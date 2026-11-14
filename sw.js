@@ -1,5 +1,5 @@
 /* Service worker: app shell cache-first, data network-first (falls back to last cached copy offline). */
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL = `shell-${VERSION}`;
 const DATA = `data-${VERSION}`;
 const SHELL_FILES = ["./", "index.html", "styles.css", "app.js", "manifest.json",

@@ -10,7 +10,12 @@
   var FOLLOW_LABEL = { instagram: "دنبال‌کننده", youtube: "مشترک", aparat: "دنبال‌کننده", tiktok: "دنبال‌کننده" };
   var POSTS_LABEL = { instagram: "پست", youtube: "ویدیو", aparat: "ویدیو", tiktok: "ویدیو" };
 
-  var state = { config: null, latest: null, history: null, error: null };
+  var AUTH_SALT = "sp-panel-v1|";
+  var AUTH_HASH = "1b906a20e9fea1a47f58c9c56aa49688acb2dd0ba5fba3188825f252401a3ba8";
+  var AUTH_KEY = "sp_auth";
+  var THEME_KEY = "sp_theme";
+
+  var state = { config: null, latest: null, history: null, error: null, busy: false };
   var app = document.getElementById("app");
 
   // ---------------------------------------------------------------- utils
@@ -40,6 +45,12 @@
     if (!iso) return "—";
     try {
       return new Intl.DateTimeFormat("fa-IR", { timeZone: TZ, year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+    } catch (e) { return iso; }
+  }
+  function fmtShort(iso) {
+    if (!iso) return "—";
+    try {
+      return new Intl.DateTimeFormat("fa-IR", { timeZone: TZ, month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
     } catch (e) { return iso; }
   }
   function fmtDay(d) { // d: 'YYYY-MM-DD' (Tehran date)
@@ -177,17 +188,75 @@
   // -------------------------------------------------------------- views
   var ICON_LOCK = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10.5" width="16" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3"/></svg>';
 
-  function homeView() {
-    var L = state.latest;
-    var html = '<header class="top"><div><h1>پنل پیج‌ها</h1><div class="sub">آخرین بروزرسانی: ' +
-      esc(fmtDateTime(L && L.updated_at)) + ' <span class="muted-note nowrap">(' + esc(ago(L && L.updated_at)) + ')</span></div></div>' +
-      '<button class="icon-btn" id="reload" aria-label="بارگذاری دوباره">↻</button></header>';
+  var ICON_REFRESH = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>';
+  var ICON_SUN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  var ICON_MOON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>';
+  var ICON_CLOCK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+  var ICON_CHANNELS = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2.5"/><path d="M8 21h8M12 17v4"/><path d="M10 8.5v5l4-2.5z" fill="currentColor"/></svg>';
 
+  function currentTheme() { return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"; }
+  function setTheme(t) {
+    document.documentElement.setAttribute("data-theme", t);
+    try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
+    var mc = document.querySelector('meta[name="theme-color"]');
+    if (mc) mc.setAttribute("content", t === "dark" ? "#120e1c" : "#f7f5fc");
+  }
+
+  function topbar(title) {
+    var L = state.latest;
+    var dark = currentTheme() === "dark";
+    return '<header class="topbar">' +
+      '<button class="refresh-btn' + (state.busy ? " spin" : "") + '" id="refresh" aria-label="به‌روزرسانی همه‌ی کانال‌ها" title="به‌روزرسانی همه‌ی کانال‌ها">' + ICON_REFRESH + '</button>' +
+      '<div class="brand"><b>' + esc(title) + '</b></div>' +
+      '<div class="tbox" title="آخرین به‌روزرسانی پنل">' + ICON_CLOCK + '<span class="ul"><b>' + esc(fmtShort(L && L.updated_at)) + '</b><span>' + esc(ago(L && L.updated_at)) + '</span></span></div>' +
+      '<button class="tbox" id="theme" aria-label="تغییر تم">' + (dark ? ICON_SUN : ICON_MOON) + '<span class="tlabel">' + (dark ? "لایت" : "دارک") + '</span></button>' +
+      '</header>';
+  }
+
+  function bindTopbar() {
+    var rb = document.getElementById("refresh");
+    if (rb) rb.onclick = refreshAll;
+    var tb = document.getElementById("theme");
+    if (tb) tb.onclick = function () { setTheme(currentTheme() === "dark" ? "light" : "dark"); render(); };
+  }
+
+  function toast(msg) {
+    var t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
+    document.body.appendChild(t); setTimeout(function () { t.remove(); }, 2600);
+  }
+
+  function refreshAll() {
+    if (state.busy) return;
+    state.busy = true; render();
+    var before = state.latest && state.latest.updated_at;
+    load(true).then(function () {
+      state.busy = false; render();
+      var now = state.latest && state.latest.updated_at;
+      toast(now && now !== before ? "همه‌ی کانال‌ها به‌روز شد" : "داده‌ها به‌روز هستند · آخرین بررسی " + ago(now));
+    });
+  }
+
+  function homeView() {
+    var html = topbar("پنل پیج‌ها");
+    html += '<div class="boxes">';
     html += '<a class="vault" href="' + VAULT_URL + '" target="_blank" rel="noopener noreferrer">' +
       '<span class="vi">' + ICON_LOCK + '</span><span><div class="vt">پسوورد منیجر</div>' +
-      '<div class="vs">باز کردن Vaultwarden در زبانه‌ی جدید</div></span><span class="arrow">↗</span></a>';
+      '<div class="vs">باز کردن Vaultwarden</div></span><span class="arrow">↗</span></a>';
+    html += '<a class="chbox" href="#/channels">' +
+      '<span class="vi">' + ICON_CHANNELS + '</span><span><div class="vt">کانال‌ها</div>' +
+      '<div class="vs">آمار و وضعیت ' + fa(state.config.pages.length) + ' پیج</div></span><span class="arrow">←</span></a>';
+    html += '</div>';
+    html += '<button class="logout" id="logout">خروج از پنل</button>';
+    app.innerHTML = html;
+    bindTopbar();
+    document.getElementById("logout").onclick = function () { try { localStorage.removeItem(AUTH_KEY); } catch (e) {} render(); };
+  }
 
-    html += '<div class="section-title">پیج‌ها</div><div class="pages">';
+  function channelsView() {
+    var L = state.latest;
+    var html = topbar("کانال‌ها");
+    html += '<button class="back" id="back">→ صفحه‌ی اصلی</button>';
+    html += '<div class="pages">';
     state.config.pages.forEach(function (cp) {
       var page = (L && L.pages[cp.id]) || { id: cp.id, name: cp.name, platforms: {} };
       var s = pageSummary(page);
@@ -205,10 +274,36 @@
         (s.missing.length ? '<span class="muted-note">نامشخص: ' + esc(s.missing.join("، ")) + "</span>" : "") + "</div></a>";
     });
     html += "</div>";
-    html += '<p class="footnote">داده‌ها هر ساعت به‌طور خودکار از صفحات عمومی خوانده می‌شوند. «—» یعنی آن عدد در دسترس نبود؛ هیچ عددی حدس زده نمی‌شود.</p>';
+    html += '<p class="footnote">«—» یعنی آن عدد در دسترس نبود؛ هیچ عددی حدس زده نمی‌شود.</p>';
     app.innerHTML = html;
-    var rb = document.getElementById("reload");
-    if (rb) rb.onclick = function () { load(true); };
+    window.scrollTo(0, 0);
+    bindTopbar();
+    document.getElementById("back").onclick = function () { location.hash = "#/"; };
+  }
+
+  // ------------------------------------------------------------- login
+  function sha256hex(s) {
+    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)).then(function (b) {
+      return Array.prototype.map.call(new Uint8Array(b), function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
+    });
+  }
+  function authed() { try { return localStorage.getItem(AUTH_KEY) === AUTH_HASH; } catch (e) { return false; } }
+
+  function loginView() {
+    app.innerHTML = '<div class="login-wrap"><form class="login" id="lf" autocomplete="on">' +
+      '<div class="logo">' + ICON_LOCK + '</div>' +
+      '<h1>ورود به پنل</h1><p class="s">این پنل محرمانه است</p>' +
+      '<label for="u">نام کاربری</label><input id="u" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required>' +
+      '<label for="p">رمز عبور</label><input id="p" name="password" type="password" autocomplete="current-password" required>' +
+      '<button class="go" type="submit">ورود</button><div class="err" id="err"></div></form></div>';
+    document.getElementById("lf").onsubmit = function (e) {
+      e.preventDefault();
+      var u = document.getElementById("u").value.trim(), p = document.getElementById("p").value;
+      sha256hex(AUTH_SALT + u + "|" + p).then(function (h) {
+        if (h === AUTH_HASH) { try { localStorage.setItem(AUTH_KEY, h); } catch (e2) {} render(); }
+        else { document.getElementById("err").textContent = "نام کاربری یا رمز عبور اشتباه است"; }
+      });
+    };
   }
 
   function chartSVG(series, label) {
@@ -322,9 +417,9 @@
     if (!cp) { location.hash = "#/"; return; }
     var page = (state.latest && state.latest.pages[id]) || { id: id, name: cp.name, platforms: {} };
     var s = pageSummary(page);
-    var html = '<button class="back" id="back">→ همه‌ی پیج‌ها</button>';
+    var html = topbar(cp.name) + '<button class="back" id="back">→ کانال‌ها</button>';
     html += '<div class="dash-head"><h1>' + esc(cp.name) + '</h1><div class="sub">' + esc(cp.topic_fa || "") +
-      " · آخرین بروزرسانی: " + esc(fmtDateTime(state.latest && state.latest.updated_at)) + "</div></div>";
+      "</div></div>";
     html += '<div class="summary">' +
       '<div class="tile"><div class="k">مجموع دنبال‌کننده</div><div class="v">' + esc(fa(s.total)) + "</div>" +
       (s.missing.length ? '<div class="n">بدون ' + esc(s.missing.join("، ")) + "</div>" : "") + "</div>" +
@@ -339,13 +434,15 @@
     PLATFORMS.forEach(function (pl) { html += platformCard(page, pl); });
     app.innerHTML = html;
     window.scrollTo(0, 0);
-    document.getElementById("back").onclick = function () { location.hash = "#/"; };
+    bindTopbar();
+    document.getElementById("back").onclick = function () { location.hash = "#/channels"; };
     Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) {
       b.onclick = function () { var el = document.getElementById(b.getAttribute("data-t")); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); };
     });
   }
 
   function render() {
+    if (!authed()) { loginView(); return; }
     if (state.error && !state.config) {
       app.innerHTML = '<div class="loading">بارگذاری داده‌ها ناموفق بود. اتصال را بررسی کنید.</div>';
       return;
@@ -353,7 +450,9 @@
     if (!state.config) return;
     var h = location.hash || "#/";
     var m = h.match(/^#\/p\/([\w-]+)/);
-    if (m) pageView(m[1]); else homeView();
+    if (m) pageView(m[1]);
+    else if (/^#\/channels/.test(h)) channelsView();
+    else homeView();
   }
 
   function getJSON(url, fresh) {
