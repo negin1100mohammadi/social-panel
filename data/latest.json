@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-11-14T08:19:53Z",
+ "updated_at": "2026-11-14T12:16:09Z",
  "timezone": "Asia/Tehran",
  "pages": {
   "hamrah-seller": {
@@ -21,9 +21,9 @@
      "total_likes": null,
      "recent": [],
      "notes": [],
-     "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain)",
+     "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain); profile page HTTP 302",
      "fetched_at": null,
-     "last_attempt_at": "2026-11-14T08:15:34Z"
+     "last_attempt_at": "2026-11-14T12:16:15Z"
     },
     "youtube": {
      "platform": "youtube",
@@ -41,7 +41,7 @@
      "notes": [],
      "error": "LookupError: handle @hamkargram not found on YouTube (HTTP 404)",
      "fetched_at": null,
-     "last_attempt_at": "2026-11-14T08:19:55Z"
+     "last_attempt_at": "2026-11-14T12:16:17Z"
     },
     "aparat": {
      "platform": "aparat",
@@ -60,7 +60,7 @@
       "Aparat public API gives views; likes/comments are not exposed"
      ],
      "error": null,
-     "fetched_at": "2026-11-14T08:13:56Z",
+     "fetched_at": "2026-11-14T12:16:23Z",
      "title": "Hamrah Seller"
     },
     "tiktok": {
@@ -80,7 +80,7 @@
       "TikTok profile page exposes totals only; per-video stats and dates are not available"
      ],
      "error": null,
-     "fetched_at": "2026-11-14T08:13:59Z",
+     "fetched_at": "2026-11-14T12:16:26Z",
      "title": "Hamrah Seller"
     }
    }
@@ -104,9 +104,9 @@
      "total_likes": null,
      "recent": [],
      "notes": [],
-     "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain)",
+     "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain); profile page HTTP 302",
      "fetched_at": null,
-     "last_attempt_at": "2026-11-14T08:15:37Z"
+     "last_attempt_at": "2026-11-14T12:16:31Z"
     },
     "youtube": {
      "platform": "youtube",
@@ -115,7 +115,7 @@
      "ok": true,
      "stale": false,
      "source": "YouTube channel page + RSS feed",
-     "followers": 20,
+     "followers": 21,
      "followers_approx": false,
      "posts": 8,
      "total_views": 5576,
@@ -126,8 +126,8 @@
        "title": "رفتی گلایه کنی ولی آخرش تو بده شدی؟",
        "url": "https://www.youtube.com/shorts/9d69AGzsu5A",
        "published": "2026-11-13T11:05:01+00:00",
-       "views": 1187,
-       "likes": 30,
+       "views": 1190,
+       "likes": 31,
        "comments": null,
        "thumb": "https://i2.ytimg.com/vi/9d69AGzsu5A/hqdefault.jpg"
       },
@@ -206,7 +206,7 @@
       "no API key: comments unavailable; likes/views from RSS feed (last 15 videos max)"
      ],
      "error": null,
-     "fetched_at": "2026-11-14T08:20:01Z",
+     "fetched_at": "2026-11-14T12:16:36Z",
      "title": "AmirDecodes",
      "channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g"
     },
@@ -298,7 +298,7 @@
       "Aparat public API gives views; likes/comments are not exposed"
      ],
      "error": null,
-     "fetched_at": "2026-11-14T08:14:05Z",
+     "fetched_at": "2026-11-14T12:16:42Z",
      "title": "TitanStation"
     },
     "tiktok": {
@@ -312,13 +312,13 @@
      "followers_approx": false,
      "posts": 4,
      "total_views": null,
-     "total_likes": 46,
+     "total_likes": 48,
      "recent": [],
      "notes": [
       "TikTok profile page exposes totals only; per-video stats and dates are not available"
      ],
      "error": null,
-     "fetched_at": "2026-11-14T08:14:07Z",
+     "fetched_at": "2026-11-14T12:16:45Z",
      "title": "Titan Station"
     }
    }
@@ -342,9 +342,9 @@
      "total_likes": null,
      "recent": [],
      "notes": [],
-     "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain)",
+     "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain); profile page HTTP 302",
      "fetched_at": null,
-     "last_attempt_at": "2026-11-14T08:15:39Z"
+     "last_attempt_at": "2026-11-14T12:16:50Z"
     },
     "youtube": {
      "platform": "youtube",
@@ -364,7 +364,7 @@
        "title": "زیر پلاستیک گیر کرده؟ نه! 😂",
        "url": "https://www.youtube.com/shorts/xodL-2TLvOg",
        "published": "2026-10-28T19:42:28+00:00",
-       "views": 387,
+       "views": 388,
        "likes": 5,
        "comments": null,
        "thumb": "https://i1.ytimg.com/vi/xodL-2TLvOg/hqdefault.jpg"
@@ -384,7 +384,7 @@
       "no API key: comments unavailable; likes/views from RSS feed (last 15 videos max)"
      ],
      "error": null,
-     "fetched_at": "2026-11-14T08:20:06Z",
+     "fetched_at": "2026-11-14T12:16:56Z",
      "title": "FanCATstic Four",
      "channel_id": "UCIQ32GL3mxkGKJoxToCrMDg"
     },
@@ -405,7 +405,7 @@
       "Aparat public API gives views; likes/comments are not exposed"
      ],
      "error": null,
-     "fetched_at": "2026-11-14T08:14:13Z",
+     "fetched_at": "2026-11-14T12:17:01Z",
      "title": "گربه‌ها"
     },
     "tiktok": {
@@ -425,7 +425,7 @@
       "TikTok profile page exposes totals only; per-video stats and dates are not available"
      ],
      "error": null,
-     "fetched_at": "2026-11-14T08:14:16Z",
+     "fetched_at": "2026-11-14T12:17:04Z",
      "title": "FanCATstic Four"
     }
    }
@@ -449,9 +449,9 @@
      "total_likes": null,
      "recent": [],
      "notes": [],
-     "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain)",
+     "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain); profile page HTTP 302",
      "fetched_at": null,
-     "last_attempt_at": "2026-11-14T08:15:42Z"
+     "last_attempt_at": "2026-11-14T12:17:09Z"
     },
     "youtube": {
      "platform": "youtube",
@@ -472,7 +472,7 @@
       "no API key: comments unavailable; likes/views from RSS feed (last 15 videos max)"
      ],
      "error": null,
-     "fetched_at": "2026-11-14T08:20:11Z",
+     "fetched_at": "2026-11-14T12:17:14Z",
      "title": "شده دیگه",
      "channel_id": "UCy_RFO09PBC9RhAqtgMf_Eg"
     },
@@ -493,7 +493,7 @@
       "Aparat public API gives views; likes/comments are not exposed"
      ],
      "error": null,
-     "fetched_at": "2026-11-14T08:14:22Z",
+     "fetched_at": "2026-11-14T12:17:20Z",
      "title": "شده دیگه"
     },
     "tiktok": {
@@ -513,7 +513,7 @@
       "TikTok profile page exposes totals only; per-video stats and dates are not available"
      ],
      "error": null,
-     "fetched_at": "2026-11-14T08:14:25Z",
+     "fetched_at": "2026-11-14T12:17:23Z",
      "title": "Shode Dige"
     }
    }
@@ -537,9 +537,9 @@
      "total_likes": null,
      "recent": [],
      "notes": [],
-     "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain)",
+     "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain); profile page HTTP 302",
      "fetched_at": null,
-     "last_attempt_at": "2026-11-14T08:15:44Z"
+     "last_attempt_at": "2026-11-14T12:17:28Z"
     },
     "youtube": {
      "platform": "youtube",
@@ -560,7 +560,7 @@
       "no API key: comments unavailable; likes/views from RSS feed (last 15 videos max)"
      ],
      "error": null,
-     "fetched_at": "2026-11-14T08:20:16Z",
+     "fetched_at": "2026-11-14T12:17:33Z",
      "title": "PreTime",
      "channel_id": "UCgByc7LjKGswrjkXavPJoxA"
     },
@@ -581,7 +581,7 @@
       "Aparat public API gives views; likes/comments are not exposed"
      ],
      "error": null,
-     "fetched_at": "2026-11-14T08:14:30Z",
+     "fetched_at": "2026-11-14T12:17:39Z",
      "title": "اساطیر ایران"
     },
     "tiktok": {
@@ -601,14 +601,14 @@
       "TikTok profile page exposes totals only; per-video stats and dates are not available"
      ],
      "error": null,
-     "fetched_at": "2026-11-14T08:14:33Z",
+     "fetched_at": "2026-11-14T12:17:41Z",
      "title": "Pre Time TV"
     }
    }
   }
  },
  "summary": {
-  "ok": 4,
-  "failed": 1
+  "ok": 14,
+  "failed": 6
  }
 }
