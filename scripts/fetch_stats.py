@@ -123,6 +123,7 @@ def blank(platform, handle, url):
         "posts": None,
         "total_views": None,
         "total_likes": None,
+        "avatar": None,
         "recent": [],
         "notes": [],
         "error": None,
@@ -130,8 +131,13 @@ def blank(platform, handle, url):
     }
 
 
-def post(pid, title, url, published, views=None, likes=None, comments=None, thumb=None):
+def post(pid, title, url, published, views=None, likes=None, comments=None, thumb=None,
+         shares=None, saves=None, retention=None, duration=None):
     return {
+        "shares": to_int(shares),
+        "saves": to_int(saves),
+        "retention": retention,
+        "duration": to_int(duration),
         "id": str(pid),
         "title": (title or "").strip()[:160],
         "url": url,
@@ -165,6 +171,8 @@ def youtube(handle, prev):
         out["channel_id"] = ch["id"]
         out["url"] = f"https://www.youtube.com/{h}"
         out["title"] = ch.get("snippet", {}).get("title")
+        _th = ch.get("snippet", {}).get("thumbnails", {})
+        out["avatar"] = (_th.get("medium") or _th.get("default") or {}).get("url")
         out["followers"] = None if st.get("hiddenSubscriberCount") else to_int(st.get("subscriberCount"))
         out["followers_approx"] = True  # API rounds subscriber counts to 3 significant figures
         out["posts"] = to_int(st.get("videoCount"))
@@ -214,6 +222,9 @@ def youtube(handle, prev):
         tv = re.search(r'"viewCountText":"([\d,]+) views"', page)
         if tv:
             out["total_views"] = to_int(tv.group(1))
+        im = re.search(r'<meta property="og:image" content="([^"]+)"', page)
+        if im:
+            out["avatar"] = htmllib.unescape(im.group(1))
         tm = re.search(r'<meta property="og:title" content="([^"]*)"', page)
         if tm:
             out["title"] = htmllib.unescape(tm.group(1))
@@ -272,7 +283,8 @@ def aparat(username, prev):
         r.raise_for_status()
         a = r.json()["data"]["attributes"]
         prof = {"name": a.get("name"), "followers": a.get("follower_cnt_num", a.get("follower_cnt")),
-                "videos": a.get("video_cnt"), "views": a.get("video_visit")}
+                "videos": a.get("video_cnt"), "views": a.get("video_visit"),
+                "avatar": a.get("pic_m") or a.get("pic_s")}
     except Exception as e:
         out["notes"].append(f"v1 profile failed: {type(e).__name__}")
     if prof is None:
@@ -282,6 +294,7 @@ def aparat(username, prev):
         prof = {"name": a.get("name"), "followers": a.get("follower_cnt"), "videos": a.get("video_cnt"),
                 "views": None}
     out["title"] = prof["name"]
+    out["avatar"] = prof.get("avatar")
     out["followers"] = to_int(prof["followers"])
     out["posts"] = to_int(prof["videos"])
     out["total_views"] = to_int(prof["views"])
@@ -305,7 +318,7 @@ def aparat(username, prev):
             out["recent"].append(post(v.get("uid") or v.get("id"), v.get("title"),
                                       f"https://www.aparat.com/v/{v.get('uid')}", pub,
                                       v.get("visit_cnt_int") or v.get("visit_cnt"), likes, None,
-                                      v.get("small_poster")))
+                                      v.get("small_poster"), duration=v.get("duration")))
     except Exception as e:
         out["notes"].append(f"video list failed: {type(e).__name__}")
     out["notes"].append("Aparat public API gives views; likes/comments are not exposed")
@@ -324,7 +337,7 @@ def instagram(username, prev):
     ig_id = os.environ.get("IG_USER_ID", "").strip()
 
     if token and ig_id:
-        fields = (f"business_discovery.username({username}){{username,name,followers_count,media_count,"
+        fields = (f"business_discovery.username({username}){{username,name,profile_picture_url,followers_count,media_count,"
                   f"media.limit({n}){{id,caption,timestamp,like_count,comments_count,permalink,media_type}}}}")
         r = get(f"https://graph.facebook.com/v21.0/{ig_id}",
                 params={"fields": fields, "access_token": token})
@@ -332,6 +345,7 @@ def instagram(username, prev):
             raise RuntimeError(f"Graph API HTTP {r.status_code}: {r.text[:160]}")
         bd = r.json().get("business_discovery", {})
         out["title"] = bd.get("name")
+        out["avatar"] = bd.get("profile_picture_url")
         out["followers"] = to_int(bd.get("followers_count"))
         out["posts"] = to_int(bd.get("media_count"))
         for m in (bd.get("media", {}) or {}).get("data", []):
@@ -405,6 +419,7 @@ def tiktok(username, prev):
     if not st:
         raise RuntimeError("no stats in embedded JSON")
     out["title"] = (info.get("user") or {}).get("nickname")
+    out["avatar"] = (info.get("user") or {}).get("avatarMedium") or (info.get("user") or {}).get("avatarThumb")
     out["followers"] = to_int(st.get("followerCount"))
     out["posts"] = to_int(st.get("videoCount"))
     out["total_likes"] = to_int(st.get("heartCount") or st.get("heart"))
