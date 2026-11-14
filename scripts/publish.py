@@ -12,7 +12,7 @@ Flow
   4. The media-upload branch is rebuilt with only files not yet moved (or deleted).
 
 Secrets (all optional; a platform without its secrets => "needs_setup", never a crash).
-They arrive as one JSON object in ALL_SECRETS (toJSON(secrets) in the workflow).
+They are passed one by one as env variables by publish.yml.
 <PAGE> = page id upper-cased with "-" -> "_", e.g. shode-dige -> SHODE_DIGE.
   YouTube : YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN_<PAGE>
   Instagram: IG_ACCESS_TOKEN_<PAGE>, IG_USER_ID_<PAGE>

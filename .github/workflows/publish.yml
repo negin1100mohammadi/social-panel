@@ -32,10 +32,40 @@ jobs:
 
       - name: Publish due jobs
         env:
+          # one secret per page/platform (<PAGE> = page id upper-cased, '-' -> '_'); a new page needs its lines here too
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # every repo secret as one JSON object, so per-page names like
-          # YT_REFRESH_TOKEN_SHODE_DIGE work without listing them here (values stay masked)
-          ALL_SECRETS: ${{ toJSON(secrets) }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN_HAMRAH_SELLER: ${{ secrets.YT_REFRESH_TOKEN_HAMRAH_SELLER }}
+          IG_ACCESS_TOKEN_HAMRAH_SELLER: ${{ secrets.IG_ACCESS_TOKEN_HAMRAH_SELLER }}
+          IG_USER_ID_HAMRAH_SELLER: ${{ secrets.IG_USER_ID_HAMRAH_SELLER }}
+          APARAT_USER_HAMRAH_SELLER: ${{ secrets.APARAT_USER_HAMRAH_SELLER }}
+          APARAT_PASS_HAMRAH_SELLER: ${{ secrets.APARAT_PASS_HAMRAH_SELLER }}
+          TIKTOK_ACCESS_TOKEN_HAMRAH_SELLER: ${{ secrets.TIKTOK_ACCESS_TOKEN_HAMRAH_SELLER }}
+          YT_REFRESH_TOKEN_TITAN_STATION: ${{ secrets.YT_REFRESH_TOKEN_TITAN_STATION }}
+          IG_ACCESS_TOKEN_TITAN_STATION: ${{ secrets.IG_ACCESS_TOKEN_TITAN_STATION }}
+          IG_USER_ID_TITAN_STATION: ${{ secrets.IG_USER_ID_TITAN_STATION }}
+          APARAT_USER_TITAN_STATION: ${{ secrets.APARAT_USER_TITAN_STATION }}
+          APARAT_PASS_TITAN_STATION: ${{ secrets.APARAT_PASS_TITAN_STATION }}
+          TIKTOK_ACCESS_TOKEN_TITAN_STATION: ${{ secrets.TIKTOK_ACCESS_TOKEN_TITAN_STATION }}
+          YT_REFRESH_TOKEN_FANCATSTIC_FOUR: ${{ secrets.YT_REFRESH_TOKEN_FANCATSTIC_FOUR }}
+          IG_ACCESS_TOKEN_FANCATSTIC_FOUR: ${{ secrets.IG_ACCESS_TOKEN_FANCATSTIC_FOUR }}
+          IG_USER_ID_FANCATSTIC_FOUR: ${{ secrets.IG_USER_ID_FANCATSTIC_FOUR }}
+          APARAT_USER_FANCATSTIC_FOUR: ${{ secrets.APARAT_USER_FANCATSTIC_FOUR }}
+          APARAT_PASS_FANCATSTIC_FOUR: ${{ secrets.APARAT_PASS_FANCATSTIC_FOUR }}
+          TIKTOK_ACCESS_TOKEN_FANCATSTIC_FOUR: ${{ secrets.TIKTOK_ACCESS_TOKEN_FANCATSTIC_FOUR }}
+          YT_REFRESH_TOKEN_SHODE_DIGE: ${{ secrets.YT_REFRESH_TOKEN_SHODE_DIGE }}
+          IG_ACCESS_TOKEN_SHODE_DIGE: ${{ secrets.IG_ACCESS_TOKEN_SHODE_DIGE }}
+          IG_USER_ID_SHODE_DIGE: ${{ secrets.IG_USER_ID_SHODE_DIGE }}
+          APARAT_USER_SHODE_DIGE: ${{ secrets.APARAT_USER_SHODE_DIGE }}
+          APARAT_PASS_SHODE_DIGE: ${{ secrets.APARAT_PASS_SHODE_DIGE }}
+          TIKTOK_ACCESS_TOKEN_SHODE_DIGE: ${{ secrets.TIKTOK_ACCESS_TOKEN_SHODE_DIGE }}
+          YT_REFRESH_TOKEN_PRETIME_TV: ${{ secrets.YT_REFRESH_TOKEN_PRETIME_TV }}
+          IG_ACCESS_TOKEN_PRETIME_TV: ${{ secrets.IG_ACCESS_TOKEN_PRETIME_TV }}
+          IG_USER_ID_PRETIME_TV: ${{ secrets.IG_USER_ID_PRETIME_TV }}
+          APARAT_USER_PRETIME_TV: ${{ secrets.APARAT_USER_PRETIME_TV }}
+          APARAT_PASS_PRETIME_TV: ${{ secrets.APARAT_PASS_PRETIME_TV }}
+          TIKTOK_ACCESS_TOKEN_PRETIME_TV: ${{ secrets.TIKTOK_ACCESS_TOKEN_PRETIME_TV }}
         run: python scripts/publish.py
 
       - name: Commit job status
