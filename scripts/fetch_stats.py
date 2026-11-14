@@ -429,6 +429,27 @@ def tiktok(username, prev):
     return out
 
 
+def is_placeholder_avatar(url):
+    """True for auto-generated letter avatars / platform defaults (not a real profile photo)."""
+    if not url:
+        return True
+    if "avatar-is-chann" in url or "default" in url.lower():
+        return True
+    try:
+        from io import BytesIO
+        from PIL import Image
+        r = get(url)
+        r.raise_for_status()
+        im = Image.open(BytesIO(r.content)).convert("RGB").resize((64, 64))
+        cols = sorted(im.getcolors(4096) or [], reverse=True)
+        if not cols:
+            return False  # very many colours -> a photo
+        top2 = sum(c for c, _ in cols[:2]) / 4096
+        return top2 > 0.6  # flat background + one letter
+    except Exception:
+        return False
+
+
 FETCHERS = {"instagram": instagram, "youtube": youtube, "aparat": aparat, "tiktok": tiktok}
 
 
@@ -483,6 +504,8 @@ def main():
             try:
                 res = FETCHERS[plat](handle, prev)
                 res["fetched_at"] = iso(now_utc())
+                if res.get("avatar") and is_placeholder_avatar(res["avatar"]):
+                    res["avatar"] = None
                 ok_count += 1
                 log(f"OK    {pid:16s} {plat:9s} followers={res['followers']} posts={res['posts']} "
                     f"recent={len(res['recent'])} via {res['source']}")
