@@ -126,9 +126,9 @@
   function initials(name) { return esc(String(name || "?").replace(/[^A-Za-z\u0600-\u06FF ]/g, "").split(" ").filter(Boolean).slice(0, 2).map(function (w) { return w[0]; }).join("").toUpperCase() || "?"); }
   function logoHTML(cp, page, cls) {
     var a = avatarOf(cp, page);
-    var fb = '<span class="logo-fb">' + initials(cp.name) + "</span>";
-    if (!a) return '<span class="clogo ' + (cls || "") + '">' + fb + "</span>";
-    return '<span class="clogo ' + (cls || "") + '"><img alt="" referrerpolicy="no-referrer" src="' + esc(a) + '" onerror="this.parentNode.innerHTML=\'' + fb.replace(/'/g, "\\'") + '\'"></span>';
+    var fb = "";
+    if (!a) return '<span class="clogo empty ' + (cls || "") + '"></span>';
+    return '<span class="clogo ' + (cls || "") + '"><img alt="" referrerpolicy="no-referrer" src="' + esc(a) + '" onerror="this.parentNode.classList.add(\'empty\');this.remove()"></span>';
   }
   // likes + comments across every platform: grows when someone likes or comments
   function interactions(page) {
