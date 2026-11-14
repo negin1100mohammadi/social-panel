@@ -1,0 +1,614 @@
+{
+ "updated_at": "2026-11-14T08:19:53Z",
+ "timezone": "Asia/Tehran",
+ "pages": {
+  "hamrah-seller": {
+   "id": "hamrah-seller",
+   "name": "Hamrah Seller",
+   "topic_fa": "فروشگاه و فروشنده",
+   "platforms": {
+    "instagram": {
+     "platform": "instagram",
+     "handle": "hamkargram",
+     "url": "https://www.instagram.com/hamkargram/",
+     "ok": false,
+     "stale": false,
+     "source": null,
+     "followers": null,
+     "followers_approx": false,
+     "posts": null,
+     "total_views": null,
+     "total_likes": null,
+     "recent": [],
+     "notes": [],
+     "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain)",
+     "fetched_at": null,
+     "last_attempt_at": "2026-11-14T08:15:34Z"
+    },
+    "youtube": {
+     "platform": "youtube",
+     "handle": "@hamkargram",
+     "url": "https://www.youtube.com/@hamkargram",
+     "ok": false,
+     "stale": false,
+     "source": null,
+     "followers": null,
+     "followers_approx": false,
+     "posts": null,
+     "total_views": null,
+     "total_likes": null,
+     "recent": [],
+     "notes": [],
+     "error": "LookupError: handle @hamkargram not found on YouTube (HTTP 404)",
+     "fetched_at": null,
+     "last_attempt_at": "2026-11-14T08:19:55Z"
+    },
+    "aparat": {
+     "platform": "aparat",
+     "handle": "u_44289977",
+     "url": "https://www.aparat.com/u_44289977",
+     "ok": true,
+     "stale": false,
+     "source": "Aparat public API",
+     "followers": 0,
+     "followers_approx": false,
+     "posts": 0,
+     "total_views": 0,
+     "total_likes": null,
+     "recent": [],
+     "notes": [
+      "Aparat public API gives views; likes/comments are not exposed"
+     ],
+     "error": null,
+     "fetched_at": "2026-11-14T08:13:56Z",
+     "title": "Hamrah Seller"
+    },
+    "tiktok": {
+     "platform": "tiktok",
+     "handle": "hamrahseller",
+     "url": "https://www.tiktok.com/@hamrahseller",
+     "ok": true,
+     "stale": false,
+     "source": "TikTok public profile page",
+     "followers": 0,
+     "followers_approx": false,
+     "posts": 0,
+     "total_views": null,
+     "total_likes": 0,
+     "recent": [],
+     "notes": [
+      "TikTok profile page exposes totals only; per-video stats and dates are not available"
+     ],
+     "error": null,
+     "fetched_at": "2026-11-14T08:13:59Z",
+     "title": "Hamrah Seller"
+    }
+   }
+  },
+  "titan-station": {
+   "id": "titan-station",
+   "name": "Titan Station",
+   "topic_fa": "روانشناسی",
+   "platforms": {
+    "instagram": {
+     "platform": "instagram",
+     "handle": "titanstation",
+     "url": "https://www.instagram.com/titanstation/",
+     "ok": false,
+     "stale": false,
+     "source": null,
+     "followers": null,
+     "followers_approx": false,
+     "posts": null,
+     "total_views": null,
+     "total_likes": null,
+     "recent": [],
+     "notes": [],
+     "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain)",
+     "fetched_at": null,
+     "last_attempt_at": "2026-11-14T08:15:37Z"
+    },
+    "youtube": {
+     "platform": "youtube",
+     "handle": "@Titan.Station",
+     "url": "https://www.youtube.com/@Titan.Station",
+     "ok": true,
+     "stale": false,
+     "source": "YouTube channel page + RSS feed",
+     "followers": 20,
+     "followers_approx": false,
+     "posts": 8,
+     "total_views": 5576,
+     "total_likes": null,
+     "recent": [
+      {
+       "id": "9d69AGzsu5A",
+       "title": "رفتی گلایه کنی ولی آخرش تو بده شدی؟",
+       "url": "https://www.youtube.com/shorts/9d69AGzsu5A",
+       "published": "2026-11-13T11:05:01+00:00",
+       "views": 1187,
+       "likes": 30,
+       "comments": null,
+       "thumb": "https://i2.ytimg.com/vi/9d69AGzsu5A/hqdefault.jpg"
+      },
+      {
+       "id": "q4fesKgLjdQ",
+       "title": "چرا زیر دوش همیشه برنده‌ای؟",
+       "url": "https://www.youtube.com/shorts/q4fesKgLjdQ",
+       "published": "2026-11-12T09:31:14+00:00",
+       "views": 414,
+       "likes": 10,
+       "comments": null,
+       "thumb": "https://i2.ytimg.com/vi/q4fesKgLjdQ/hqdefault.jpg"
+      },
+      {
+       "id": "5PreLpYw-Mw",
+       "title": "چرا براش دلیل میاری؟",
+       "url": "https://www.youtube.com/shorts/5PreLpYw-Mw",
+       "published": "2026-11-11T14:30:14+00:00",
+       "views": 853,
+       "likes": 17,
+       "comments": null,
+       "thumb": "https://i2.ytimg.com/vi/5PreLpYw-Mw/hqdefault.jpg"
+      },
+      {
+       "id": "97JcUsq0pyY",
+       "title": "چرا براش دلیل میاری؟",
+       "url": "https://www.youtube.com/shorts/97JcUsq0pyY",
+       "published": "2026-11-10T18:51:17+00:00",
+       "views": 294,
+       "likes": 7,
+       "comments": null,
+       "thumb": "https://i2.ytimg.com/vi/97JcUsq0pyY/hqdefault.jpg"
+      },
+      {
+       "id": "4pLlpaC3oZE",
+       "title": "هرچی بیشتر می‌دوی، دورتر می‌شن.",
+       "url": "https://www.youtube.com/shorts/4pLlpaC3oZE",
+       "published": "2026-11-07T20:55:57+00:00",
+       "views": 12,
+       "likes": 0,
+       "comments": null,
+       "thumb": "https://i1.ytimg.com/vi/4pLlpaC3oZE/hqdefault.jpg"
+      },
+      {
+       "id": "5jSv4sFEoUo",
+       "title": "منو ببین",
+       "url": "https://www.youtube.com/shorts/5jSv4sFEoUo",
+       "published": "2026-10-25T11:09:11+00:00",
+       "views": 355,
+       "likes": 10,
+       "comments": null,
+       "thumb": "https://i2.ytimg.com/vi/5jSv4sFEoUo/hqdefault.jpg"
+      },
+      {
+       "id": "WA0kkBfHY0M",
+       "title": "کمال‌گرا یا عمل‌گرا؟ 🧱",
+       "url": "https://www.youtube.com/shorts/WA0kkBfHY0M",
+       "published": "2026-10-23T19:43:57+00:00",
+       "views": 1234,
+       "likes": 19,
+       "comments": null,
+       "thumb": "https://i4.ytimg.com/vi/WA0kkBfHY0M/hqdefault.jpg"
+      },
+      {
+       "id": "wPB9npIf0WY",
+       "title": "خوشحالی هیچ‌وقت خودش نمیاد...",
+       "url": "https://www.youtube.com/shorts/wPB9npIf0WY",
+       "published": "2026-10-23T16:59:31+00:00",
+       "views": 1229,
+       "likes": 20,
+       "comments": null,
+       "thumb": "https://i4.ytimg.com/vi/wPB9npIf0WY/hqdefault.jpg"
+      }
+     ],
+     "notes": [
+      "no API key: comments unavailable; likes/views from RSS feed (last 15 videos max)"
+     ],
+     "error": null,
+     "fetched_at": "2026-11-14T08:20:01Z",
+     "title": "AmirDecodes",
+     "channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g"
+    },
+    "aparat": {
+     "platform": "aparat",
+     "handle": "amirdecodes",
+     "url": "https://www.aparat.com/amirdecodes",
+     "ok": true,
+     "stale": false,
+     "source": "Aparat public API",
+     "followers": 0,
+     "followers_approx": false,
+     "posts": 7,
+     "total_views": 29,
+     "total_likes": null,
+     "recent": [
+      {
+       "id": "biffr43",
+       "title": "رفتی گلایه کنی ولی آخرش تو بده شدی؟",
+       "url": "https://www.aparat.com/v/biffr43",
+       "published": "2026-11-13T11:06:24Z",
+       "views": 2,
+       "likes": null,
+       "comments": null,
+       "thumb": "https://static.cdn.asset.aparat.com/avt/74201170-1893-l__7175.jpg?width=300&quality=90&secret=4Xg7WnD4AnJGAQ4bc3RvMQ"
+      },
+      {
+       "id": "eikb2g7",
+       "title": "چرا زیر دوش همیشه برنده‌ای؟",
+       "url": "https://www.aparat.com/v/eikb2g7",
+       "published": "2026-11-12T09:33:06Z",
+       "views": 3,
+       "likes": null,
+       "comments": null,
+       "thumb": "https://static.cdn.asset.aparat.com/avt/74183875-9478-l__7113.jpg?width=300&quality=90&secret=IoqJEuWOFFb1IG9UrOMdXg"
+      },
+      {
+       "id": "yvk9509",
+       "title": "چرا براش دلیل میاری؟",
+       "url": "https://www.aparat.com/v/yvk9509",
+       "published": "2026-11-11T14:33:07Z",
+       "views": 2,
+       "likes": null,
+       "comments": null,
+       "thumb": "https://static.cdn.asset.aparat.com/avt/74172841-9075-l__8966.jpg?width=300&quality=90&secret=dng07v8Z_Cwp7y7YXu16fQ"
+      },
+      {
+       "id": "tadl86q",
+       "title": "چرا براش دلیل میاری؟",
+       "url": "https://www.aparat.com/v/tadl86q",
+       "published": "2026-11-10T18:54:26Z",
+       "views": 5,
+       "likes": null,
+       "comments": null,
+       "thumb": "https://static.cdn.asset.aparat.com/avt/74161130-2054-l__6421.jpg?width=300&quality=90&secret=EyYF9M5Qpgbw0fTlnHGHaw"
+      },
+      {
+       "id": "xvlpnw8",
+       "title": "هرچی بیشتر می‌دوی، دورتر می‌شن",
+       "url": "https://www.aparat.com/v/xvlpnw8",
+       "published": "2026-11-07T21:01:26Z",
+       "views": 6,
+       "likes": null,
+       "comments": null,
+       "thumb": "https://static.cdn.asset.aparat.com/avt/74116015-6683-l__5435.jpg?width=300&quality=90&secret=0RbZGmjdkySdgx2zTshLBw"
+      },
+      {
+       "id": "wej88z9",
+       "title": "کمال‌گرا یا عمل‌گرا؟",
+       "url": "https://www.aparat.com/v/wej88z9",
+       "published": "2026-10-23T19:45:27Z",
+       "views": 10,
+       "likes": null,
+       "comments": null,
+       "thumb": "https://static.cdn.asset.aparat.com/avt/73879465-7938-l__2022.jpg?width=300&quality=90&secret=AARAVZvdljxP2quvupSGyQ"
+      },
+      {
+       "id": "wxx2e0p",
+       "title": "خوشحالی هیچ‌وقت خودش نمیاد...",
+       "url": "https://www.aparat.com/v/wxx2e0p",
+       "published": "2026-10-23T17:24:17Z",
+       "views": 4,
+       "likes": null,
+       "comments": null,
+       "thumb": "https://static.cdn.asset.aparat.com/avt/73877365-5628-l__3803.jpg?width=300&quality=90&secret=k6y3RWqkwdTVncjTmiQukw"
+      }
+     ],
+     "notes": [
+      "Aparat public API gives views; likes/comments are not exposed"
+     ],
+     "error": null,
+     "fetched_at": "2026-11-14T08:14:05Z",
+     "title": "TitanStation"
+    },
+    "tiktok": {
+     "platform": "tiktok",
+     "handle": "titan_station",
+     "url": "https://www.tiktok.com/@titan_station",
+     "ok": true,
+     "stale": false,
+     "source": "TikTok public profile page",
+     "followers": 1,
+     "followers_approx": false,
+     "posts": 4,
+     "total_views": null,
+     "total_likes": 46,
+     "recent": [],
+     "notes": [
+      "TikTok profile page exposes totals only; per-video stats and dates are not available"
+     ],
+     "error": null,
+     "fetched_at": "2026-11-14T08:14:07Z",
+     "title": "Titan Station"
+    }
+   }
+  },
+  "fancatstic-four": {
+   "id": "fancatstic-four",
+   "name": "FanCATstic Four",
+   "topic_fa": "گربه‌ها",
+   "platforms": {
+    "instagram": {
+     "platform": "instagram",
+     "handle": "fancatstic.four",
+     "url": "https://www.instagram.com/fancatstic.four/",
+     "ok": false,
+     "stale": false,
+     "source": null,
+     "followers": null,
+     "followers_approx": false,
+     "posts": null,
+     "total_views": null,
+     "total_likes": null,
+     "recent": [],
+     "notes": [],
+     "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain)",
+     "fetched_at": null,
+     "last_attempt_at": "2026-11-14T08:15:39Z"
+    },
+    "youtube": {
+     "platform": "youtube",
+     "handle": "@fancatsticfour",
+     "url": "https://www.youtube.com/@fancatsticfour",
+     "ok": true,
+     "stale": false,
+     "source": "YouTube channel page + RSS feed",
+     "followers": 6,
+     "followers_approx": false,
+     "posts": 2,
+     "total_views": 1416,
+     "total_likes": null,
+     "recent": [
+      {
+       "id": "xodL-2TLvOg",
+       "title": "زیر پلاستیک گیر کرده؟ نه! 😂",
+       "url": "https://www.youtube.com/shorts/xodL-2TLvOg",
+       "published": "2026-10-28T19:42:28+00:00",
+       "views": 387,
+       "likes": 5,
+       "comments": null,
+       "thumb": "https://i1.ytimg.com/vi/xodL-2TLvOg/hqdefault.jpg"
+      },
+      {
+       "id": "lAtPqFTNCzI",
+       "title": "بلفی و آب دهنش 💧😂",
+       "url": "https://www.youtube.com/shorts/lAtPqFTNCzI",
+       "published": "2026-10-24T08:14:44+00:00",
+       "views": 1029,
+       "likes": 39,
+       "comments": null,
+       "thumb": "https://i1.ytimg.com/vi/lAtPqFTNCzI/hqdefault.jpg"
+      }
+     ],
+     "notes": [
+      "no API key: comments unavailable; likes/views from RSS feed (last 15 videos max)"
+     ],
+     "error": null,
+     "fetched_at": "2026-11-14T08:20:06Z",
+     "title": "FanCATstic Four",
+     "channel_id": "UCIQ32GL3mxkGKJoxToCrMDg"
+    },
+    "aparat": {
+     "platform": "aparat",
+     "handle": "u_44289730",
+     "url": "https://www.aparat.com/u_44289730",
+     "ok": true,
+     "stale": false,
+     "source": "Aparat public API",
+     "followers": 0,
+     "followers_approx": false,
+     "posts": 0,
+     "total_views": 0,
+     "total_likes": null,
+     "recent": [],
+     "notes": [
+      "Aparat public API gives views; likes/comments are not exposed"
+     ],
+     "error": null,
+     "fetched_at": "2026-11-14T08:14:13Z",
+     "title": "گربه‌ها"
+    },
+    "tiktok": {
+     "platform": "tiktok",
+     "handle": "fancatsticfour",
+     "url": "https://www.tiktok.com/@fancatsticfour",
+     "ok": true,
+     "stale": false,
+     "source": "TikTok public profile page",
+     "followers": 0,
+     "followers_approx": false,
+     "posts": 0,
+     "total_views": null,
+     "total_likes": 0,
+     "recent": [],
+     "notes": [
+      "TikTok profile page exposes totals only; per-video stats and dates are not available"
+     ],
+     "error": null,
+     "fetched_at": "2026-11-14T08:14:16Z",
+     "title": "FanCATstic Four"
+    }
+   }
+  },
+  "shode-dige": {
+   "id": "shode-dige",
+   "name": "Shode Dige",
+   "topic_fa": "طنز و زندگی روزمره",
+   "platforms": {
+    "instagram": {
+     "platform": "instagram",
+     "handle": "shode.dige",
+     "url": "https://www.instagram.com/shode.dige/",
+     "ok": false,
+     "stale": false,
+     "source": null,
+     "followers": null,
+     "followers_approx": false,
+     "posts": null,
+     "total_views": null,
+     "total_likes": null,
+     "recent": [],
+     "notes": [],
+     "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain)",
+     "fetched_at": null,
+     "last_attempt_at": "2026-11-14T08:15:42Z"
+    },
+    "youtube": {
+     "platform": "youtube",
+     "handle": "@shodedige",
+     "url": "https://www.youtube.com/@shodedige",
+     "ok": true,
+     "stale": false,
+     "source": "YouTube channel page + RSS feed",
+     "followers": null,
+     "followers_approx": false,
+     "posts": 0,
+     "total_views": null,
+     "total_likes": null,
+     "recent": [],
+     "notes": [
+      "video count from empty RSS feed (no public videos)",
+      "subscriber count not shown publicly (zero or hidden)",
+      "no API key: comments unavailable; likes/views from RSS feed (last 15 videos max)"
+     ],
+     "error": null,
+     "fetched_at": "2026-11-14T08:20:11Z",
+     "title": "شده دیگه",
+     "channel_id": "UCy_RFO09PBC9RhAqtgMf_Eg"
+    },
+    "aparat": {
+     "platform": "aparat",
+     "handle": "u_44289335",
+     "url": "https://www.aparat.com/u_44289335",
+     "ok": true,
+     "stale": false,
+     "source": "Aparat public API",
+     "followers": 0,
+     "followers_approx": false,
+     "posts": 0,
+     "total_views": 0,
+     "total_likes": null,
+     "recent": [],
+     "notes": [
+      "Aparat public API gives views; likes/comments are not exposed"
+     ],
+     "error": null,
+     "fetched_at": "2026-11-14T08:14:22Z",
+     "title": "شده دیگه"
+    },
+    "tiktok": {
+     "platform": "tiktok",
+     "handle": "shodedige",
+     "url": "https://www.tiktok.com/@shodedige",
+     "ok": true,
+     "stale": false,
+     "source": "TikTok public profile page",
+     "followers": 0,
+     "followers_approx": false,
+     "posts": 0,
+     "total_views": null,
+     "total_likes": 0,
+     "recent": [],
+     "notes": [
+      "TikTok profile page exposes totals only; per-video stats and dates are not available"
+     ],
+     "error": null,
+     "fetched_at": "2026-11-14T08:14:25Z",
+     "title": "Shode Dige"
+    }
+   }
+  },
+  "pretime-tv": {
+   "id": "pretime-tv",
+   "name": "PreTime TV",
+   "topic_fa": "شاهنامه و اساطیر ایران",
+   "platforms": {
+    "instagram": {
+     "platform": "instagram",
+     "handle": "pretimetv",
+     "url": "https://www.instagram.com/pretimetv/",
+     "ok": false,
+     "stale": false,
+     "source": null,
+     "followers": null,
+     "followers_approx": false,
+     "posts": null,
+     "total_views": null,
+     "total_likes": null,
+     "recent": [],
+     "notes": [],
+     "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain)",
+     "fetched_at": null,
+     "last_attempt_at": "2026-11-14T08:15:44Z"
+    },
+    "youtube": {
+     "platform": "youtube",
+     "handle": "@pretimetv",
+     "url": "https://www.youtube.com/@pretimetv",
+     "ok": true,
+     "stale": false,
+     "source": "YouTube channel page + RSS feed",
+     "followers": null,
+     "followers_approx": false,
+     "posts": 0,
+     "total_views": null,
+     "total_likes": null,
+     "recent": [],
+     "notes": [
+      "video count from empty RSS feed (no public videos)",
+      "subscriber count not shown publicly (zero or hidden)",
+      "no API key: comments unavailable; likes/views from RSS feed (last 15 videos max)"
+     ],
+     "error": null,
+     "fetched_at": "2026-11-14T08:20:16Z",
+     "title": "PreTime",
+     "channel_id": "UCgByc7LjKGswrjkXavPJoxA"
+    },
+    "aparat": {
+     "platform": "aparat",
+     "handle": "u_44295339",
+     "url": "https://www.aparat.com/u_44295339",
+     "ok": true,
+     "stale": false,
+     "source": "Aparat public API",
+     "followers": 0,
+     "followers_approx": false,
+     "posts": 0,
+     "total_views": 0,
+     "total_likes": null,
+     "recent": [],
+     "notes": [
+      "Aparat public API gives views; likes/comments are not exposed"
+     ],
+     "error": null,
+     "fetched_at": "2026-11-14T08:14:30Z",
+     "title": "اساطیر ایران"
+    },
+    "tiktok": {
+     "platform": "tiktok",
+     "handle": "pretimetv",
+     "url": "https://www.tiktok.com/@pretimetv",
+     "ok": true,
+     "stale": false,
+     "source": "TikTok public profile page",
+     "followers": 0,
+     "followers_approx": false,
+     "posts": 0,
+     "total_views": null,
+     "total_likes": 0,
+     "recent": [],
+     "notes": [
+      "TikTok profile page exposes totals only; per-video stats and dates are not available"
+     ],
+     "error": null,
+     "fetched_at": "2026-11-14T08:14:33Z",
+     "title": "Pre Time TV"
+    }
+   }
+  }
+ },
+ "summary": {
+  "ok": 4,
+  "failed": 1
+ }
+}

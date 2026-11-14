@@ -1,0 +1,63 @@
+{
+  "timezone": "Asia/Tehran",
+  "history_days": 90,
+  "request_delay_seconds": 2.5,
+  "recent_posts": 12,
+  "pages": [
+    {
+      "id": "hamrah-seller",
+      "name": "Hamrah Seller",
+      "topic_fa": "فروشگاه و فروشنده",
+      "accounts": {
+        "instagram": "hamkargram",
+        "youtube": "@hamkargram",
+        "tiktok": "hamrahseller",
+        "aparat": "u_44289977"
+      }
+    },
+    {
+      "id": "titan-station",
+      "name": "Titan Station",
+      "topic_fa": "روانشناسی",
+      "accounts": {
+        "instagram": "titanstation",
+        "youtube": "@Titan.Station",
+        "tiktok": "titan_station",
+        "aparat": "amirdecodes"
+      }
+    },
+    {
+      "id": "fancatstic-four",
+      "name": "FanCATstic Four",
+      "topic_fa": "گربه‌ها",
+      "accounts": {
+        "instagram": "fancatstic.four",
+        "youtube": "@fancatsticfour",
+        "tiktok": "fancatsticfour",
+        "aparat": "u_44289730"
+      }
+    },
+    {
+      "id": "shode-dige",
+      "name": "Shode Dige",
+      "topic_fa": "طنز و زندگی روزمره",
+      "accounts": {
+        "instagram": "shode.dige",
+        "youtube": "@shodedige",
+        "tiktok": "shodedige",
+        "aparat": "u_44289335"
+      }
+    },
+    {
+      "id": "pretime-tv",
+      "name": "PreTime TV",
+      "topic_fa": "شاهنامه و اساطیر ایران",
+      "accounts": {
+        "instagram": "pretimetv",
+        "youtube": "@pretimetv",
+        "tiktok": "pretimetv",
+        "aparat": "u_44295339"
+      }
+    }
+  ]
+}

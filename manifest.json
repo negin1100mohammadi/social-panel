@@ -1,0 +1,19 @@
+{
+  "name": "پنل پیج‌ها",
+  "short_name": "پنل پیج‌ها",
+  "description": "آمار و ارزیابی فعالیت پنج پیج در اینستاگرام، یوتیوب، آپارات و تیک‌تاک",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f6f3",
+  "theme_color": "#17181b",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

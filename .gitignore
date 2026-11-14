@@ -1,0 +1,7 @@
+_screens/
+_site/
+__pycache__/
+*.pyc
+*.tmp
+.env
+.DS_Store
