@@ -8,6 +8,7 @@ on:
     branches: [main]
     paths-ignore:
       - "data/**"          # data commits are deployed by the run that made them
+      - "queue/**"         # publish queue is handled by publish.yml
 
 permissions:
   contents: write

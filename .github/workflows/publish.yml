@@ -1,0 +1,51 @@
+name: Publish queued posts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "queue/**"
+  schedule:
+    - cron: "*/15 * * * *"   # scheduled posts (GitHub may delay cron runs by a few minutes)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-queue
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Publish due jobs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # every repo secret as one JSON object, so per-page names like
+          # YT_REFRESH_TOKEN_SHODE_DIGE work without listing them here (values stay masked)
+          ALL_SECRETS: ${{ toJSON(secrets) }}
+        run: python scripts/publish.py
+
+      - name: Commit job status
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add queue/ || true
+          if git diff --cached --quiet; then
+            echo "No status changes."
+          else
+            git commit -m "queue: status update $(TZ=Asia/Tehran date '+%Y-%m-%d %H:%M') Tehran"
+            for i in 1 2 3; do git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push && break; sleep 5; done
+          fi

@@ -3,7 +3,9 @@
 
 Writes:
   data/latest.json   - current snapshot (one block per page/platform)
-  data/history.json  - one point per day per platform (last N days)
+  data/history.json  - one snapshot per run per platform (full resolution 3 days,
+                       hourly up to 14 days, daily up to history_days >= 90)
+  data/avatars/      - local copy of every profile photo, re-downloaded every run
 
 Rules:
   * Every platform runs in its own try/except. A failure keeps the previous
@@ -258,6 +260,12 @@ def youtube(handle, prev):
         out["recent"].append(post(vid, e.findtext("a:title", default="", namespaces=ns),
                                   link.get("href") if link is not None else f"https://www.youtube.com/watch?v={vid}",
                                   pub, views, likes, None, thumb))
+    if not out["recent"]:
+        # RSS can lag or be empty right after upload; read the Videos / Shorts tabs too
+        try:
+            youtube_tabs(channel_id, out, n)
+        except Exception as e:
+            out["notes"].append(f"videos/shorts tabs failed: {type(e).__name__}")
     if out["posts"] is None and not out["recent"]:
         out["posts"] = 0
         out["notes"].append("video count from empty RSS feed (no public videos)")
@@ -267,6 +275,64 @@ def youtube(handle, prev):
     out["source"] = "YouTube channel page + RSS feed"
     out["ok"] = True  # channel resolved and RSS feed read
     return out
+
+
+def _ago_to_dt(text):
+    """'3 days ago' / 'Streamed 2 hours ago' -> approximate UTC datetime."""
+    m = re.search(r"(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago", text or "")
+    if not m:
+        return None
+    k = int(m.group(1))
+    sec = {"second": 1, "minute": 60, "hour": 3600, "day": 86400, "week": 604800,
+           "month": 2592000, "year": 31536000}[m.group(2)]
+    return now_utc() - timedelta(seconds=k * sec)
+
+
+def _walk(o, key):
+    if isinstance(o, dict):
+        for k, v in o.items():
+            if k == key:
+                yield v
+            yield from _walk(v, key)
+    elif isinstance(o, list):
+        for v in o:
+            yield from _walk(v, key)
+
+
+def youtube_tabs(channel_id, out, n):
+    seen = {p["id"] for p in out["recent"]}
+    for tab in ("videos", "shorts", "streams"):
+        r = get(f"https://www.youtube.com/channel/{channel_id}/{tab}", params={"hl": "en", "gl": "US"},
+                cookies={"CONSENT": "YES+1", "SOCS": "CAI"})
+        if r.status_code != 200:
+            continue
+        m = re.search(r"var ytInitialData = (\{.*?\});</script>", r.text, re.S)
+        if not m:
+            continue
+        data = json.loads(m.group(1))
+        for v in _walk(data, "videoRenderer"):
+            vid = v.get("videoId")
+            if not vid or vid in seen:
+                continue
+            seen.add(vid)
+            title = "".join(x.get("text", "") for x in (v.get("title") or {}).get("runs", []))
+            pub = _ago_to_dt((v.get("publishedTimeText") or {}).get("simpleText"))
+            views = to_int(re.sub(r"\D", "", (v.get("viewCountText") or {}).get("simpleText", "")) or None)
+            out["recent"].append(post(vid, title, f"https://www.youtube.com/watch?v={vid}", pub, views,
+                                      thumb=f"https://i.ytimg.com/vi/{vid}/mqdefault.jpg"))
+        for v in _walk(data, "shortsLockupViewModel"):
+            vid = ((v.get("onTap") or {}).get("innertubeCommand") or {}).get("reelWatchEndpoint", {}).get("videoId")
+            if not vid or vid in seen:
+                continue
+            seen.add(vid)
+            title = ((v.get("overlayMetadata") or {}).get("primaryText") or {}).get("content", "")
+            out["recent"].append(post(vid, title, f"https://www.youtube.com/shorts/{vid}", None,
+                                      thumb=f"https://i.ytimg.com/vi/{vid}/mqdefault.jpg"))
+    out["recent"] = out["recent"][:n]
+    if out["recent"]:
+        out["notes"].append("recent videos from channel tabs (dates approximate)")
+        if out["posts"] is None:
+            out["posts"] = len(out["recent"])
 
 
 # --------------------------------------------------------------------------
@@ -356,6 +422,14 @@ def instagram(username, prev):
         out["ok"] = True
         return out
 
+    # public profile embed page: profile photo, followers, post count and the
+    # latest posts with their dates / likes / comments (works without login)
+    try:
+        if instagram_embed(username, out, n):
+            return out
+    except Exception as e:
+        out["notes"].append(f"embed page failed: {type(e).__name__}: {str(e)[:80]}")
+
     # best-effort public endpoint (often blocked for datacenter IPs)
     r = get("https://i.instagram.com/api/v1/users/web_profile_info/",
             params={"username": username},
@@ -399,6 +473,52 @@ def instagram(username, prev):
     return out
 
 
+IG_EMBED_UA = ("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 "
+               "(KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1")
+
+
+def instagram_embed(username, out, n):
+    """Read https://www.instagram.com/<user>/embed/ (contextJSON). Returns True on success."""
+    r = get(f"https://www.instagram.com/{username}/embed/", headers={"User-Agent": IG_EMBED_UA,
+                                                                     "Accept": "text/html"})
+    if r.status_code != 200:
+        raise RuntimeError(f"HTTP {r.status_code}")
+    m = re.search(r'"contextJSON":"((?:\\.|[^"\\])*)"', r.text)
+    if not m:
+        raise RuntimeError("contextJSON not found (account missing, private or layout changed)")
+    ctx = json.loads(json.loads('"' + m.group(1) + '"')).get("context") or {}
+    if not ctx.get("username"):
+        raise RuntimeError("empty profile context")
+    out["title"] = ctx.get("full_name") or ctx.get("username")
+    out["avatar"] = ctx.get("profile_pic_url")
+    out["followers"] = to_int(ctx.get("followers_count"))
+    out["posts"] = to_int(ctx.get("posts_count"))
+    for g in (ctx.get("graphql_media") or [])[:n]:
+        nd = g.get("shortcode_media") or {}
+        sc = nd.get("shortcode")
+        if not sc:
+            continue
+        cap = ""
+        caps = (nd.get("edge_media_to_caption") or {}).get("edges") or []
+        if caps:
+            cap = (caps[0].get("node") or {}).get("text", "")
+        ts = nd.get("taken_at_timestamp")
+        likes = (nd.get("edge_liked_by") or nd.get("edge_media_preview_like") or {}).get("count")
+        kind = "reel" if nd.get("is_video") else "p"
+        thumb = None
+        res = nd.get("display_resources") or []
+        if res:
+            thumb = res[0].get("src")
+        out["recent"].append(post(sc, cap, f"https://www.instagram.com/{kind}/{sc}/",
+                                  datetime.fromtimestamp(ts, timezone.utc) if ts else None,
+                                  nd.get("video_view_count"), likes,
+                                  (nd.get("edge_media_to_comment") or {}).get("count"), thumb))
+    out["notes"].append("public embed page: views/shares/saves need the Graph API token")
+    out["source"] = "Instagram public profile embed"
+    out["ok"] = True
+    return True
+
+
 # --------------------------------------------------------------------------
 # TikTok
 # --------------------------------------------------------------------------
@@ -429,25 +549,56 @@ def tiktok(username, prev):
     return out
 
 
-def is_placeholder_avatar(url):
-    """True for auto-generated letter avatars / platform defaults (not a real profile photo)."""
-    if not url:
-        return True
-    if "avatar-is-chann" in url or "default" in url.lower():
-        return True
+AVATAR_DIR = os.path.join(DATA_DIR, "avatars")
+
+
+def is_placeholder_bytes(content):
+    """True for auto-generated letter avatars / flat platform defaults (not a real profile photo)."""
     try:
         from io import BytesIO
         from PIL import Image
-        r = get(url)
-        r.raise_for_status()
-        im = Image.open(BytesIO(r.content)).convert("RGB").resize((64, 64))
+        im = Image.open(BytesIO(content)).convert("RGB").resize((64, 64))
         cols = sorted(im.getcolors(4096) or [], reverse=True)
         if not cols:
             return False  # very many colours -> a photo
         top2 = sum(c for c, _ in cols[:2]) / 4096
-        return top2 > 0.6  # flat background + one letter
+        return top2 > 0.6  # flat background + one letter / silhouette
     except Exception:
         return False
+
+
+def store_avatar(pid, plat, url):
+    """Download the profile photo on EVERY run (no reuse of old URLs) and keep a local copy
+    in data/avatars/ so the site never depends on expiring CDN links.
+    Returns (local_path_or_None, sha8_or_None, reason)."""
+    path = os.path.join(AVATAR_DIR, f"{pid}-{plat}.jpg")
+    if not url or "avatar-is-chann" in url or "default" in url.lower():
+        if os.path.exists(path):
+            os.remove(path)
+        return None, None, "placeholder url"
+    r = get(url, headers={"Accept": "image/*"})
+    r.raise_for_status()
+    if is_placeholder_bytes(r.content):
+        if os.path.exists(path):
+            os.remove(path)
+        return None, None, "placeholder image"
+    import hashlib
+    try:  # normalise to a small JPEG
+        from io import BytesIO
+        from PIL import Image
+        im = Image.open(BytesIO(r.content)).convert("RGB")
+        im.thumbnail((256, 256))
+        buf = BytesIO()
+        im.save(buf, "JPEG", quality=86)
+        content = buf.getvalue()
+    except Exception:
+        content = r.content
+    os.makedirs(AVATAR_DIR, exist_ok=True)
+    old = open(path, "rb").read() if os.path.exists(path) else None
+    if old != content:
+        with open(path, "wb") as f:
+            f.write(content)
+    return f"data/avatars/{pid}-{plat}.jpg", hashlib.sha1(content).hexdigest()[:8], "ok"
 
 
 FETCHERS = {"instagram": instagram, "youtube": youtube, "aparat": aparat, "tiktok": tiktok}
@@ -470,6 +621,73 @@ def write_json(path, obj):
         json.dump(obj, f, ensure_ascii=False, indent=1)
         f.write("\n")
     os.replace(tmp, path)
+
+
+def parse_ts(v):
+    """ISO string (with Z or offset) -> aware datetime, or None."""
+    if not v:
+        return None
+    try:
+        return datetime.fromisoformat(str(v).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def point_time(p):
+    """History point -> aware datetime. Old points only had a Tehran date ('d')."""
+    if p.get("t"):
+        return parse_ts(p["t"])
+    if p.get("d"):
+        try:
+            return datetime.fromisoformat(p["d"] + "T12:00:00").replace(tzinfo=TEHRAN)
+        except ValueError:
+            return None
+    return None
+
+
+def prune_series(pts, now):
+    """Full resolution for 3 days, then one point per hour up to 14 days,
+    then one point per (Tehran) day; drop anything older than history_days (+ margin)."""
+    keep_days = max(90, int(CONFIG.get("history_days", 90)))
+    out, seen_hour, seen_day = [], set(), set()
+    for p in sorted(pts, key=lambda q: q["t"], reverse=True):  # newest first: keep latest per bucket
+        t = parse_ts(p["t"])
+        if t is None:
+            continue
+        age = now - t
+        if age > timedelta(days=keep_days + 5):
+            continue
+        if age <= timedelta(days=3):
+            out.append(p)
+        elif age <= timedelta(days=14):
+            k = t.strftime("%Y%m%d%H")
+            if k not in seen_hour:
+                seen_hour.add(k)
+                out.append(p)
+        else:
+            k = t.astimezone(TEHRAN).date().isoformat()
+            if k not in seen_day:
+                seen_day.add(k)
+                out.append(p)
+    out.sort(key=lambda q: q["t"])
+    return out
+
+
+def snapshot_point(r, at):
+    recent = r.get("recent") or []
+
+    def sum_of(k):
+        vals = [x.get(k) for x in recent if x.get(k) is not None]
+        return sum(vals) if vals else None
+    views = r.get("total_views") if r.get("total_views") is not None else sum_of("views")
+    likes = r.get("total_likes") if r.get("total_likes") is not None else sum_of("likes")
+    return {"t": iso(at), "f": r.get("followers"), "p": r.get("posts"), "v": views, "l": likes,
+            "c": sum_of("comments")}
+
+
+def newest_post(r):
+    dates = [x.get("published") for x in (r.get("recent") or []) if x.get("published")]
+    return max(dates) if dates else None
 
 
 def main():
@@ -504,11 +722,19 @@ def main():
             try:
                 res = FETCHERS[plat](handle, prev)
                 res["fetched_at"] = iso(now_utc())
-                if res.get("avatar") and is_placeholder_avatar(res["avatar"]):
-                    res["avatar"] = None
+                src = res.get("avatar")
+                res["avatar_src"] = src
+                res["avatar"] = None
+                res["avatar_hash"] = None
+                try:
+                    local, h, why = store_avatar(pid, plat, src)
+                    res["avatar"], res["avatar_hash"] = local, h
+                except Exception as e:  # download failed: fall back to the fresh remote URL
+                    res["avatar"] = src
+                    res["notes"].append(f"avatar download failed: {type(e).__name__}")
                 ok_count += 1
                 log(f"OK    {pid:16s} {plat:9s} followers={res['followers']} posts={res['posts']} "
-                    f"recent={len(res['recent'])} via {res['source']}")
+                    f"recent={len(res['recent'])} avatar={'yes' if res['avatar'] else 'no'} via {res['source']}")
             except Exception as e:
                 fail_count += 1
                 err = f"{type(e).__name__}: {str(e)[:200]}"
@@ -518,39 +744,71 @@ def main():
                     res["stale"] = True
                     res["error"] = err
                 else:
-                    url = blank(plat, handle, "")["url"]
-                    res = blank(plat, handle, url)
+                    res = blank(plat, handle, "")
                     res["url"] = {"instagram": f"https://www.instagram.com/{handle}/",
                                   "youtube": f"https://www.youtube.com/{handle if handle.startswith('@') else '@' + handle}",
                                   "aparat": f"https://www.aparat.com/{handle}",
                                   "tiktok": f"https://www.tiktok.com/@{handle.lstrip('@')}"}[plat]
                     res["error"] = err
                 res["last_attempt_at"] = iso(now_utc())
+
+            # activity markers: newest dated post, and when the post count / newest post last changed
+            res["last_post_at"] = newest_post(res)
+            changed = False
+            if prev and not res.get("stale"):
+                pp, np_ = prev.get("posts"), res.get("posts")
+                if pp is not None and np_ is not None and np_ > pp:
+                    changed = True
+                prev_ids = {x.get("id") for x in (prev.get("recent") or [])}
+                if prev.get("fetched_at") and any(x.get("id") not in prev_ids for x in res.get("recent") or []):
+                    changed = True
+            if changed:
+                res["last_change_at"] = iso(run_at)
+            else:
+                res["last_change_at"] = (prev or {}).get("last_change_at")
+                if not res["last_change_at"] and (res.get("posts") or 0) > 0:
+                    # first time: earliest snapshot that already shows the current post count
+                    pts = [q for q in history.get("series", {}).get(f"{pid}/{plat}", []) if q.get("p") is not None]
+                    pts.sort(key=lambda q: point_time(q) or run_at)
+                    when = None
+                    for q in pts:
+                        if q.get("p") == res.get("posts") and when is None:
+                            when = point_time(q)
+                        elif q.get("p") != res.get("posts"):
+                            when = None
+                    res["last_change_at"] = iso(when) if when else None
             pblock["platforms"][plat] = res
         latest["pages"][pid] = pblock
 
-    # ---- history: one point per day (Tehran date) per platform; keep last N days
-    keep = int(CONFIG.get("history_days", 90))
-    today = run_at.astimezone(TEHRAN).date()
-    cutoff = (today - timedelta(days=keep - 1)).isoformat()
+    # ---- history: one snapshot per run; full resolution 3 days, hourly to 14 days, daily after
     series = history.get("series", {})
+    for key in list(series.keys()):  # migrate old daily points {"d": ...} -> {"t": ...}
+        conv = []
+        for q in series[key]:
+            if "t" not in q:
+                t = point_time(q)
+                if t is None:
+                    continue
+                q = {"t": iso(t), "f": q.get("f"), "p": q.get("p")}
+            conv.append(q)
+        series[key] = conv
     for pid, pb in latest["pages"].items():
         for plat, r in pb["platforms"].items():
             key = f"{pid}/{plat}"
-            pts = [p for p in series.get(key, []) if p.get("d", "") >= cutoff and p.get("d") != today.isoformat()]
+            pts = list(series.get(key, []))
             if r.get("ok") and not r.get("stale") and (r.get("followers") is not None or r.get("posts") is not None):
-                pts.append({"d": today.isoformat(), "f": r.get("followers"), "p": r.get("posts")})
-            else:
-                # keep today's earlier point if this run failed
-                old_today = [p for p in series.get(key, []) if p.get("d") == today.isoformat()]
-                pts.extend(old_today)
-            pts.sort(key=lambda p: p["d"])
-            series[key] = pts
-    history = {"days": keep, "updated_at": iso(run_at), "series": series}
+                pts.append(snapshot_point(r, run_at))
+            series[key] = prune_series(pts, run_at)
+    history = {"days": max(90, int(CONFIG.get("history_days", 90))), "updated_at": iso(run_at),
+               "resolution": "all points for 3 days, hourly to 14 days, daily after", "series": series}
 
     latest["summary"] = {"ok": ok_count, "failed": fail_count}
     write_json(LATEST_PATH, latest)
-    write_json(HISTORY_PATH, history)
+    tmp = HISTORY_PATH + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:  # compact: this file grows with every run
+        json.dump(history, f, ensure_ascii=False, separators=(",", ":"))
+        f.write("\n")
+    os.replace(tmp, HISTORY_PATH)
     log(f"done: {ok_count} ok, {fail_count} failed")
 
 

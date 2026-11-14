@@ -15,11 +15,26 @@ A lightweight, installable PWA (Persian, RTL) that shows stats for five pages ac
 | `manifest.json`, `sw.js`, `icons/` | نصب روی صفحه‌ی اصلی گوشی و کار آفلاین |
 | `config.json` | نام پیج‌ها و آیدی هر پلتفرم — برای تغییر آیدی فقط همین فایل را ویرایش کنید |
 | `data/latest.json` | آخرین آمار |
-| `data/history.json` | یک نقطه در روز برای هر پلتفرم، ۹۰ روز آخر (برای نمودار و «رشد ۷ روز») |
+| `data/history.json` | یک اندازه‌گیری در هر اجرا: ۳ روز با جزئیات کامل، تا ۱۴ روز ساعتی، تا ۹۰+ روز روزانه |
+| `data/avatars/` | عکس پروفایل هر کانال/شبکه؛ هر اجرا از نو دانلود می‌شود |
+| `queue/` | صف انتشار محتوا (یک JSON برای هر پست) |
+| `scripts/publish.py`، `.github/workflows/publish.yml` | انتشار پست‌های صف (با push به `queue/` و هر ۱۵ دقیقه) |
 | `scripts/fetch_stats.py` | اسکریپت جمع‌آوری آمار (پایتون ۳ + `requests`) |
 | `.github/workflows/refresh.yml` | اجرای ساعتی + انتشار روی GitHub Pages |
 
 دکمه‌ی «پسوورد منیجر» فقط `https://vault.vaultwarden.com/` را در زبانه‌ی جدید باز می‌کند. هیچ رمز یا محتوای گاوصندوقی در این مخزن ذخیره نمی‌شود — و نباید بشود.
+
+### به‌روزرسانی فوری و انتشار محتوا (نسخه‌ی ۴)
+- در **تنظیمات** پنل یک *Fine-grained token* گیت‌هاب بگذارید (فقط مخزن `social-panel`؛ دسترسی‌ها: `Actions: Read and write` و `Contents: Read and write`). توکن **فقط در localStorage همان مرورگر** ذخیره می‌شود و هرگز در مخزن نیست.
+- با توکن، دکمه‌ی به‌روزرسانی بالای صفحه workflow «Refresh stats & deploy» را اجرا می‌کند، تا پایان انتشار سایت صبر می‌کند و بعد داده‌ها و عکس‌های پروفایل تازه را بارگذاری می‌کند. بدون توکن فقط آخرین داده‌ها دوباره خوانده می‌شوند.
+- **انتشار محتوا** (`#/publish`): فایل به‌صورت git blob روی شاخه‌ی `media-upload` آپلود می‌شود (مرورگر نمی‌تواند مستقیم Release asset آپلود کند، چون `uploads.github.com` CORS ندارد؛ حداکثر ۷۰ مگابایت) و `queue/<id>.json` ساخته می‌شود. `publish.py` فایل را به Release با تگ `media-queue` منتقل می‌کند، کارهای سررسیده را منتشر می‌کند و نتیجه‌ی هر مقصد را برمی‌گرداند.
+- Secretهای انتشار (`<PAGE>` = شناسه‌ی پیج با حروف بزرگ و `_`، مثل `SHODE_DIGE`):
+  - یوتیوب: `YT_CLIENT_ID`، `YT_CLIENT_SECRET`، `YT_REFRESH_TOKEN_<PAGE>` (OAuth با scope `youtube.upload`)
+  - اینستاگرام: `IG_ACCESS_TOKEN_<PAGE>`، `IG_USER_ID_<PAGE>` (اکانت Business/Creator، دسترسی `instagram_content_publish`)
+  - آپارات: `APARAT_USER_<PAGE>`، `APARAT_PASS_<PAGE>` — API رسمی و مستند فعالی برای آپلود ندارد (`etc/api` پاسخ 503 می‌دهد)؛ عملاً «نیاز به راه‌اندازی».
+  - تیک‌تاک: `TIKTOK_ACCESS_TOKEN_<PAGE>` (اپ تأییدشده‌ی Content Posting API؛ اپ تأییدنشده فقط خصوصی منتشر می‌کند)
+  - بدون Secret، وضعیت آن مقصد «نیاز به راه‌اندازی» با توضیح فارسی است.
+- آمار اینستاگرام بدون توکن از صفحه‌ی عمومی `instagram.com/<user>/embed/` خوانده می‌شود (دنبال‌کننده، تعداد پست، تاریخ/لایک/کامنت پست‌های اخیر).
 
 ### راه‌اندازی GitHub Pages
 1. مخزن را روی گیت‌هاب بسازید و این پوشه را push کنید (شاخه‌ی `main`).
@@ -82,7 +97,9 @@ All handles live in `config.json` (`pages[].accounts`). Page order on the Home s
 |---|---|---|
 | YouTube | channel `/about` page (subscribers, video count, total views) + RSS feed (recent videos, views, likes) | Data API v3 (`channels?forHandle=`, uploads playlist, `videos` stats incl. comments) |
 | Aparat | public `api/fa/v1/user/user/information` (followers, videos, total views) + `api/fa/v1/user/video/list` (recent videos, views). Legacy `etc/api/profile` used as fallback; legacy `videobyuser` returns 503. No likes/comments. | — |
-| Instagram | unofficial `web_profile_info`, then profile-page meta — usually blocked | Graph API Business Discovery |
+| Instagram | public profile embed page `instagram.com/<user>/embed/` (followers, post count, recent posts with dates/likes/comments), then unofficial fallbacks | Graph API Business Discovery |
 | TikTok | profile page embedded JSON (`__UNIVERSAL_DATA_FOR_REHYDRATION__`): followers, total likes, video count. No per-video list/dates. | — |
+
+**v4:** history keeps one snapshot per run (full 3 days, hourly to 14 days, daily to ≥90 days); profile photos are re-downloaded every run into `data/avatars/`; the panel's settings page stores a GitHub fine-grained token in localStorage only (never in the repo) to trigger refreshes and to queue posts (`queue/`, `scripts/publish.py`, `publish.yml`; see the Persian section for secret names).
 
 The vault button only links to `https://vault.vaultwarden.com/`. Never commit passwords, tokens or vault content to this repo — use GitHub Secrets.

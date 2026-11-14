@@ -1,12 +1,15 @@
-/* Service worker: app shell cache-first, data network-first (falls back to last cached copy offline). */
-const VERSION = "v3";
+/* Service worker: network-first for everything (fresh data, avatars and app code),
+   falling back to the last cached copy only when offline. */
+const VERSION = "v4";
 const SHELL = `shell-${VERSION}`;
 const DATA = `data-${VERSION}`;
 const SHELL_FILES = ["./", "index.html", "styles.css", "app.js", "manifest.json",
   "icons/icon.svg", "icons/icon-192.png", "icons/apple-touch-icon.png"];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(SHELL).then((c) => c.addAll(SHELL_FILES)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(SHELL)
+    .then((c) => c.addAll(SHELL_FILES.map((u) => new Request(u, { cache: "reload" }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (e) => {
@@ -17,21 +20,19 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
-  if (e.request.method !== "GET" || url.origin !== location.origin) return; // fonts, thumbnails: browser default
-  const isData = url.pathname.endsWith(".json");
+  if (e.request.method !== "GET" || url.origin !== location.origin) return; // GitHub API, fonts, thumbnails: browser default
+  const isData = url.pathname.endsWith(".json") || url.pathname.includes("/data/");
   if (isData) {
+    // data/*.json and data/avatars/*: always the network (no HTTP cache), offline copy as fallback
     const key = url.origin + url.pathname; // ignore cache-busting query
-    e.respondWith(fetch(e.request).then((res) => {
+    e.respondWith(fetch(e.request, { cache: "no-store" }).then((res) => {
       if (res.ok) { const copy = res.clone(); caches.open(DATA).then((c) => c.put(key, copy)); }
       return res;
     }).catch(() => caches.match(key)));
     return;
   }
-  e.respondWith(caches.match(e.request).then((hit) => {
-    const net = fetch(e.request).then((res) => {
-      if (res.ok) { const copy = res.clone(); caches.open(SHELL).then((c) => c.put(e.request, copy)); }
-      return res;
-    }).catch(() => hit);
-    return hit || net; // stale-while-revalidate
-  }));
+  e.respondWith(fetch(e.request, { cache: "no-cache" }).then((res) => {
+    if (res.ok) { const copy = res.clone(); caches.open(SHELL).then((c) => c.put(e.request, copy)); }
+    return res;
+  }).catch(() => caches.match(e.request).then((hit) => hit || caches.match("index.html"))));
 });
