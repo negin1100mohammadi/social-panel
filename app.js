@@ -1320,15 +1320,20 @@
     var tok = getToken(); if (tok) h.Authorization = "Bearer " + tok;
     return get(api, h).catch(function () { return get(raw); });
   }
+  var ERR = {};
   function loadYt(force) {
     if (state.yt.loading) return state.yt.loading;
     if (!force && Date.now() - state.yt.loadedAt < 30000) return Promise.resolve();
     state.yt.loading = Promise.all([
-      fetchRepoJSON(YT_STORE_PATH).catch(function () { return state.yt.store; }),
-      fetchRepoJSON(YT_REPLIES_PATH).catch(function () { return state.yt.replies; })
+      fetchRepoJSON(YT_STORE_PATH).catch(function () { return ERR; }),
+      fetchRepoJSON(YT_REPLIES_PATH).catch(function () { return ERR; })
     ]).then(function (res) {
-      state.yt.store = res[0] || { channels: {} }; state.yt.replies = res[1] || { items: [] };
-      state.yt.loadedAt = Date.now(); state.yt.loading = null;
+      // null = the file does not exist yet (nothing connected); ERR = could not read it (keep what we had)
+      state.yt.err = res[0] === ERR;
+      if (res[0] !== ERR) state.yt.store = res[0] || { channels: {} };
+      if (res[1] !== ERR) state.yt.replies = res[1] || { items: [] };
+      if (!state.yt.err) state.yt.loadedAt = Date.now();
+      state.yt.loading = null;
       updateYtUI();
     }, function () { state.yt.loading = null; });
     return state.yt.loading;
@@ -1340,7 +1345,7 @@
   }
   // one status per page: none | ok | mismatch | revoked | error | unknown (store not loaded yet)
   function ytStatus(pid) {
-    if (!state.yt.store) return { st: "unknown", label: "…", btn: "اتصال" };
+    if (!state.yt.store) return { st: "unknown", label: state.yt.err ? "وضعیت خوانده نشد" : "…", btn: "اتصال" };
     var es = ytEntries(pid), e = es[0];
     if (!e) return { st: "none", label: "متصل نیست", btn: "اتصال" };
     var cp = cpById(pid), r = cp ? (pageData(cp).platforms.youtube || {}) : {}, o = r.oauth || null;
@@ -1411,7 +1416,7 @@
     var drafts = {}; Array.prototype.forEach.call(box.querySelectorAll("textarea[data-thread]"), function (t) { if (t.value) drafts[t.getAttribute("data-thread")] = t.value; });
     var focused = document.activeElement && document.activeElement.getAttribute && document.activeElement.getAttribute("data-thread");
     var T = threadsOf(pid), h = '<h3>کامنت‌های یوتیوب' + (T.threads.length ? " <small>(" + fa(T.threads.length) + ")</small>" : "") + "</h3>";
-    if (s.st === "unknown") { box.innerHTML = h + '<div class="muted-note">در حال بررسی اتصال…</div>'; return; }
+    if (s.st === "unknown") { box.innerHTML = h + '<div class="muted-note">' + (state.yt.err ? "وضعیت اتصال از گیت‌هاب خوانده نشد؛ اینترنت را بررسی کن و صفحه را دوباره باز کن." : "در حال بررسی اتصال…") + "</div>"; return; }
     if (s.st === "none" || s.st === "mismatch") { box.innerHTML = h + '<div class="muted-note" id="inbox-empty" data-why="' + s.st + '">برای دیدن کامنت‌ها و پاسخ دادن، اول یوتیوب این پیج را (با کانال درست) متصل کن.</div>'; return; }
     if (T.meta) h += '<p class="muted-note">آخرین دریافت کامنت‌ها: ' + esc(fmtShort(T.meta.fetched_at)) + " (" + esc(ago(T.meta.fetched_at)) + ") · جدیدترین بالا · با دکمه‌ی به‌روزرسانی بالای صفحه دوباره خوانده می‌شود.</p>";
     if (!T.threads.length) { box.innerHTML = h + '<div class="muted-note" id="inbox-empty" data-why="nodata">' + (T.meta ? "هنوز کامنتی روی ویدیوهای این کانال نیست." : "کامنت‌ها با اولین به‌روزرسانی بعد از اتصال این‌جا می‌آیند.") + "</div>"; return; }

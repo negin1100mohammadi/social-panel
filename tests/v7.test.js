@@ -63,7 +63,7 @@ async function mockGitHub(ctx, st) {
     const pth = url.pathname;
     let mm;
     if (pth.endsWith("/config/token.enc.json")) return json(404, { message: "Not Found" });
-    if (pth.endsWith("/config/yt_tokens.enc.json")) { st.storeHits = (st.storeHits || 0) + 1; return st.store ? json(200, st.store) : json(404, {}); }
+    if (pth.endsWith("/config/yt_tokens.enc.json")) { st.storeHits = (st.storeHits || 0) + 1; if (st.storeDown) return json(500, {}); return st.store ? json(200, st.store) : json(404, {}); }
     if (pth.endsWith("/config/yt_replies.json")) return json(200, st.replies || { items: [] });
     if (pth.endsWith("/config/yt_connect_last.json")) { if (auth !== "Bearer " + TOKEN) return json(401, {}); return json(200, st.connectResult ? st.connectResult(st) : {}); }
     if ((mm = /\/actions\/workflows\/([\w.-]+)\/dispatches$/.exec(pth)) && m === "POST") {
@@ -160,6 +160,19 @@ const until = async (fn, ms = 15000) => { const t = Date.now(); while (Date.now(
       await page.evaluate(() => { window.__spLastOAuth = null; });
       await page.click(`.branch[data-pl="youtube"][data-page="${P1}"] button[data-ytc]`);
       ok(dialogs === 1 && !(await page.evaluate(() => window.__spLastOAuth)), `${vp}: connected channel asks before reconnecting (dismiss = no navigation)`);
+      await ctx.close();
+    }
+    // store unreadable (network/API down): status unknown, never "not connected"
+    {
+      const st = { store: store(), storeDown: true };
+      const ctx = await newCtx(browser, "mobile", { ls: { sp_gh_token: TOKEN } });
+      await mockGitHub(ctx, st);
+      const page = await ctx.newPage();
+      await page.goto(base + "#/settings");
+      await page.waitForSelector("#yt-accounts .yacc");
+      await until(() => st.storeHits >= 2);
+      await page.waitForTimeout(400);
+      ok(await page.evaluate(() => Array.from(document.querySelectorAll(".yacc")).every((r) => r.getAttribute("data-yst") === "unknown") && /وضعیت خوانده نشد/.test(document.getElementById("yt-accounts").textContent)), "unreadable store: status unknown, not 'not connected'");
       await ctx.close();
     }
     // no token: no navigation, sent to settings
