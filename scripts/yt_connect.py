@@ -81,6 +81,7 @@ def main():
         log("bad input")
         return 0
     try:
+        T._key()  # TOKEN_KEY must be usable before the one-time code is spent
         cid, csec = T.client_creds()
         r = requests.post(T.TOKEN_URL, data={"code": code, "client_id": cid, "client_secret": csec,
                                              "redirect_uri": T.REDIRECT_URI, "grant_type": "authorization_code"},

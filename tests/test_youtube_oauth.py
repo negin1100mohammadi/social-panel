@@ -297,6 +297,12 @@ class Connect(Base):
         self.connect(req="bad req!")
         self.assertEqual(self.read("config/yt_connect_last.json")["error"], "bad_input")
 
+    def test_bad_key_does_not_spend_code(self):
+        self.env["TOKEN_KEY"] = "not-base64!!"
+        self.connect(req="k")
+        self.assertEqual(self.read("config/yt_connect_last.json")["error"], "setup")
+        self.assertFalse([c for c in Google.calls if c[1] == "/token"])
+
     def test_missing_secret(self):
         self.env["YT_CLIENT_SECRET"] = ""
         self.connect(req="z")
