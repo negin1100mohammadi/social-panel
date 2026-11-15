@@ -627,8 +627,27 @@ def parse_ts(v):
     """ISO string (with Z or offset) -> aware datetime, or None."""
     if not v:
         return None
+    s = str(v).strip()
     try:
-        return datetime.fromisoformat(str(v).replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+        return dt if dt.tzinfo else dt.replace(tzinfo=TEHRAN)
+    except ValueError:
+        pass
+    # display-style strings, e.g. "Sat 2026-11-14 4:24 PM (UTC+03:30)"
+    m = re.match(r"^(?:[A-Za-z]{3},?\s+)?(\d{4})-(\d{2})-(\d{2})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])?"
+                 r"\s*\(?\s*(?:UTC|GMT)?\s*([+-]\d{2}):?(\d{2})?\s*\)?$", s)
+    if not m:
+        return None
+    h = int(m.group(4))
+    if m.group(7):
+        pm = m.group(7).lower() == "pm"
+        h = (12 if pm else 0) if h == 12 else h + (12 if pm else 0)
+    tz = TEHRAN
+    if m.group(8):
+        sign = -1 if m.group(8)[0] == "-" else 1
+        tz = timezone(sign * timedelta(hours=int(m.group(8)[1:]), minutes=int(m.group(9) or 0)))
+    try:
+        return datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)), h, int(m.group(5)), int(m.group(6) or 0), tzinfo=tz)
     except ValueError:
         return None
 
@@ -650,17 +669,19 @@ def prune_series(pts, now):
     then one point per (Tehran) day; drop anything older than history_days (+ margin)."""
     keep_days = max(90, int(CONFIG.get("history_days", 90)))
     out, seen_hour, seen_day = [], set(), set()
-    for p in sorted(pts, key=lambda q: q["t"], reverse=True):  # newest first: keep latest per bucket
-        t = parse_ts(p["t"])
-        if t is None:
-            continue
+    parsed = []
+    for p in pts:
+        t = parse_ts(p.get("t"))
+        if t is not None:
+            parsed.append((t, dict(p, t=iso(t))))  # normalize any legacy time string to ISO UTC
+    for t, p in sorted(parsed, key=lambda x: x[0], reverse=True):  # newest first: keep latest per bucket
         age = now - t
         if age > timedelta(days=keep_days + 5):
             continue
         if age <= timedelta(days=3):
             out.append(p)
         elif age <= timedelta(days=14):
-            k = t.strftime("%Y%m%d%H")
+            k = t.astimezone(timezone.utc).strftime("%Y%m%d%H")
             if k not in seen_hour:
                 seen_hour.add(k)
                 out.append(p)
@@ -681,8 +702,14 @@ def snapshot_point(r, at):
         return sum(vals) if vals else None
     views = r.get("total_views") if r.get("total_views") is not None else sum_of("views")
     likes = r.get("total_likes") if r.get("total_likes") is not None else sum_of("likes")
+    # basis of each cumulative number: "t" = channel total, "r" = sum over the recent-posts list.
+    # The app only diffs consecutive snapshots with the same basis (and, for "r", the same post count),
+    # so a post entering/leaving the recent list is never shown as new views/likes/comments.
+    basis = {"v": "t" if r.get("total_views") is not None else "r",
+             "l": "t" if r.get("total_likes") is not None else "r",
+             "c": "r"}
     return {"t": iso(at), "f": r.get("followers"), "p": r.get("posts"), "v": views, "l": likes,
-            "c": sum_of("comments")}
+            "c": sum_of("comments"), "b": basis}
 
 
 def newest_post(r):

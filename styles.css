@@ -531,3 +531,17 @@ a.tr { color: var(--accent); }
 .bbtn svg { pointer-events: none; }
 .pub-btns .go, .pub-btns .ghost, .sched .go { height: auto; min-height: 46px; padding: 8px 12px; line-height: 1.45; font-size: 14px; }
 .chart svg text { direction: ltr; unicode-bidi: isolate; }
+
+/* v5 charts: data range under each chart, 3-point axis, flat-value label */
+.chart .axis span { flex: 1; text-align: center; white-space: nowrap; }
+.chart .axis .ax0 { text-align: left; }
+.chart .axis .ax2 { text-align: right; }
+.chart .lbl.flat { fill: var(--ink); font-weight: 700; }
+.range-note { color: var(--faint); font-size: 11px; margin: 6px 2px 0; line-height: 1.7; }
+.chart[data-state="insufficient"] .empty { color: var(--muted); line-height: 1.8; padding: 18px 8px; }
+.tok-status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--soft); margin: 0 0 10px; }
+.tok-status.ok { color: #138a52; }
+.tok-status.bad { color: #c0392b; }
+.sync-box { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.sync-box h3 { font-size: 15px; margin: 0 0 6px; }
+.sync-banner { display: block; margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft, var(--soft)); color: var(--ink); font-size: 13px; text-decoration: none; }

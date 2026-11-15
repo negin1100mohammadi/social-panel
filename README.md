@@ -103,3 +103,14 @@ All handles live in `config.json` (`pages[].accounts`). Page order on the Home s
 **v4:** history keeps one snapshot per run (full 3 days, hourly to 14 days, daily to ≥90 days); profile photos are re-downloaded every run into `data/avatars/`; the panel's settings page stores a GitHub fine-grained token in localStorage only (never in the repo) to trigger refreshes and to queue posts (`queue/`, `scripts/publish.py`, `publish.yml`; see the Persian section for secret names).
 
 The vault button only links to `https://vault.vaultwarden.com/`. Never commit passwords, tokens or vault content to this repo — use GitHub Secrets.
+
+## Tests (v5)
+
+Headless Chromium at iPhone width (390px). Setup once: `npm i playwright && npx playwright install chromium`.
+
+- Chart filters on a synthetic 92-day history (pruned exactly like the refresh job):
+  `NOW=$(node -e 'console.log(Date.now())'); python tests/make_fixture.py /tmp/spfix $NOW && FIXTURE_NOW=$NOW node tests/charts.test.js /tmp/spfix --fixture`
+- Same test against the real data: `node tests/charts.test.js .` (or the live URL)
+- Encrypted token sync (GitHub API mocked, real WebCrypto, throwaway login): `node tests/token_sync.test.js .`
+
+Token sync: `config/token.enc.json` = `{v, salt, iv, ct, created_at}`; PBKDF2-SHA256 (310000 iterations, 16-byte salt) → AES-GCM-256 (12-byte IV), keyed by the panel login password. The password is kept only in memory/sessionStorage of the tab; the plain token only in each device's localStorage.

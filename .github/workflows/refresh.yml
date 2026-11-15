@@ -9,6 +9,7 @@ on:
     paths-ignore:
       - "data/**"          # data commits are deployed by the run that made them
       - "queue/**"         # publish queue is handled by publish.yml
+      - "config/**"        # encrypted token sync file; read from the GitHub API, not from Pages
 
 permissions:
   contents: write

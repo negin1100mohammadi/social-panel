@@ -1,6 +1,6 @@
 /* Service worker: network-first for everything (fresh data, avatars and app code),
    falling back to the last cached copy only when offline. */
-const VERSION = "v4";
+const VERSION = "v5";
 const SHELL = `shell-${VERSION}`;
 const DATA = `data-${VERSION}`;
 const SHELL_FILES = ["./", "index.html", "styles.css", "app.js", "manifest.json",

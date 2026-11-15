@@ -21,7 +21,7 @@
   var MEDIA_BRANCH = "media-upload";
   var MAX_UPLOAD = 70 * 1024 * 1024; // GitHub blob API limit is 100 MB after base64
 
-  var state = { config: null, latest: null, history: null, error: null, busy: false, progress: "" };
+  var state = { config: null, latest: null, history: null, error: null, busy: false, progress: "", syncAvailable: false };
   var app = document.getElementById("app");
 
   // ---------------------------------------------------------------- utils
@@ -49,15 +49,16 @@
   }
   function fmtFmt(iso, o) {
     if (!iso) return "—";
-    try { o.timeZone = TZ; return new Intl.DateTimeFormat("fa-IR", o).format(new Date(iso)); } catch (e) { return String(iso); }
+    var t = tsOf(iso); if (t == null) return "—";
+    try { o.timeZone = TZ; return new Intl.DateTimeFormat("fa-IR", o).format(new Date(t)); } catch (e) { return String(iso); }
   }
   function fmtDateTime(iso) { return fmtFmt(iso, { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }); }
   function fmtShort(iso) { return fmtFmt(iso, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }); }
   function fmtDayOnly(iso) { return fmtFmt(iso, { month: "short", day: "numeric" }); }
   function fmtTime(iso) { return fmtFmt(iso, { hour: "2-digit", minute: "2-digit" }); }
   function ago(iso) {
-    if (!iso) return "—";
-    var ms = Date.now() - new Date(iso).getTime();
+    var t0 = tsOf(iso); if (t0 == null) return "—";
+    var ms = Date.now() - t0;
     if (ms < 0) ms = 0;
     var m = Math.floor(ms / 60000);
     if (m < 60) return m <= 1 ? "همین حالا" : fa(m) + " دقیقه پیش";
@@ -74,7 +75,24 @@
     var o = {}; p.forEach(function (x) { o[x.type] = x.value; });
     return o;
   }
-  function tsOf(v) { var t = v ? new Date(v).getTime() : NaN; return isNaN(t) ? null : t; }
+  // Timestamps: ISO 8601 (with Z or offset) is the data format. Also accepts epoch ms, "YYYY-MM-DD HH:MM[:SS]"
+  // (no zone = Tehran) and display strings like "Sat 2026-11-14 4:24 PM (UTC+03:30)" (older/hand-made data).
+  // Never relies on the engine's lenient Date parsing (Safari returns NaN for most non-ISO strings).
+  var TS_RE = /^(?:[A-Za-z]{3},?\s+)?(\d{4})-(\d{2})-(\d{2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?\s*([AaPp][Mm])?)?\s*(?:\(?\s*(?:UTC|GMT)?\s*(Z|[+-]\d{2}:?\d{2})?\s*\)?)?$/;
+  function tsOf(v) {
+    if (v == null || v === "") return null;
+    if (typeof v === "number") return isFinite(v) ? v : null;
+    if (v instanceof Date) { var dv = v.getTime(); return isNaN(dv) ? null : dv; }
+    var m = TS_RE.exec(String(v).trim());
+    if (!m) { var t0 = Date.parse(v); return isNaN(t0) ? null : t0; }
+    var h = +(m[4] || 0), mi = +(m[5] || 0), se = +(m[6] || 0), ms = m[7] ? +(m[7] + "00").slice(0, 3) : 0;
+    if (m[8]) { var pm = /p/i.test(m[8]); if (h === 12) h = pm ? 12 : 0; else if (pm) h += 12; }
+    var off = 3.5 * 60; // minutes; no zone given -> Tehran
+    if (m[9]) off = m[9] === "Z" ? 0 : (m[9][0] === "-" ? -1 : 1) * (+m[9].replace(/[^\d]/g, "").slice(0, 2) * 60 + +m[9].replace(/[^\d]/g, "").slice(2, 4));
+    if (!m[4] && !m[9]) { h = 12; } // bare date: noon Tehran
+    var t = Date.UTC(+m[1], +m[2] - 1, +m[3], h, mi, se, ms) - off * 60000;
+    return isNaN(t) ? null : t;
+  }
 
   // ------------------------------------------------------------ platform info
   var LOGIN_URL = {
@@ -111,10 +129,11 @@
   function pageData(cp) { return (state.latest && state.latest.pages[cp.id]) || { id: cp.id, name: cp.name, platforms: {} }; }
   function cpById(id) { return state.config.pages.filter(function (p) { return p.id === id; })[0]; }
   function hasData(r) { return !!(r && (r.ok || r.stale)); }
+  function num(v) { if (v == null || v === "") return null; var n = Number(v); return isFinite(n) ? n : null; }
   function seriesOf(pid, pl) {
     var s = (((state.history && state.history.series) || {})[pid + "/" + pl] || []).map(function (p) {
-      var t = p.t ? tsOf(p.t) : (p.d ? tsOf(p.d + "T12:00:00+03:30") : null);
-      return { t: t, f: p.f, p: p.p, v: p.v, l: p.l, c: p.c };
+      var t = p.t ? tsOf(p.t) : (p.d ? tsOf(p.d) : null);
+      return { t: t, f: num(p.f), p: num(p.p), v: num(p.v), l: num(p.l), c: num(p.c), b: p.b || null };
     }).filter(function (p) { return p.t != null; });
     s.sort(function (a, b) { return a.t - b.t; });
     return s;
@@ -337,11 +356,12 @@
       '<div class="vs">' + (getToken() ? "آپلود ویدیو یا عکس، انتشار و زمان‌بندی" : "اول توکن گیت‌هاب را در تنظیمات بگذار") + "</div></span>" +
       '<span class="arrow">←</span></a>';
     html += "</div>";
+    if (!getToken() && state.syncAvailable) html += '<a class="sync-banner" id="sync-banner" href="#/settings">یک توکن همگام‌شده از دستگاه دیگر آماده است؛ برای فعال شدن، در تنظیمات رمز پنل را وارد کن ←</a>';
     html += '<a class="setrow" href="#/settings">' + ICON_GEAR + "<span>تنظیمات</span><em>" + (getToken() ? "توکن ثبت شده" : "توکن ثبت نشده") + "</em></a>";
     html += '<button class="logout" id="logout">خروج از پنل</button>';
     app.innerHTML = html;
     bindTopbar();
-    document.getElementById("logout").onclick = function () { try { localStorage.removeItem(AUTH_KEY); } catch (e) {} render(); };
+    document.getElementById("logout").onclick = function () { try { localStorage.removeItem(AUTH_KEY); } catch (e) {} setSessPw("", ""); render(); };
   }
 
   // -------------------------------------------------------------- channels (tree)
@@ -400,67 +420,148 @@
   }
 
   // -------------------------------------------------------------- charts (vanilla SVG)
+  // Every box has its own window. A window is [now - ms, now], measured on real timestamps.
+  // Buckets are aligned to the Tehran clock (Iran has no DST: fixed +03:30) and clipped to the window.
+  var TEH_OFF = 3.5 * HOUR;
   var RANGES = [
-    { id: "3h", label: "۳ ساعت اخیر", ms: 3 * HOUR, bucket: 15 * 60000 },
-    { id: "24h", label: "۲۴ ساعت اخیر", ms: 24 * HOUR, bucket: HOUR },
-    { id: "30d", label: "۳۰ روز اخیر", ms: 30 * DAY, bucket: DAY },
-    { id: "90d", label: "۹۰ روز اخیر", ms: 90 * DAY, bucket: 3 * DAY }
+    { id: "3h", short: "۳ ساعت", label: "۳ ساعت اخیر", ms: 3 * HOUR, bucket: 30 * 60000, axis: "time" },
+    { id: "24h", short: "۲۴ ساعت", label: "۲۴ ساعت اخیر", ms: 24 * HOUR, bucket: HOUR, axis: "time" },
+    { id: "30d", short: "۳۰ روز", label: "۳۰ روز اخیر", ms: 30 * DAY, bucket: DAY, axis: "date" },
+    { id: "90d", short: "۹۰ روز", label: "۹۰ روز اخیر", ms: 90 * DAY, bucket: 3 * DAY, axis: "date" }
   ];
   function rangeById(id) { return RANGES.filter(function (r) { return r.id === id; })[0] || RANGES[2]; }
-  function bucketLabel(t, rg) { return rg.bucket < DAY ? fmtTime(new Date(t).toISOString()) : fmtDayOnly(new Date(t).toISOString()); }
+  function tLabel(t, rg) { return rg.axis === "time" ? fmtTime(t) : fmtDayOnly(t); }
+  function tFull(t, rg) { return rg.axis === "time" ? fmtShort(t) : fmtFmt(t, { month: "short", day: "numeric" }); }
+  function gridStart(t, size) { return Math.floor((t + TEH_OFF) / size) * size - TEH_OFF; }
+  function buckets(rg, now) {
+    var from = now - rg.ms, out = [];
+    for (var g = gridStart(from, rg.bucket); g <= now; g += rg.bucket) {
+      out.push({ a: Math.max(g, from), b: Math.min(g + rg.bucket, now), last: g + rg.bucket > now });
+    }
+    return out;
+  }
+  function inBucket(t, bk) { return t >= bk.a && (bk.last ? t <= bk.b : t < bk.b); }
+
+  // value of a series at time t (last known point at or before t)
+  function pointAt(s, k, t) {
+    var hit = null;
+    for (var i = 0; i < s.length && s[i].t <= t; i++) if (s[i][k] != null) hit = s[i];
+    return hit;
+  }
+  // two snapshots are comparable for a "new views/likes/comments" increment when they measure the same thing:
+  // same basis (channel total vs. sum of the recent posts list) and, for a recent-list sum, the same post count
+  function comparable(a, b, k) {
+    if (a[k] == null || b[k] == null) return false;
+    var ba = (a.b || {})[k] || "", bb = (b.b || {})[k] || "";
+    if (ba !== bb) return false;
+    if (ba === "t") return true;
+    return a.p === b.p;
+  }
+
+  // Pure computation for one box: items to plot + header numbers + coverage. Exposed for tests.
+  function computeLevelDelta(s, k, kind, rg, now) {
+    var from = now - rg.ms;
+    var all = s.filter(function (p) { return p[k] != null && p.t <= now; });
+    var res = { from: from, to: now, kind: kind, items: [], value: null, change: null, anchorFirst: null, coverage: null, n: 0, firstEver: all.length ? all[0].t : null, count: 0 };
+    if (!all.length) { res.state = "unavailable"; return res; }
+    var inWin = all.filter(function (p) { return p.t >= from; });
+    var before = pointAt(all, k, from - 1); // last point strictly before the window
+    res.count = inWin.length;
+    var last = all[all.length - 1];
+    res.value = last[k]; res.lastEver = last.t;
+    var anchor = before || inWin[0] || null;
+    if (!before && inWin.length) res.anchorFirst = inWin[0].t;
+    if (inWin.length) res.coverage = { a: inWin[0].t, b: inWin[inWin.length - 1].t };
+    var bs = buckets(rg, now);
+    if (kind === "level") {
+      res.change = anchor && inWin.length ? last[k] - anchor[k] : null;
+      res.items = bs.map(function (bk) {
+        var hit = null;
+        inWin.forEach(function (p) { if (inBucket(p.t, bk)) hit = p; });
+        return { t: bk.a, y: hit ? hit[k] : null, at: hit ? hit.t : null };
+      });
+    } else {
+      // chain of consecutive snapshots: anchor (before window, if any) + every snapshot in the window
+      var chain = (before ? [before] : []).concat(inWin);
+      var steps = [];
+      for (var i = 1; i < chain.length; i++) {
+        if (comparable(chain[i - 1], chain[i], k)) steps.push({ t: chain[i].t, d: chain[i][k] - chain[i - 1][k] });
+      }
+      res.change = chain.length >= 2 ? steps.reduce(function (a, x) { return a + x.d; }, 0) : null;
+      res.items = bs.map(function (bk) {
+        var sum = null;
+        steps.forEach(function (x) { if (inBucket(x.t, bk)) sum = (sum || 0) + x.d; });
+        return { t: bk.a, y: sum, at: bk.b };
+      });
+    }
+    // the plotted range starts at the first bucket that has data (no fake empty lead-in)
+    var firstIdx = -1;
+    for (var j = 0; j < res.items.length; j++) if (res.items[j].y != null) { firstIdx = j; break; }
+    res.items = firstIdx < 0 ? [] : res.items.slice(firstIdx);
+    res.n = res.items.filter(function (d) { return d.y != null; }).length;
+    res.state = res.n >= 2 ? "ok" : "insufficient";
+    return res;
+  }
+  function computePosts(posts, mk, rg, now) {
+    var from = now - rg.ms;
+    var dated = posts.map(function (p) { return { p: p, t: tsOf(p.published) }; }).filter(function (x) { return x.t != null; });
+    var inR = dated.filter(function (x) { return x.t >= from && x.t <= now; }).sort(function (a, b) { return a.t - b.t; });
+    var oldest = dated.length ? Math.min.apply(null, dated.map(function (x) { return x.t; })) : null;
+    return {
+      from: from, to: now, dated: dated.length, oldest: oldest,
+      items: inR.map(function (x) { return { t: x.t, y: x.p[mk] == null ? null : x.p[mk], title: x.p.title || "" }; }),
+      n: inR.filter(function (x) { return x.p[mk] != null; }).length, count: inR.length
+    };
+  }
 
   // items: [{label, y (number|null), tip}]; oldest on the left
   function svgChart(items, type, fmt, opts) {
     opts = opts || {};
-    var vals = items.map(function (d) { return d.y; }).filter(function (v) { return v != null && !isNaN(v); });
-    if (!vals.length) return '<div class="chart"><div class="empty">' + esc(opts.empty || "برای این بازه داده‌ای نیست") + "</div></div>";
-    var W = 320, H = 150, T = 16, B = 8, n = items.length;
-    var max = Math.max.apply(null, vals), min = Math.min.apply(null, vals);
-    if (type === "bar" || opts.zero) { min = Math.min(0, min); max = Math.max(0, max); }
-    if (max === min) { max = max + 1; if (type !== "bar" && !opts.zero) min = Math.max(0, min - 1); }
-    var y = function (v) { return T + (H - T - B) * (1 - (v - min) / (max - min)); };
-    var slot = W / n;
-    var x = function (i) { return slot * (i + 0.5); };
+    var vals = items.map(function (d) { return d.y; }).filter(function (v) { return v != null && isFinite(v); });
+    var n = items.length;
+    if (!vals.length) return '<div class="chart" data-state="empty" data-n="0"><div class="empty">' + esc(opts.empty || "برای این بازه داده‌ای نیست") + "</div></div>";
+    var W = 320, H = 150, T = 18, B = 10, L = 4, R = 4;
+    var max = Math.max.apply(null, vals), min = Math.min.apply(null, vals), flat = max === min;
+    if (opts.zero) { min = Math.min(0, min); max = Math.max(0, max); }
+    else if (type === "bar") { var pad = flat ? Math.max(1, Math.abs(max) * 0.1) : (max - min) * 0.25; min = min - pad; } // level bars: baseline under the lowest value, so differences stay visible
+    var span = max - min;
+    var y = function (v) { return span === 0 ? T + (H - T - B) / 2 : T + (H - T - B) * (1 - (v - min) / span); };
+    var slot = (W - L - R) / n;
+    var x = function (i) { return L + slot * (i + 0.5); };
     var s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(opts.label || "") + '">';
-    s += '<line x1="0" y1="' + y(Math.max(min, 0)).toFixed(1) + '" x2="' + W + '" y2="' + y(Math.max(min, 0)).toFixed(1) + '" stroke="currentColor" stroke-opacity=".15"/>';
+    var zeroY = span === 0 ? H - B : y(Math.max(min, Math.min(0, max)));
+    if (type === "bar") zeroY = span === 0 ? H - B : y(opts.zero ? 0 : min);
+    s += '<line x1="0" y1="' + zeroY.toFixed(1) + '" x2="' + W + '" y2="' + zeroY.toFixed(1) + '" stroke="currentColor" stroke-opacity=".15"/>';
     if (type === "bar") {
       var bw = Math.max(2, Math.min(26, slot * 0.68));
       items.forEach(function (d, i) {
-        if (d.y == null) return;
-        var y0 = y(0), y1 = y(d.y), top = Math.min(y0, y1), h = Math.max(1.5, Math.abs(y0 - y1));
-        s += '<rect class="bar" x="' + (x(i) - bw / 2).toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="' + Math.min(4, bw / 3).toFixed(1) + '"><title>' + esc((d.tip || d.label) + ": " + fmt(d.y)) + "</title></rect>";
-        if (n <= 12) s += '<text x="' + x(i).toFixed(1) + '" y="' + (top - 4).toFixed(1) + '" text-anchor="middle" font-size="9" class="lbl">' + esc(fmt(d.y)) + "</text>";
+        if (d.y == null || !isFinite(d.y)) return;
+        var y1 = span === 0 ? (d.y === 0 ? zeroY : T) : y(d.y);
+        var top = Math.min(zeroY, y1), h = Math.max(1.5, Math.abs(zeroY - y1));
+        s += '<rect class="bar" data-v="' + d.y + '" x="' + (x(i) - bw / 2).toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="' + Math.min(4, bw / 3).toFixed(1) + '"><title>' + esc((d.tip || d.label) + ": " + fmt(d.y)) + "</title></rect>";
+        if (n <= 12) s += '<text x="' + x(i).toFixed(1) + '" y="' + Math.max(9, top - 4).toFixed(1) + '" text-anchor="middle" font-size="9" class="lbl">' + esc(fmt(d.y)) + "</text>";
       });
     } else {
       var pts = [];
-      items.forEach(function (d, i) { if (d.y != null) pts.push([x(i), y(d.y), d]); });
-      if (pts.length === 1) pts.unshift([0, pts[0][1], pts[0][2]]);
+      items.forEach(function (d, i) { if (d.y != null && isFinite(d.y)) pts.push([x(i), y(d.y), d]); });
       var line = pts.map(function (q) { return q[0].toFixed(1) + "," + q[1].toFixed(1); }).join(" ");
-      var base = y(Math.max(min, 0)).toFixed(1);
-      s += '<polygon class="area" points="' + pts[0][0].toFixed(1) + "," + base + " " + line + " " + pts[pts.length - 1][0].toFixed(1) + "," + base + '"/>';
-      s += '<polyline class="ln" points="' + line + '" fill="none" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
-      if (pts.length <= 40) pts.forEach(function (q) { s += '<circle class="dot" cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="2.8"><title>' + esc((q[2].tip || q[2].label) + ": " + fmt(q[2].y)) + "</title></circle>"; });
+      if (pts.length > 1) {
+        var base = (span === 0 ? H - B : y(min)).toFixed(1);
+        s += '<polygon class="area" points="' + pts[0][0].toFixed(1) + "," + base + " " + line + " " + pts[pts.length - 1][0].toFixed(1) + "," + base + '"/>';
+        s += '<polyline class="ln" points="' + line + '" fill="none" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
+      }
+      if (pts.length <= 48) pts.forEach(function (q) { s += '<circle class="dot" data-v="' + q[2].y + '" cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="2.8"><title>' + esc((q[2].tip || q[2].label) + ": " + fmt(q[2].y)) + "</title></circle>"; });
     }
-    s += '<text x="2" y="10" font-size="9" class="lbl">' + esc(fmt(max)) + "</text>";
+    var yfmt = function (v) { return Math.abs(v) < 1e6 ? fa(v, { maximumFractionDigits: 1 }) : fmt(v); }; // exact on the axis: 10,007 vs 10,019 must not both read "10K"
+    if (flat) s += '<text x="' + (W / 2) + '" y="10" text-anchor="middle" font-size="10" class="lbl flat">' + esc("بدون تغییر: " + yfmt(vals[0])) + "</text>";
+    else if (!(type === "bar" && n <= 12)) { // bars with their own value labels need no axis numbers
+      s += '<text x="2" y="10" font-size="9" class="lbl ymax">' + esc(yfmt(Math.max.apply(null, vals))) + "</text>";
+      s += '<text x="2" y="' + (H - 1) + '" font-size="9" class="lbl ymin">' + esc(yfmt(Math.min.apply(null, vals))) + "</text>";
+    }
     s += "</svg>";
-    var first = items[0], last = items[n - 1];
-    return '<div class="chart" dir="ltr">' + s + '<div class="axis"><span>' + esc(first.label) + "</span><span>" + esc(last.label) + "</span></div></div>";
-  }
-
-  // value of a cumulative series at time t (last known point at or before t)
-  function levelAt(s, k, t) {
-    var v = null;
-    for (var i = 0; i < s.length && s[i].t <= t; i++) if (s[i][k] != null) v = s[i][k];
-    return v;
-  }
-  function firstAfter(s, k, t) {
-    for (var i = 0; i < s.length; i++) if (s[i].t >= t && s[i][k] != null) return s[i];
-    return null;
-  }
-  function buckets(rg, now) {
-    var out = [], n = Math.round(rg.ms / rg.bucket), start = now - n * rg.bucket;
-    for (var i = 0; i < n; i++) out.push({ a: start + i * rg.bucket, b: start + (i + 1) * rg.bucket });
-    return out;
+    var first = items[0], last = items[n - 1], mid = items[Math.floor((n - 1) / 2)];
+    var ax = '<span class="ax0">' + esc(first.label) + "</span>" + (n >= 5 ? '<span class="ax1">' + esc(mid.label) + "</span>" : "") + '<span class="ax2">' + esc(n > 1 ? last.label : "") + "</span>";
+    return '<div class="chart" dir="ltr" data-state="ok" data-n="' + vals.length + '" data-slots="' + n + '" data-first="' + esc(first.label) + '" data-last="' + esc(last.label) + '">' + s + '<div class="axis">' + ax + "</div></div>";
   }
 
   // -------------------------------------------------------------- analytics
@@ -474,10 +575,15 @@
       (sub ? '<div class="pct">' + esc(sub) + "</div>" : "") + (note ? '<div class="n">' + esc(note) + "</div>" : "") + "</div>";
   }
   var BOX_KEY = "sp_box";
-  function boxPref(key, def) { var all = lsGet(BOX_KEY, {}); var p = all[key] || {}; return { r: p.r || def.r, type: p.type || def.type, m: p.m || def.m }; }
-  function saveBoxPref(key, p) { var all = lsGet(BOX_KEY, {}); all[key] = p; lsSet(BOX_KEY, all); }
+  function boxDefault(def) { return { r: "30d", type: def.kind === "level" ? "line" : "bar", m: "views" }; }
+  function boxPref(key, def) {
+    var all = lsGet(BOX_KEY, {}), p = all[key] || {}, d = boxDefault(def);
+    return { r: rangeById(p.r || d.r).id, type: p.type === "bar" || p.type === "line" ? p.type : d.type, m: /^(views|likes|comments)$/.test(p.m || "") ? p.m : d.m };
+  }
+  function saveBoxPref(key, p) { var all = lsGet(BOX_KEY, {}); all[key] = { r: p.r, type: p.type, m: p.m }; lsSet(BOX_KEY, all); }
 
   function metricUnavailable(pl, k) {
+    if (k === "f") return "تعداد " + FOLLOW_LABEL[pl] + " از " + PNAME[pl] + " در دسترس نیست";
     if (k === "v" && pl === "instagram") return "اینستاگرام بازدید را بدون توکن Graph API نمی‌دهد";
     if (k === "v" && pl === "tiktok") return "تیک‌تاک بازدید را بدون دسترسی به اکانت نمی‌دهد";
     if (k === "l" && pl === "aparat") return "آپارات لایک را عمومی نمی‌دهد";
@@ -485,91 +591,86 @@
     if (k === "c" && (pl === "aparat" || pl === "tiktok")) return PNAME[pl] + " کامنت را عمومی نمی‌دهد";
     return "این عدد از " + PNAME[pl] + " در دسترس نیست";
   }
+  function rangeNote(a, b, rg, extra) {
+    return '<div class="range-note" data-from="' + (a == null ? "" : new Date(a).toISOString()) + '" data-to="' + (b == null ? "" : new Date(b).toISOString()) + '">' +
+      esc(a == null ? "در این بازه داده‌ای ثبت نشده" : "داده‌ی نمودار: " + tFull(a, rg) + (b != null && b !== a ? " تا " + tFull(b, rg) : "") + (extra || "")) + "</div>";
+  }
 
-  function boxBody(ctx, def, pref) {
-    var rg = rangeById(pref.r), now = Date.now(), from = now - rg.ms;
+  function boxBody(ctx, def, pref, nowArg) {
+    var rg = rangeById(pref.r), now = nowArg || Date.now();
     var s = ctx.series, pl = ctx.pl, html = "";
     if (def.kind === "level" || def.kind === "delta") {
-      var k = def.key;
-      if (!s.some(function (p) { return p[k] != null; })) return '<div class="chart"><div class="empty">' + esc(metricUnavailable(pl, k)) + "</div></div>";
-      var bs = buckets(rg, now);
-      var nowV = levelAt(s, k, now);
-      var anchor = levelAt(s, k, from), anchorNote = "";
-      if (anchor == null) { var fa1 = firstAfter(s, k, from); anchor = fa1 ? fa1[k] : null; anchorNote = fa1 ? " (از اولین ثبت: " + fmtShort(new Date(fa1.t).toISOString()) + ")" : ""; }
-      var change = nowV != null && anchor != null ? nowV - anchor : null;
-      var firstT = (s.filter(function (p) { return p[k] != null; })[0] || {}).t;
-      var items = bs.map(function (b) {
-        var lb = bucketLabel(b.b, rg), y;
-        if (def.kind === "level") y = firstT != null && b.b >= firstT ? levelAt(s, k, b.b) : null;
-        else {
-          var e = levelAt(s, k, b.b), st = levelAt(s, k, b.a);
-          y = e != null && st != null ? e - st : null;
-        }
-        return { label: lb, y: y, tip: lb };
-      });
-      var pointsIn = s.filter(function (p) { return p.t >= from && p[k] != null; }).length;
-      if (def.kind === "level") html += '<div class="bhead"><b>' + esc(fa(nowV)) + "</b><span>" + esc(change == null ? "" : signed(change) + " در " + rg.label + anchorNote) + "</span></div>";
-      else html += '<div class="bhead"><b>' + esc(change == null ? "—" : signed(change)) + "</b><span>" + esc("در " + rg.label + anchorNote) + "</span></div>";
-      html += svgChart(items, pref.type, function (v) { return compact(v); }, {
-        label: def.title, zero: def.kind === "delta",
-        empty: pointsIn ? "برای این بازه هنوز داده‌ی کافی ثبت نشده" : "در این بازه هنوز اندازه‌گیری ثبت نشده (اندازه‌گیری هر ۳۰ دقیقه انجام می‌شود)"
-      });
+      var k = def.key, R = computeLevelDelta(s, k, def.kind, rg, now);
+      if (R.state === "unavailable") return '<div class="chart" data-state="unavailable" data-n="0"><div class="empty">' + esc(metricUnavailable(pl, k)) + "</div></div>";
+      var anchorNote = R.anchorFirst != null ? " (از اولین ثبت: " + fmtShort(R.anchorFirst) + ")" : "";
+      if (def.kind === "level") html += '<div class="bhead"><b>' + esc(fa(R.value)) + '</b><span class="chg" data-change="' + (R.change == null ? "" : R.change) + '">' + esc(R.change == null ? "در " + rg.label + " اندازه‌گیری نشده" : signed(R.change) + " در " + rg.label + anchorNote) + "</span></div>";
+      else html += '<div class="bhead"><b class="chg" data-change="' + (R.change == null ? "" : R.change) + '">' + esc(R.change == null ? "—" : signed(R.change)) + "</b><span>" + esc("در " + rg.label + anchorNote) + "</span></div>";
+      if (R.state === "insufficient") {
+        html += '<div class="chart" data-state="insufficient" data-n="' + R.n + '"><div class="empty">' + esc("هنوز داده کافی برای این بازه نیست — از " + fmtShort(R.firstEver) + " جمع‌آوری شده" + (R.count ? "" : " · آخرین اندازه‌گیری: " + fmtShort(R.lastEver))) + "</div></div>";
+      } else {
+        var items = R.items.map(function (d) { var lb = tLabel(d.t, rg); return { label: lb, y: d.y, tip: d.at != null ? fmtShort(d.at) : lb }; });
+        html += svgChart(items, pref.type, function (v) { return compact(v); }, { label: def.title, zero: def.kind === "delta" });
+      }
+      html += rangeNote(R.coverage && R.coverage.a, R.coverage && R.coverage.b, rg, R.count ? " · " + fa(R.count) + " اندازه‌گیری" : "");
       return html;
     }
     // per-post metrics, filtered by post date
     var mk = pref.m || "views";
-    var dated = ctx.posts.filter(function (p) { return p.published; });
-    if (!ctx.posts.length) return '<div class="chart"><div class="empty">' + esc(pl === "tiktok" ? "تیک‌تاک فهرست و تاریخ ویدیوها را بدون دسترسی به اکانت نمی‌دهد" : "هنوز " + POSTS_LABEL[pl] + "ی شناسایی نشده") + "</div></div>";
-    if (!dated.length) return '<div class="chart"><div class="empty">تاریخ انتشار ' + esc(POSTS_LABEL[pl]) + "‌ها در دسترس نیست</div></div>";
-    var inR = dated.filter(function (p) { return tsOf(p.published) >= from; }).sort(function (a, b) { return tsOf(a.published) - tsOf(b.published); });
-    var sum = sumOf(inR, mk);
     var mlabel = { views: "بازدید", likes: "لایک", comments: "کامنت" }[mk];
+    if (!ctx.posts.length) return '<div class="chart" data-state="unavailable" data-n="0"><div class="empty">' + esc(pl === "tiktok" ? "تیک‌تاک فهرست و تاریخ ویدیوها را بدون دسترسی به اکانت نمی‌دهد" : "هنوز " + POSTS_LABEL[pl] + "ی شناسایی نشده") + "</div></div>";
+    var P = computePosts(ctx.posts, mk, rg, now);
+    if (!P.dated) return '<div class="chart" data-state="unavailable" data-n="0"><div class="empty">تاریخ انتشار ' + esc(POSTS_LABEL[pl]) + "‌ها در دسترس نیست</div></div>";
     html += '<div class="seg small" role="group">' + ["views", "likes", "comments"].map(function (m) {
-      return '<button data-m="' + m + '" class="' + (m === mk ? "on" : "") + '">' + { views: "بازدید", likes: "لایک", comments: "کامنت" }[m] + "</button>";
+      return '<button type="button" data-m="' + m + '" class="' + (m === mk ? "on" : "") + '">' + { views: "بازدید", likes: "لایک", comments: "کامنت" }[m] + "</button>";
     }).join("") + "</div>";
-    html += '<div class="bhead"><b>' + esc(fa(inR.length)) + " " + esc(POSTS_LABEL[pl]) + "</b><span>" + esc("در " + rg.label + (inR.length ? " · مجموع " + mlabel + " " + (sum == null ? "—" : fa(sum)) : "")) + "</span></div>";
+    var inPosts = P.items, sum = inPosts.filter(function (d) { return d.y != null; }).reduce(function (a, d) { return a + d.y; }, 0);
+    html += '<div class="bhead"><b class="chg" data-change="' + P.count + '">' + esc(fa(P.count)) + " " + esc(POSTS_LABEL[pl]) + "</b><span>" + esc("در " + rg.label + (P.count ? " · مجموع " + mlabel + " " + (P.n ? fa(sum) : "—") : "")) + "</span></div>";
     var unavailable = ctx.posts.every(function (p) { return p[mk] == null; });
-    if (unavailable) return html + '<div class="chart"><div class="empty">' + esc(metricUnavailable(pl, { views: "v", likes: "l", comments: "c" }[mk])) + "</div></div>";
-    var items2 = inR.map(function (p) { var d = rg.ms <= DAY ? fmtTime(p.published) : fmtDayOnly(p.published); return { label: d, y: p[mk], tip: (p.title || "").slice(0, 40) + " · " + d }; });
+    if (unavailable) return html + '<div class="chart" data-state="unavailable" data-n="0"><div class="empty">' + esc(metricUnavailable(pl, { views: "v", likes: "l", comments: "c" }[mk])) + "</div></div>";
+    var items2 = inPosts.map(function (d) { var lb = tLabel(d.t, rg); return { label: lb, y: d.y, tip: d.title.slice(0, 40) + " · " + fmtShort(d.t) }; });
     html += svgChart(items2, pref.type, function (v) { return compact(v); }, { label: mlabel, zero: true, empty: "در " + rg.label + " " + POSTS_LABEL[pl] + "ی منتشر نشده" });
+    var listNote = P.oldest != null && P.oldest > P.from ? " · فهرست فقط " + fa(P.dated) + " " + POSTS_LABEL[pl] + "ِ آخر را دارد (از " + fmtDayOnly(P.oldest) + ")" : "";
+    html += rangeNote(inPosts.length ? inPosts[0].t : null, inPosts.length ? inPosts[inPosts.length - 1].t : null, rg, listNote);
     return html;
+  }
+  function boxInner(ctx, def, pref) {
+    return '<div class="abh"><h3>' + esc(def.title) + "</h3>" +
+      '<div class="seg type" role="group" aria-label="نوع نمودار"><button type="button" data-type="line" class="' + (pref.type === "line" ? "on" : "") + '">خطی</button><button type="button" data-type="bar" class="' + (pref.type === "bar" ? "on" : "") + '">میله‌ای</button></div></div>' +
+      '<div class="seg range" role="group" aria-label="بازه‌ی زمانی">' + RANGES.map(function (r) {
+        return '<button type="button" data-r="' + r.id + '" class="' + (r.id === pref.r ? "on" : "") + '" aria-pressed="' + (r.id === pref.r) + '">' + r.short + "</button>";
+      }).join("") + "</div>" +
+      '<div class="abody">' + boxBody(ctx, def, pref) + "</div>";
   }
   function boxHTML(ctx, def) {
     var key = ctx.pid + "/" + ctx.pl + "/" + def.id;
-    var pref = boxPref(key, { r: "30d", type: def.kind === "level" ? "line" : "bar", m: "views" });
-    return '<section class="abox" data-box="' + esc(def.id) + '" data-key="' + esc(key) + '">' +
-      '<div class="abh"><h3>' + esc(def.title) + "</h3>" +
-      '<div class="seg type" role="group" aria-label="نوع نمودار"><button data-type="line" class="' + (pref.type === "line" ? "on" : "") + '">خطی</button><button data-type="bar" class="' + (pref.type === "bar" ? "on" : "") + '">میله‌ای</button></div></div>' +
-      '<div class="seg range" role="group" aria-label="بازه‌ی زمانی">' + RANGES.map(function (r) {
-        return '<button data-r="' + r.id + '" class="' + (r.id === pref.r ? "on" : "") + '">' + r.label + "</button>";
-      }).join("") + "</div>" +
-      '<div class="abody">' + boxBody(ctx, def, pref) + "</div></section>";
+    var pref = boxPref(key, def);
+    return '<section class="abox" data-box="' + esc(def.id) + '" data-key="' + esc(key) + '" data-r="' + pref.r + '" data-type="' + pref.type + '">' + boxInner(ctx, def, pref) + "</section>";
   }
+  // one delegated listener per render of the analytics view; each box reads its own key/def at click time
   function bindBoxes(ctx, defs) {
-    Array.prototype.forEach.call(document.querySelectorAll(".abox"), function (el) {
-      var def = defs.filter(function (d) { return d.id === el.getAttribute("data-box"); })[0];
-      var key = el.getAttribute("data-key");
-      el.onclick = function (e) {
-        var b = e.target.closest ? e.target.closest("button") : null; if (!b || !el.contains(b)) return;
-        var pref = boxPref(key, { r: "30d", type: def.kind === "level" ? "line" : "bar", m: "views" });
-        if (b.hasAttribute("data-r")) pref.r = b.getAttribute("data-r");
-        else if (b.hasAttribute("data-type")) pref.type = b.getAttribute("data-type");
-        else if (b.hasAttribute("data-m")) pref.m = b.getAttribute("data-m");
-        else return;
-        saveBoxPref(key, pref);
-        var tmp = document.createElement("div"); tmp.innerHTML = boxHTML(ctx, def);
-        el.parentNode.replaceChild(tmp.firstChild, el);
-        bindBoxes(ctx, defs);
-      };
-    });
+    var wrap = document.querySelector(".aboxes"); if (!wrap) return;
+    wrap.onclick = function (e) {
+      var b = e.target.closest ? e.target.closest("button") : null; if (!b) return;
+      var el = b.closest(".abox"); if (!el || !wrap.contains(el)) return;
+      var def = defs.filter(function (d) { return d.id === el.getAttribute("data-box"); })[0]; if (!def) return;
+      var key = el.getAttribute("data-key"), pref = boxPref(key, def);
+      if (b.hasAttribute("data-r")) pref.r = b.getAttribute("data-r");
+      else if (b.hasAttribute("data-type")) pref.type = b.getAttribute("data-type");
+      else if (b.hasAttribute("data-m")) pref.m = b.getAttribute("data-m");
+      else return;
+      saveBoxPref(key, pref);
+      el.setAttribute("data-r", pref.r); el.setAttribute("data-type", pref.type);
+      el.innerHTML = boxInner(ctx, def, pref);
+    };
   }
+  window.__spChart = { tsOf: function (v) { return tsOf(v); }, computeLevelDelta: computeLevelDelta, computePosts: computePosts, buckets: buckets, RANGES: RANGES, comparable: comparable };
 
   function analyticsView(pid, pl) {
     var cp = cpById(pid);
     if (!cp || PLATFORMS.indexOf(pl) < 0) { location.hash = "#/channels"; return; }
     var page = pageData(cp), r = page.platforms[pl] || {};
     var ok = hasData(r);
-    var posts = ok ? (r.recent || []).slice().sort(function (a, b) { return (b.published || "") > (a.published || "") ? 1 : -1; }) : [];
+    var posts = ok ? (r.recent || []).slice().sort(function (a, b) { return (tsOf(b.published) || 0) - (tsOf(a.published) || 0); }) : [];
     var html = topbar(cp.name);
     html += '<button class="back" id="back">→ کانال‌ها</button>';
     html += '<div class="ahead" data-page="' + esc(pid) + '" data-platform="' + pl + '">' + logoHTML(cp, page, "big", pl) + '<div class="at"><h1>' + esc(cp.name) + "</h1>" +
@@ -634,45 +735,217 @@
     document.getElementById("back").onclick = function () { location.hash = "#/channels"; };
   }
 
+  // ------------------------------------------------------------- encrypted token sync
+  // The token is encrypted in this browser (PBKDF2-SHA256 310k -> AES-GCM-256) with the panel login password
+  // and committed as ciphertext to config/token.enc.json. The password itself lives only in memory/sessionStorage.
+  var ENC_PATH = "config/token.enc.json", PW_KEY = "sp_pw", USER_KEY = "sp_user", TOKSRC_KEY = "sp_tok_src";
+  var KDF_ITER = 310000;
+  var memPw = "";
+  function sessPw() { if (memPw) return memPw; try { return sessionStorage.getItem(PW_KEY) || ""; } catch (e) { return ""; } }
+  function setSessPw(u, p) {
+    memPw = p || "";
+    try {
+      if (p) { sessionStorage.setItem(PW_KEY, p); sessionStorage.setItem(USER_KEY, u || ""); }
+      else { sessionStorage.removeItem(PW_KEY); sessionStorage.removeItem(USER_KEY); }
+    } catch (e) {}
+  }
+  function tokSrc() { try { return localStorage.getItem(TOKSRC_KEY) || ""; } catch (e) { return ""; } }
+  function setTokSrc(v) { try { if (v) localStorage.setItem(TOKSRC_KEY, v); else localStorage.removeItem(TOKSRC_KEY); } catch (e) {} }
+  function u8b64(u8) { var s = ""; for (var i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return btoa(s); }
+  function b64u8(s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+  function deriveKey(pw, salt) {
+    return crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]).then(function (base) {
+      return crypto.subtle.deriveKey({ name: "PBKDF2", salt: salt, iterations: KDF_ITER, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+    });
+  }
+  function encryptToken(tok, pw) {
+    var salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+    return deriveKey(pw, salt).then(function (key) {
+      return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, new TextEncoder().encode(tok));
+    }).then(function (ct) {
+      return { v: 1, salt: u8b64(salt), iv: u8b64(iv), ct: u8b64(new Uint8Array(ct)), created_at: new Date().toISOString() };
+    });
+  }
+  function decryptToken(obj, pw) {
+    if (!obj || obj.v !== 1) return Promise.reject(new Error("unsupported"));
+    return deriveKey(pw, b64u8(obj.salt)).then(function (key) {
+      return crypto.subtle.decrypt({ name: "AES-GCM", iv: b64u8(obj.iv) }, key, b64u8(obj.ct));
+    }).then(function (pt) { return new TextDecoder().decode(pt); });
+  }
+  // the encrypted file, read without a token (public repo). Resolves null when it does not exist.
+  function fetchEnc() {
+    var api = "https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + ENC_PATH + "?ref=" + GH_BRANCH + "&t=" + Date.now();
+    var raw = "https://raw.githubusercontent.com/" + GH_OWNER + "/" + GH_REPO + "/" + GH_BRANCH + "/" + ENC_PATH + "?t=" + Date.now();
+    function get(url, hdr) {
+      return fetch(url, { cache: "no-store", headers: hdr || {} }).then(function (r) {
+        if (r.status === 404) return null;
+        if (!r.ok) { var e = new Error("HTTP " + r.status); e.status = r.status; throw e; }
+        return r.json();
+      });
+    }
+    return get(api, { Accept: "application/vnd.github.raw+json" }).catch(function () { return get(raw); });
+  }
+  // pull the synced token into this device (no-op when one is already here and is the current synced copy)
+  function pullToken(pw, opts) {
+    opts = opts || {};
+    return fetchEnc().then(function (obj) {
+      state.syncAvailable = !!obj;
+      if (!obj) return { pulled: false, exists: false };
+      if (getToken() && !(opts.force || (tokSrc() && tokSrc() !== obj.created_at))) return { pulled: false, exists: true };
+      if (!pw) return { pulled: false, exists: true, needPw: true };
+      return decryptToken(obj, pw).then(function (tok) {
+        if (!/^(github_pat_|ghp_|gho_)/.test(tok)) throw new Error("bad");
+        setToken(tok); setTokSrc(obj.created_at);
+        return { pulled: true, exists: true };
+      }, function () { return { pulled: false, exists: true, badPw: true }; });
+    });
+  }
+  // on app start: pick up a token synced from another device, or drop a synced token that was removed everywhere
+  function syncOnStart() {
+    if (!authed()) return;
+    var had = getToken(), src = tokSrc();
+    fetchEnc().then(function (obj) {
+      state.syncAvailable = !!obj;
+      if (!obj) {
+        if (had && src) { setToken(""); setTokSrc(""); toast("توکن از همه‌ی دستگاه‌ها حذف شده بود؛ از این دستگاه هم پاک شد", 4500); rerenderSafe(); }
+        return;
+      }
+      if (had && (!src || src === obj.created_at)) return;
+      var pw = sessPw();
+      if (!pw) { if (!had) rerenderSafe(); return; }
+      return pullToken(pw).then(function (r) { if (r.pulled) { toast("توکن همگام شد"); rerenderSafe(); } });
+    }).catch(function () {});
+  }
+  function credsOk(u, p) { return sha256hex(AUTH_SALT + u + "|" + p).then(function (h) { return h === AUTH_HASH; }); }
+  // password for encryption: from this session's login, or typed into the settings form (checked against the login hash)
+  function pwFromForm() {
+    var pw = sessPw();
+    if (pw) return Promise.resolve(pw);
+    var ue = document.getElementById("sync-user"), pe = document.getElementById("sync-pw");
+    var u = ue ? ue.value.trim() : "", p = pe ? pe.value : "";
+    if (!u || !p) return Promise.reject(new Error("برای رمزگذاری، نام کاربری و رمز ورود پنل را وارد کن."));
+    return credsOk(u, p).then(function (ok) {
+      if (!ok) throw new Error("نام کاربری یا رمز ورود پنل اشتباه است.");
+      setSessPw(u, p); return p;
+    });
+  }
+  function encSha() {
+    return gh("/contents/" + ENC_PATH + "?ref=" + GH_BRANCH + "&t=" + Date.now()).then(function (f) { return f && f.sha; }, function (e) { if (e.status === 404) return null; throw e; });
+  }
+  function validateToken() { return gh("?t=" + Date.now()); } // GET /repos/negin1100mohammadi/social-panel
+
   // ------------------------------------------------------------- settings
   function settingsView() {
-    var tok = getToken();
+    var tok = getToken(), havePw = !!sessPw();
     var html = topbar("تنظیمات");
     html += '<button class="back" id="back">→ صفحه‌ی اصلی</button>';
-    html += '<section class="card form">' +
+    html += '<section class="card form" id="token-card">' +
       "<h2>توکن گیت‌هاب</h2>" +
-      '<p class="help">با این توکن، دکمه‌ی به‌روزرسانی بالای صفحه همان لحظه آمار و <b>عکس‌های پروفایل</b> همه‌ی کانال‌ها را از نو می‌خواند، و بخش «انتشار محتوا» فایل‌ها را در صف انتشار می‌گذارد. توکن <b>فقط در مرورگر همین گوشی</b> (localStorage) ذخیره می‌شود و هرگز داخل مخزن یا سایت قرار نمی‌گیرد.</p>' +
+      '<div class="tok-status ' + (tok ? "" : "bad") + '" id="token-status" data-state="' + (tok ? "checking" : "none") + '">' + (tok ? "در حال بررسی اتصال…" : "✗ متصل نیست") + "</div>" +
+      '<p class="help">با این توکن، دکمه‌ی به‌روزرسانی بالای صفحه همان لحظه آمار و <b>عکس‌های پروفایل</b> همه‌ی کانال‌ها را از نو می‌خواند، و بخش «انتشار محتوا» فایل‌ها را در صف انتشار می‌گذارد. توکن در مرورگر همین دستگاه (localStorage) ذخیره می‌شود؛ با «همگام‌سازی با همه دستگاه‌ها» نسخه‌ی <b>رمزگذاری‌شده</b> با رمز ورود پنل در مخزن قرار می‌گیرد تا دستگاه‌های دیگر هنگام ورود آن را بگیرند.</p>' +
       '<ol class="steps"><li>در گیت‌هاب به <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Fine-grained personal access token ↗</a> برو.</li>' +
       "<li>یک نام و تاریخ انقضا بگذار. در <b>Repository access</b> گزینه‌ی <b>Only select repositories</b> و فقط <b dir=\"ltr\">social-panel</b> را انتخاب کن.</li>" +
       "<li>در <b>Permissions → Repository permissions</b>: <b dir=\"ltr\">Actions: Read and write</b> و <b dir=\"ltr\">Contents: Read and write</b> (Metadata خودکار Read می‌شود).</li>" +
       "<li>توکن ساخته‌شده (با <span dir=\"ltr\">github_pat_</span> شروع می‌شود) را کپی کن و این‌جا بچسبان.</li></ol>" +
-      '<label for="tok">توکن</label><div class="pw"><input id="tok" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="github_pat_…" value="' + esc(tok) + '">' +
+      '<label for="gh-token">توکن</label><div class="pw"><input id="gh-token" name="gh-token" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="github_pat_…" value="' + esc(tok) + '">' +
       '<button type="button" class="show" id="showtok">' + ICON_EYE + "<span>نمایش</span></button></div>" +
-      '<div class="row-btns"><button class="go" id="savetok">ذخیره</button><button class="ghost" id="testtok"' + (tok ? "" : " disabled") + '>آزمایش توکن</button>' +
-      (tok ? '<button class="ghost danger" id="deltok">حذف توکن</button>' : "") + "</div>" +
-      '<div class="msg" id="tokmsg">' + (tok ? "توکن روی این دستگاه ثبت شده است." : "توکنی ثبت نشده؛ دکمه‌ی به‌روزرسانی فقط آخرین داده‌های ذخیره‌شده را دوباره بارگذاری می‌کند.") + "</div></section>";
+      '<div class="row-btns"><button type="button" class="go" id="savetok">ذخیره</button><button type="button" class="ghost" id="testtok"' + (tok ? "" : " disabled") + '>آزمایش توکن</button>' +
+      (tok ? '<button type="button" class="ghost danger" id="deltok">حذف توکن</button>' : "") + "</div>" +
+      '<div class="msg" id="tokmsg">' + (tok ? "توکن روی این دستگاه ثبت شده است." : "توکنی ثبت نشده؛ دکمه‌ی به‌روزرسانی فقط آخرین داده‌های ذخیره‌شده را دوباره بارگذاری می‌کند.") + "</div>" +
+      '<div class="sync-box" id="sync-box"><h3>همگام‌سازی بین دستگاه‌ها</h3>' +
+      (havePw ? "" : '<p class="help">برای رمزگذاری یا باز کردن توکن همگام‌شده، نام کاربری و رمز ورود پنل را وارد کن (فقط تا بسته شدن این برگه در حافظه می‌ماند).</p>' +
+        '<label for="sync-user">نام کاربری پنل</label><input id="sync-user" name="sync-user" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">' +
+        '<label for="sync-pw">رمز ورود پنل</label><input id="sync-pw" name="sync-pw" type="password" autocomplete="current-password">') +
+      '<div class="row-btns"><button type="button" class="go" id="sync-token">همگام‌سازی با همه دستگاه‌ها</button>' +
+      (!tok && state.syncAvailable ? '<button type="button" class="ghost" id="pull-token">دریافت توکن همگام‌شده</button>' : "") +
+      '<button type="button" class="ghost danger" id="del-token-all">حذف توکن از همه دستگاه‌ها</button></div>' +
+      '<div class="msg" id="sync-msg" data-state="idle">' + (state.syncAvailable ? "یک نسخه‌ی رمزگذاری‌شده‌ی توکن در مخزن هست." : "") + "</div></div></section>";
     app.innerHTML = html;
     bindTopbar();
     document.getElementById("back").onclick = function () { location.hash = "#/"; };
-    var ti = document.getElementById("tok"), sb = document.getElementById("showtok"), msg = document.getElementById("tokmsg");
+    var ti = document.getElementById("gh-token"), sb = document.getElementById("showtok"), msg = document.getElementById("tokmsg"), smsg = document.getElementById("sync-msg");
+    function say(t, st) { smsg.textContent = t; smsg.setAttribute("data-state", st || "idle"); }
     sb.onclick = function () { var s = ti.type === "text"; ti.type = s ? "password" : "text"; sb.innerHTML = (s ? ICON_EYE : ICON_EYE_OFF) + "<span>" + (s ? "نمایش" : "پنهان") + "</span>"; };
     document.getElementById("savetok").onclick = function () {
       var v = ti.value.trim();
       if (!v) { msg.textContent = "اول توکن را بچسبان."; return; }
       if (!/^(github_pat_|ghp_|gho_)/.test(v)) { msg.textContent = "این شبیه توکن گیت‌هاب نیست (باید با github_pat_ شروع شود)."; return; }
+      if (v !== getToken()) setTokSrc("");
       setToken(v); settingsView(); testToken();
     };
     var tt = document.getElementById("testtok"); if (tt) tt.onclick = testToken;
-    var dt = document.getElementById("deltok"); if (dt) dt.onclick = function () { setToken(""); settingsView(); toast("توکن از این دستگاه حذف شد"); };
+    var dt = document.getElementById("deltok"); if (dt) dt.onclick = function () { setToken(""); setTokSrc(""); settingsView(); toast("توکن از این دستگاه حذف شد"); };
+    var busy = false;
+    document.getElementById("sync-token").onclick = function () {
+      if (busy) return;
+      var v = (ti.value || "").trim() || getToken();
+      if (!v) { say("اول توکن را در کادر بالا بچسبان.", "error"); return; }
+      if (!/^(github_pat_|ghp_|gho_)/.test(v)) { say("این شبیه توکن گیت‌هاب نیست (باید با github_pat_ شروع شود).", "error"); return; }
+      busy = true; say("در حال بررسی رمز…", "busy");
+      var prev = getToken(), prevSrc = tokSrc(), pwv;
+      pwFromForm().then(function (pw) {
+        pwv = pw; setToken(v); say("در حال بررسی توکن…", "busy");
+        return validateToken();
+      }).then(function (repo) {
+        if (!(repo && repo.permissions && repo.permissions.push)) { var e = new Error("این توکن اجازه‌ی نوشتن (Contents: Read and write) روی social-panel را ندارد."); throw e; }
+        say("در حال رمزگذاری…", "busy");
+        return encryptToken(v, pwv);
+      }).then(function (obj) {
+        say("در حال ذخیره در مخزن…", "busy");
+        return encSha().then(function (sha) {
+          var body = { message: "config: encrypted token for device sync", content: b64utf8(JSON.stringify(obj, null, 1) + "\n"), branch: GH_BRANCH };
+          if (sha) body.sha = sha;
+          return gh("/contents/" + ENC_PATH, { method: "PUT", body: body });
+        }).then(function () { return obj; });
+      }).then(function (obj) {
+        setTokSrc(obj.created_at); state.syncAvailable = true; busy = false;
+        settingsView();
+        var m = document.getElementById("sync-msg");
+        m.textContent = "✓ همگام شد. هر دستگاه دیگر هنگام ورود به پنل (یا باز کردن آن) توکن را خودش می‌گیرد."; m.setAttribute("data-state", "ok");
+        testToken();
+      }).catch(function (e) {
+        busy = false;
+        if (getToken() === v && v !== prev) { setToken(prev); setTokSrc(prevSrc); }
+        say("✗ " + (e && e.status ? ghErrorFa(e) : (e && e.message) || "همگام‌سازی ممکن نشد"), "error");
+      });
+    };
+    var pt = document.getElementById("pull-token");
+    if (pt) pt.onclick = function () {
+      say("در حال دریافت…", "busy");
+      pwFromForm().then(function (pw) { return pullToken(pw, { force: true }); }).then(function (r) {
+        if (r.pulled) { settingsView(); toast("توکن همگام شد"); testToken(); }
+        else say(r.badPw ? "✗ با این رمز باز نشد (توکن با رمز دیگری رمزگذاری شده)." : r.exists ? "✗ دریافت ممکن نشد." : "نسخه‌ی همگام‌شده‌ای در مخزن نیست.", "error");
+      }).catch(function (e) { say("✗ " + ((e && e.message) || "دریافت ممکن نشد"), "error"); });
+    };
+    var armed = false;
+    document.getElementById("del-token-all").onclick = function () {
+      var b = this;
+      if (!getToken()) { say("برای حذف فایل همگام‌سازی از مخزن، توکن لازم است.", "error"); return; }
+      if (!armed) { armed = true; b.textContent = "مطمئنی؟ دوباره بزن"; setTimeout(function () { armed = false; if (b.isConnected) b.textContent = "حذف توکن از همه دستگاه‌ها"; }, 5000); return; }
+      armed = false; say("در حال حذف…", "busy");
+      encSha().then(function (sha) {
+        if (!sha) return null;
+        return gh("/contents/" + ENC_PATH, { method: "DELETE", body: { message: "config: remove synced token", sha: sha, branch: GH_BRANCH } });
+      }).then(function () {
+        setToken(""); setTokSrc(""); state.syncAvailable = false; settingsView();
+        var m = document.getElementById("sync-msg");
+        m.textContent = "✓ نسخه‌ی همگام‌شده حذف شد و توکن از این دستگاه پاک شد. دستگاه‌های دیگر دفعه‌ی بعد که پنل را باز کنند آن را پاک می‌کنند. برای باطل کردن کامل، توکن را در گیت‌هاب هم حذف کن."; m.setAttribute("data-state", "ok");
+      }).catch(function (e) { say("✗ " + ghErrorFa(e), "error"); });
+    };
+    if (tok) testToken();
   }
   function testToken() {
-    var msg = document.getElementById("tokmsg"); if (msg) msg.textContent = "در حال آزمایش…";
-    Promise.all([gh(""), gh("/actions/workflows").catch(function (e) { return { _err: e }; })]).then(function (res) {
+    var msg = document.getElementById("tokmsg"), st = document.getElementById("token-status");
+    if (msg) msg.textContent = "در حال آزمایش…";
+    function status(ok, text) { if (!st) return; st.className = "tok-status " + (ok ? "ok" : "bad"); st.setAttribute("data-state", ok ? "connected" : "invalid"); st.textContent = text; }
+    Promise.all([validateToken(), gh("/actions/workflows").catch(function (e) { return { _err: e }; })]).then(function (res) {
       var repo = res[0], wf = res[1], parts = [];
-      parts.push(repo.permissions && repo.permissions.push ? "✓ دسترسی Contents (نوشتن) دارد" : "✗ دسترسی نوشتن Contents ندارد");
+      var push = !!(repo.permissions && repo.permissions.push);
+      parts.push(push ? "✓ دسترسی Contents (نوشتن) دارد" : "✗ دسترسی نوشتن Contents ندارد");
       parts.push(wf && !wf._err ? "✓ دسترسی Actions دارد" : "✗ دسترسی Actions ندارد");
+      status(true, push ? "✓ متصل" : "✓ متصل (فقط خواندن)");
       if (msg) msg.textContent = parts.join(" · ");
-    }).catch(function (e) { if (msg) msg.textContent = "✗ " + ghErrorFa(e); });
+    }).catch(function (e) { status(false, "✗ متصل نیست"); if (msg) msg.textContent = "✗ " + ghErrorFa(e); });
   }
 
   // ------------------------------------------------------------- publish
@@ -912,7 +1185,13 @@
       e.preventDefault();
       var u = document.getElementById("u").value.trim(), p = pi.value;
       sha256hex(AUTH_SALT + u + "|" + p).then(function (h) {
-        if (h === AUTH_HASH) { try { localStorage.setItem(AUTH_KEY, h); } catch (e2) {} render(); }
+        if (h === AUTH_HASH) {
+          try { localStorage.setItem(AUTH_KEY, h); } catch (e2) {}
+          setSessPw(u, p); // kept only for this tab (token encryption/decryption), never in localStorage
+          render();
+          if (!getToken()) pullToken(p).then(function (r) { if (r.pulled) { toast("توکن همگام شد"); rerenderSafe(); } }).catch(function () {});
+          else syncOnStart();
+        }
         else { document.getElementById("err").textContent = "نام کاربری یا رمز عبور اشتباه است"; }
       });
     };
@@ -950,7 +1229,7 @@
 
   window.addEventListener("hashchange", render);
   if (!authed()) loginView();
-  load(false);
+  load(false).then(syncOnStart);
 
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
     window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
