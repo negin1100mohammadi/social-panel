@@ -1,0 +1,8 @@
+{
+ "req": "verify3",
+ "page": "shode-dige",
+ "ok": false,
+ "error": "invalid_grant",
+ "error_fa": "کد تأیید منقضی یا قبلاً استفاده شده؛ دوباره «اتصال» را بزن.",
+ "at": "2026-11-15T20:32:21Z"
+}
