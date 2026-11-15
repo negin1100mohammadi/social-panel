@@ -432,6 +432,8 @@ class Workflows(unittest.TestCase):
             self.assertIn("run-name:", s)
             self.assertIn("${{ inputs.req }}", s)
             self.assertIn("TOKEN_KEY: ${{ secrets.TOKEN_KEY }}", s)
+            # one `git add` per existing file: a single add with a missing path adds nothing at all
+            self.assertNotRegex(s, r"git add [^\n]*\.json [^\n]*\.json")
         pub = open(os.path.join(REPO, ".github/workflows/publish.yml"), encoding="utf-8").read()
         self.assertNotIn("YT_REFRESH_TOKEN_", pub)
         self.assertIn("TOKEN_KEY: ${{ secrets.TOKEN_KEY }}", pub)
