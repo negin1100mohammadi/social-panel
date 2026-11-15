@@ -104,7 +104,33 @@ All handles live in `config.json` (`pages[].accounts`). Page order on the Home s
 
 The vault button only links to `https://vault.vaultwarden.com/`. Never commit passwords, tokens or vault content to this repo — use GitHub Secrets.
 
-## Tests (v5)
+## v6 (2026-11-15)
+
+### فارسی — تغییرات نسخه‌ی ۶
+- **اتصال توکن روی همه‌ی دستگاه‌ها:** اگر روی این دستگاه وارد پنل هستی ولی توکن نداری و نسخه‌ی رمزگذاری‌شده در مخزن هست، روی هر صفحه پنجره‌ی «برای فعال‌سازی اتصال، رمز پنل را یک بار وارد کن» باز می‌شود (در «انتشار» و «تنظیمات» همان فرم داخل صفحه است). بعد از ورود دوباره هم خودکار باز می‌شود.
+- **آمار دقیق هر پست:** `data/posts_history.json` در هر اجرا بازدید/لایک/کامنت تک‌تک پست‌ها را ثبت می‌کند (۹۵ روز). صفحه‌ی آمار یک فیلتر زمانی واحد دارد (۳ ساعت، ۲۴ ساعت، ۳۰ روز، ۹۰ روز): جمع بازدید/لایک/کامنت تازه با بازه‌ی دقیق «از … تا …» به وقت تهران و پوشش داده، نمودار روند، و فهرست پست‌ها به ترتیب بازدید تازه.
+- **دکمه‌ی آمار:** لینک واقعی با محدوده‌ی جدا؛ ترتیب کانال‌ها در طول بازدید ثابت است و هیچ چیزی در پس‌زمینه ردیف‌ها را جابه‌جا نمی‌کند.
+- **«ورود»** حالا بخش مدیریت اکانت را باز می‌کند (داشبورد حرفه‌ای اینستاگرام و Meta Business Suite، YouTube Studio، داشبورد آپارات، TikTok Studio).
+- **ابزارها:** جعبه‌ی طوسی «ابزارها» در صفحه‌ی اصلی؛ هر هوش مصنوعی دو دکمه‌ی «نگین» و «امیرحسین» دارد که صفحه‌ی معمولی آن را باز می‌کنند. لینک Muse در همان صفحه قابل ویرایش است.
+
+### English — v6
+- `data/posts_history.json` (written by `scripts/fetch_stats.py` every run): per account `runs` (every successful read) and per post `s: [[iso, views, likes, comments], ...]` stored on change, plus title/url/thumb/published/first/last. Pruned like history.json (all 3 d, hourly to 14 d, daily to 95 d). Rounded counts ("1.2K") are stored as null. `scripts/backfill_posts_history.py` rebuilt it from every committed `data/latest.json`.
+- Window math (app.js `computeWindow`/`postGain`): gain = value at window end − value at window start; posts published inside the window count from 0; posts first seen inside the window count from their first reading (labelled). Bucket gains sum exactly to the window total.
+- YouTube: RSS feed (intermittently 404) → fallback to channel Videos/Shorts tabs + each video's watch page for exact views/likes/date.
+- Scheduled refresh cron `7,22,37,52 * * * *` (GitHub drops/delays many runs; aims at ~30 min).
+- Service worker v6: skipWaiting + clients.claim; the page reloads once when a new version takes over.
+- Tools config: `config.json` → `tools.items[]` (`id`, `name`, `url`, `editable`), `tools.accounts[]` (`id`, `name`).
+
+## Tests (v6)
+```
+npm i playwright@1.48 && npx playwright install chromium
+NOW=$(date +%s%3N); python3 tests/make_fixture.py /tmp/fx $NOW
+FIXTURE_NOW=$NOW node tests/v6.test.js /tmp/fx .     # ~13 000 checks
+node tests/token_sync.test.js /tmp/fx                 # settings sync / delete flows
+```
+`tests/v6.test.js`: every route at 390 px and 1280 px in light and dark; per-post window math against an independent implementation and a hand-computed account; every chart and admin link by `elementFromPoint` and a real click/tap (each group alone and all open, after a background data reload); tools; unlock modal (mocked GitHub API, real WebCrypto, real committed `config/token.enc.json` format); SW update → exactly one reload.
+
+## Tests (v5, superseded)
 
 Headless Chromium at iPhone width (390px). Setup once: `npm i playwright && npx playwright install chromium`.
 

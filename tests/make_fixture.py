@@ -113,4 +113,78 @@ for pidx, pg in enumerate(cfg["pages"]):
                                "recent": recent if pl != "tiktok" else [], "fetched_at": fs.iso(last_snap)}
     latest["pages"][pg["id"]] = pb
 json.dump(latest, open(os.path.join(out, "data", "latest.json"), "w"), ensure_ascii=False)
-print("fixture written", out, sum(len(v) for v in series.values()), "points")
+
+# ---------------------------------------------------------------- per-post history (v6)
+# Generated directly (a run every 30 min), stored change-only exactly like update_posts_history, then pruned by
+# the real prune_posts_history. Coverage differs per account: 92 days, 20 days, last 2 hours, none.
+def gen_posts(key, idx):
+    span = [timedelta(days=92), timedelta(days=20), timedelta(hours=2), timedelta(days=92)][idx % 4]
+    pl = key.split("/")[1]
+    t0 = last_snap - span
+    runs = []
+    t = last_snap
+    while t >= t0:
+        runs.append(t)
+        t -= timedelta(minutes=30)
+    runs.reverse()
+    ages = [timedelta(minutes=50), timedelta(hours=2, minutes=40), timedelta(hours=10), timedelta(days=2),
+            timedelta(days=20), timedelta(days=60), timedelta(days=100), None]
+    posts = {}
+    for j, age in enumerate(ages):
+        pub = (last_snap - age) if age is not None else None
+        pid = f"{pl}-{idx}-{j}"
+        e = {"s": [], "title": f"پست {j} ({pl})", "url": f"https://example.com/{pid}", "thumb": None,
+             "published": fs.iso(pub) if pub else None}
+        v = l = c = 0
+        for rt in runs:
+            if pub is not None and rt < pub:
+                continue
+            if pub is None and rt < last_snap - timedelta(days=5):
+                continue
+            v += rnd.randint(0, 9) if rnd.random() < 0.6 else 0
+            l += 1 if rnd.random() < 0.15 else 0
+            if rnd.random() < 0.01:
+                v -= 1  # platforms sometimes correct a count downwards
+            c += 1 if rnd.random() < 0.05 else 0
+            vals = [None if pl == "instagram" else v, None if pl == "aparat" else l, c if pl == "instagram" else None]
+            ts = fs.iso(rt)
+            e.setdefault("first", ts)
+            e["last"] = ts
+            if not e["s"] or e["s"][-1][1:] != vals:
+                e["s"].append([ts] + vals)
+        if e["s"]:
+            posts[pid] = e
+    return {"runs": [fs.iso(x) for x in runs], "posts": posts}
+
+
+ph = {"v": 1, "channels": {}}
+for idx, key in enumerate(keys):
+    pl = key.split("/")[1]
+    if pl == "tiktok":
+        ph["channels"][key] = {"runs": [fs.iso(last_snap - timedelta(minutes=30 * i)) for i in range(40)][::-1], "posts": {}}
+        continue
+    if key == "pretime-tv/youtube":
+        continue  # hand-made below
+    if key == "hamrah-seller/youtube":
+        continue  # no per-post data at all
+    ph["channels"][key] = gen_posts(key, idx)
+fs.POSTS_KEEP_DAYS = 95
+fs.prune_posts_history(ph, now)
+
+# hand-made account with known answers (checked by tests/v6.test.js against numbers worked out by hand):
+N = now
+def T(**kw):
+    return fs.iso(N - timedelta(**kw))
+ph["channels"]["pretime-tv/youtube"] = {
+    "runs": [T(hours=4), T(hours=2), T(hours=1), T(minutes=10)],
+    "posts": {
+        "A": {"title": "A", "url": "https://example.com/A", "published": T(hours=5), "first": T(hours=4), "last": T(minutes=10),
+              "s": [[T(hours=4), 100, 1, None], [T(hours=2), 150, 2, None], [T(hours=1), 170, 2, None], [T(minutes=10), 200, 3, None]]},
+        "B": {"title": "B", "url": "https://example.com/B", "published": T(days=30), "first": T(hours=4), "last": T(minutes=10),
+              "s": [[T(hours=4), 1000, None, None], [T(hours=1), 1010, None, None], [T(minutes=10), 1030, None, None]]},
+        "C": {"title": "C", "url": "https://example.com/C", "published": T(minutes=30), "first": T(minutes=10), "last": T(minutes=10),
+              "s": [[T(minutes=10), 7, 0, None]]},
+    }}
+json.dump(ph, open(os.path.join(out, "data", "posts_history.json"), "w"), ensure_ascii=False)
+print("fixture written", out, sum(len(v) for v in series.values()), "points;",
+      sum(len(c["posts"]) for c in ph["channels"].values()), "posts")

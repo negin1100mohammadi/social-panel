@@ -93,12 +93,13 @@ async function decryptNode(obj, pw) {
   const B = await device(false); await login(B.page);
   await B.page.waitForFunction(() => localStorage.getItem("sp_gh_token"), null, { timeout: 20000 }).catch(() => {});
   ok(await ls(B.page, "sp_gh_token") === TOKEN, "B: token not synced on login");
-  ok(/توکن همگام شد/.test(await B.page.evaluate(() => document.body.innerText)), "B: no 'توکن همگام شد' note");
+  ok(/اتصال گیت‌هاب فعال شد/.test(await B.page.evaluate(() => document.body.innerText)), "B: no 'connected' note after login");
 
   // device C: already logged in (no password in this session) -> banner -> settings -> enter password -> pull
   const C = await device(true);
-  await C.page.waitForSelector("#sync-banner", { timeout: 15000 }).catch(() => {});
-  ok(!!(await C.page.$("#sync-banner")), "C: no sync banner on home");
+  await C.page.waitForSelector("#unlock-modal", { timeout: 15000 }).catch(() => {});
+  ok(!!(await C.page.$("#unlock-modal")), "C: no 'enter panel password' modal on home (v6)");
+  await C.page.click("#unlock-later");
   await C.page.evaluate(() => { location.hash = "#/settings"; }); await C.page.waitForSelector("#sync-pw");
   await C.page.fill("#sync-user", U); await C.page.fill("#sync-pw", "wrong");
   await C.page.click("#pull-token"); await C.page.waitForSelector("#sync-msg[data-state='error']", { timeout: 10000 }).catch(() => {});

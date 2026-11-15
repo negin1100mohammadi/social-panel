@@ -21,7 +21,9 @@
   var MEDIA_BRANCH = "media-upload";
   var MAX_UPLOAD = 70 * 1024 * 1024; // GitHub blob API limit is 100 MB after base64
 
-  var state = { config: null, latest: null, history: null, error: null, busy: false, progress: "", syncAvailable: false };
+  var SP_VERSION = "v6";
+  window.SP_VERSION = SP_VERSION;
+  var state = { config: null, latest: null, history: null, postsHist: null, error: null, busy: false, progress: "", syncAvailable: false, encCreated: null, chOrder: null };
   var app = document.getElementById("app");
 
   // ---------------------------------------------------------------- utils
@@ -95,12 +97,20 @@
   }
 
   // ------------------------------------------------------------ platform info
-  var LOGIN_URL = {
-    instagram: "https://www.instagram.com/accounts/login/",
-    youtube: "https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fstudio.youtube.com%2F",
-    aparat: "https://www.aparat.com/signin",
-    tiktok: "https://www.tiktok.com/login"
-  };
+  // "ورود" opens the account's owner/admin area (sign-in first when needed), not the public page
+  function adminLinks(cp, pl, r) {
+    if (pl === "instagram") return [
+      { label: "ورود", long: "داشبورد حرفه‌ای اینستاگرام", url: "https://www.instagram.com/accounts/login/?next=%2Faccounts%2Fprofessional_dashboard%2F" },
+      { label: "Meta", long: "Meta Business Suite", url: "https://business.facebook.com/latest/home" }];
+    if (pl === "youtube") {
+      var cid = r && /^UC[\w-]{22}$/.test(r.channel_id || "") ? r.channel_id : "";
+      var studio = "https://studio.youtube.com/" + (cid ? "channel/" + cid : "");
+      return [{ label: "ورود", long: "YouTube Studio", url: "https://accounts.google.com/ServiceLogin?service=youtube&continue=" + encodeURIComponent(studio) }];
+    }
+    if (pl === "aparat") return [{ label: "ورود", long: "داشبورد آپارات", url: "https://www.aparat.com/dashboard" }];
+    if (pl === "tiktok") return [{ label: "ورود", long: "TikTok Studio", url: "https://www.tiktok.com/tiktokstudio" }];
+    return [];
+  }
   var NO_ACCESS = "فقط با دسترسی به خود اکانت";
   var PICON = {
     instagram: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="16.9" cy="7.1" r="1" fill="#fff" stroke="none"/></svg>',
@@ -123,6 +133,7 @@
   var ICON_EYE_OFF = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
   var ICON_SEND = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>';
   var ICON_SEND_SM = ICON_SEND.replace(/width="22" height="22"/, 'width="17" height="17"');
+  var ICON_TOOLS = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z"/><path d="M18.5 14.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/><path d="M5.5 15.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>';
   var ICON_GEAR = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
 
   // ------------------------------------------------------------ channel helpers
@@ -294,16 +305,16 @@
     if (state.busy) return;
     state.busy = true; state.progress = "در حال به‌روزرسانی…"; rerenderSafe();
     var before = state.latest && state.latest.updated_at;
-    var job = getToken() ? runRefreshWorkflow() : Promise.resolve({ ran: false });
+    var job = tokenState().has ? runRefreshWorkflow() : Promise.resolve({ ran: false });
     job.then(function (res) {
       setProgress("در حال دریافت داده‌های تازه…");
-      return load(true, true).then(function () { return res; });
+      return load(true, true).then(function () { state.chOrder = null; return res; });
     }).then(function (res) {
       state.busy = false; state.progress = ""; rerenderSafe();
       var now = state.latest && state.latest.updated_at;
       if (res.error) toast(res.error, 5000);
       else if (res.ran) toast(now && now !== before ? "همه‌ی کانال‌ها و عکس‌های پروفایل به‌روز شد" : "اجرا تمام شد؛ تغییری در داده‌ها نبود");
-      else toast(now && now !== before ? "داده‌های تازه بارگذاری شد" : "داده‌ها به‌روز هستند · آخرین بررسی " + ago(now) + " · برای بررسی فوری، توکن را در تنظیمات بگذار");
+      else toast(now && now !== before ? "داده‌های تازه بارگذاری شد" : "داده‌ها به‌روز هستند · آخرین بررسی " + ago(now) + (tokenState().locked ? " · برای بررسی فوری، رمز پنل را یک بار وارد کن" : " · برای بررسی فوری، توکن را در تنظیمات بگذار"));
     });
   }
   function runRefreshWorkflow() {
@@ -340,7 +351,7 @@
   // -------------------------------------------------------------- home
   function homeView() {
     var html = topbar("پنل پیج‌ها");
-    var total = 0;
+    var total = 0, ts = tokenState();
     state.config.pages.forEach(function (cp) { total += newCount(cp, pageData(cp)); });
     html += '<div class="boxes">';
     html += '<a class="vault" href="' + VAULT_URL + '" rel="noopener">' +
@@ -353,32 +364,43 @@
       '<span class="arrow">←</span></a>';
     html += '<a class="pubbox" href="#/publish" id="pubbox">' +
       '<span class="vi">' + ICON_SEND + '</span><span><div class="vt">انتشار محتوا</div>' +
-      '<div class="vs">' + (getToken() ? "آپلود ویدیو یا عکس، انتشار و زمان‌بندی" : "اول توکن گیت‌هاب را در تنظیمات بگذار") + "</div></span>" +
+      '<div class="vs">' + esc(ts.has ? "آپلود ویدیو یا عکس، انتشار و زمان‌بندی" : ts.locked ? "برای فعال‌سازی اتصال، رمز پنل را یک بار وارد کن" : "اول توکن گیت‌هاب را در تنظیمات بگذار") + "</div></span>" +
+      '<span class="arrow">←</span></a>';
+    html += '<a class="toolbox" href="#/tools" id="toolbox">' +
+      '<span class="vi">' + ICON_TOOLS + '</span><span><div class="vt">ابزارها</div>' +
+      '<div class="vs">هوش‌های مصنوعی برای نگین و امیرحسین</div></span>' +
       '<span class="arrow">←</span></a>';
     html += "</div>";
-    if (!getToken() && state.syncAvailable) html += '<a class="sync-banner" id="sync-banner" href="#/settings">یک توکن همگام‌شده از دستگاه دیگر آماده است؛ برای فعال شدن، در تنظیمات رمز پنل را وارد کن ←</a>';
-    html += '<a class="setrow" href="#/settings">' + ICON_GEAR + "<span>تنظیمات</span><em>" + (getToken() ? "توکن ثبت شده" : "توکن ثبت نشده") + "</em></a>";
+    html += '<a class="setrow" href="#/settings">' + ICON_GEAR + "<span>تنظیمات</span><em id=\"tok-pill\" data-state=\"" + ts.state + "\">" + esc(ts.label) + "</em></a>";
     html += '<button class="logout" id="logout">خروج از پنل</button>';
     app.innerHTML = html;
     bindTopbar();
-    document.getElementById("logout").onclick = function () { try { localStorage.removeItem(AUTH_KEY); } catch (e) {} setSessPw("", ""); render(); };
+    document.getElementById("logout").onclick = function () { try { localStorage.removeItem(AUTH_KEY); } catch (e) {} setSessPw("", ""); closeUnlock(); render(); };
   }
 
   // -------------------------------------------------------------- channels (tree)
+  // The order is computed once (newest activity first) and then kept for the whole visit: nothing that loads
+  // in the background (data, token sync, avatars, fonts) may move a row while the user is about to tap it.
+  function channelOrder() {
+    if (state.chOrder && state.chOrder.length === state.config.pages.length) return state.chOrder;
+    var list = state.config.pages.map(function (cp, i) { var pg = pageData(cp); return { id: cp.id, last: lastActivity(cp, pg), i: i }; });
+    list.sort(function (a, b) {
+      if (a.last && b.last && b.last.t !== a.last.t) return b.last.t - a.last.t;
+      if (a.last && !b.last) return -1; if (b.last && !a.last) return 1; return a.i - b.i;
+    });
+    state.chOrder = list.map(function (x) { return x.id; });
+    return state.chOrder;
+  }
   function channelsView() {
     var html = topbar("کانال‌ها");
     html += '<button class="back" id="back">→ صفحه‌ی اصلی</button>';
     var opened = openSet();
-    var list = state.config.pages.map(function (cp, i) { var pg = pageData(cp); return { cp: cp, page: pg, last: lastActivity(cp, pg), i: i }; });
-    list.sort(function (a, b) {
-      if (a.last && b.last) return b.last.t - a.last.t;
-      if (a.last) return -1; if (b.last) return 1; return a.i - b.i;
-    });
-    html += '<div class="clist">';
-    list.forEach(function (x) {
-      var cp = x.cp, page = x.page, open = !!opened[cp.id];
+    html += '<div class="clist" id="clist">';
+    channelOrder().forEach(function (id) {
+      var cp = cpById(id); if (!cp) return;
+      var page = pageData(cp), last = lastActivity(cp, page), open = !!opened[cp.id];
       var nc = newCount(cp, page);
-      var sub = x.last ? (x.last.dated ? "آخرین انتشار " : "تغییر تعداد محتوا ") + ago(new Date(x.last.t).toISOString()) + " · " + PNAME[x.last.pl] : "محتوایی شناسایی نشد";
+      var sub = last ? (last.dated ? "آخرین انتشار " : "تغییر تعداد محتوا ") + ago(new Date(last.t).toISOString()) + " · " + PNAME[last.pl] : "محتوایی شناسایی نشد";
       html += '<div class="cgroup' + (open ? " open" : "") + '" data-page="' + esc(cp.id) + '">';
       html += '<div class="chead"><button class="cbox" data-id="' + esc(cp.id) + '" aria-expanded="' + open + '">' +
         logoHTML(cp, page) +
@@ -393,19 +415,23 @@
           var handle = (cp.accounts || {})[pl]; if (!handle) return;
           var url = (r && r.url) || "#";
           var shown = pl === "tiktok" ? "@" + String(handle).replace(/^@/, "") : handle;
-          html += '<div class="branch" data-pl="' + pl + '">' +
-            '<a class="bnet" href="' + esc(url) + '" target="_blank" rel="noopener">' + picon(pl) +
+          var route = "#/a/" + cp.id + "/" + pl;
+          html += '<div class="branch" data-pl="' + pl + '" data-page="' + esc(cp.id) + '">' +
+            '<a class="bnet" href="' + esc(url) + '" target="_blank" rel="noopener" title="صفحه‌ی عمومی ' + PNAME[pl] + '">' + picon(pl) +
             '<span class="bt"><b>' + PNAME[pl] + '</b><span class="bh">' + esc(shown) + "</span></span></a>" +
-            '<a class="bbtn" href="' + esc(LOGIN_URL[pl]) + '" target="_blank" rel="noopener" title="ورود به ' + PNAME[pl] + '">' + ICON_LOGIN + "<span>ورود</span></a>" +
-            '<a class="bbtn chartbtn" data-route="a/' + esc(cp.id) + "/" + pl + '" href="#/a/' + esc(cp.id) + "/" + pl + '" title="آمار ' + PNAME[pl] + " " + esc(cp.name) + '" aria-label="آمار ' + PNAME[pl] + '">' + ICON_CHART + "</a>" +
+            adminLinks(cp, pl, r).map(function (x, i) {
+              return '<a class="bbtn adm' + (i ? " alt" : "") + '" data-admin="' + pl + '" href="' + esc(x.url) + '" target="_blank" rel="noopener" title="' + esc(x.long) + '">' + (i ? "" : ICON_LOGIN) + "<span>" + esc(x.label) + "</span></a>";
+            }).join("") +
+            '<a class="bbtn chartbtn" data-route="' + esc(route.slice(2)) + '" href="' + esc(route) + '" title="آمار ' + PNAME[pl] + " " + esc(cp.name) + '" aria-label="آمار ' + PNAME[pl] + " " + esc(cp.name) + '">' + ICON_CHART + "</a>" +
             "</div>";
         });
+        html += '<p class="adm-note">«ورود» بخش مدیریت همان اکانت را باز می‌کند. اگر در آن مرورگر چند اکانت وارد شده‌اند، بعد از باز شدن از منوی همان سایت اکانت درست را انتخاب کن.</p>';
         html += "</div>";
       }
       html += "</div>";
     });
     html += "</div>";
-    html += '<p class="footnote">ترتیب کانال‌ها بر اساس جدیدترین انتشار در هر چهار شبکه است. زنگوله یعنی از آخرین باری که این کانال را باز کردی، لایک یا کامنت تازه آمده.</p>';
+    html += '<p class="footnote">ترتیب کانال‌ها بر اساس جدیدترین انتشار در هر چهار شبکه است (در طول این بازدید ثابت می‌ماند). زنگوله یعنی از آخرین باری که این کانال را باز کردی، لایک یا کامنت تازه آمده.</p>';
     app.innerHTML = html;
     bindTopbar();
     document.getElementById("back").onclick = function () { location.hash = "#/"; };
@@ -415,6 +441,75 @@
         o[id] = !o[id]; saveOpen(o);
         if (o[id]) { var cp = cpById(id); markSeen(cp, pageData(cp)); }
         var y = window.scrollY; channelsView(); window.scrollTo(0, y);
+      };
+    });
+  }
+
+  // -------------------------------------------------------------- tools (AI apps)
+  // Each AI opens its normal page; Negin and Amirhossein sign in there themselves (one button each, same link).
+  var TOOL_DEFAULTS = {
+    accounts: [{ id: "negin", name: "نگین" }, { id: "amirhossein", name: "امیرحسین" }],
+    items: [
+      { id: "hark", name: "Hark", url: "https://hark.com" },
+      { id: "muse", name: "Muse", url: "", editable: true },
+      { id: "gemini", name: "Gemini", url: "https://gemini.google.com/app" },
+      { id: "chatgpt", name: "ChatGPT", url: "https://chatgpt.com" },
+      { id: "claude", name: "Claude", url: "https://claude.ai" },
+      { id: "aistudio", name: "Google AI Studio", url: "https://aistudio.google.com" },
+      { id: "flow", name: "Google Flow", url: "https://labs.google/fx/tools/flow" }
+    ]
+  };
+  var TOOL_COLORS = { hark: "#7c3aed", muse: "#0f766e", gemini: "#1a73e8", chatgpt: "#10a37f", claude: "#d97757", aistudio: "#4285f4", flow: "#ea4335" };
+  var TOOL_URL_KEY = "sp_tool_url"; // { <tool id>: url } typed on this device (e.g. Muse)
+  function toolsConf() {
+    var t = (state.config && state.config.tools) || {};
+    return { accounts: t.accounts && t.accounts.length ? t.accounts : TOOL_DEFAULTS.accounts, items: t.items && t.items.length ? t.items : TOOL_DEFAULTS.items };
+  }
+  function toolURL(it) {
+    var own = (lsGet(TOOL_URL_KEY, {}) || {})[it.id];
+    return (it.editable && own) ? own : (it.url || "");
+  }
+  function hostOf(u) { return String(u || "").replace(/^https?:\/\//, "").replace(/\/.*$/, ""); }
+  function toolsView() {
+    var T = toolsConf(), opened = lsGet("sp_tool_open", "");
+    var html = topbar("ابزارها");
+    html += '<button class="back" id="back">→ صفحه‌ی اصلی</button>';
+    html += '<div class="tlist" id="tlist">' + T.items.map(function (it) {
+      var open = opened === it.id, url = toolURL(it);
+      var badge = '<span class="tbadge" style="background:' + (TOOL_COLORS[it.id] || "#64748b") + '">' + esc((it.name || "?").replace(/^Google\s+/, "").charAt(0).toUpperCase()) + "</span>";
+      var h = '<div class="tool' + (open ? " open" : "") + '" data-tool="' + esc(it.id) + '"><button type="button" class="thead" aria-expanded="' + open + '">' + badge +
+        '<span class="tn"><b>' + esc(it.name) + "</b><small>" + esc(url ? hostOf(url) : "لینک تنظیم نشده") + "</small></span>" +
+        '<span class="pm">' + (open ? "−" : "+") + "</span></button>";
+      if (open) {
+        h += '<div class="taccs">';
+        if (!url) h += '<div class="muted-note tmissing">لینک تنظیم نشده — آدرس را پایین وارد کن.</div>';
+        else T.accounts.forEach(function (acc) {
+          h += '<a class="tacc" data-acc="' + esc(acc.id) + '" href="' + esc(url) + '" target="_blank" rel="noopener"><b>' + esc(acc.name) + "</b></a>";
+        });
+        h += "</div>";
+        if (it.editable) h += '<form class="turl" data-tool="' + esc(it.id) + '" onsubmit="return false"><label for="turl-' + esc(it.id) + '">لینک ' + esc(it.name) + '</label><div class="turl-row"><input id="turl-' + esc(it.id) + '" type="text" dir="ltr" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="https://…" value="' + esc(url) + '"><button type="submit" class="go sm">ذخیره</button></div></form>';
+      }
+      return h + "</div>";
+    }).join("") + "</div>";
+    app.innerHTML = html;
+    bindTopbar();
+    document.getElementById("back").onclick = function () { location.hash = "#/"; };
+    var tl = document.getElementById("tlist");
+    tl.onclick = function (e) {
+      var hd = e.target.closest ? e.target.closest(".thead") : null; if (!hd) return;
+      var id = hd.parentNode.getAttribute("data-tool");
+      lsSet("sp_tool_open", lsGet("sp_tool_open", "") === id ? "" : id);
+      var y = window.scrollY; toolsView(); window.scrollTo(0, y);
+    };
+    Array.prototype.forEach.call(tl.querySelectorAll(".turl"), function (f) {
+      f.onsubmit = function (e) {
+        if (e) e.preventDefault();
+        var id = f.getAttribute("data-tool"), v = f.querySelector("input").value.trim();
+        if (v && !/^https?:\/\//i.test(v)) v = "https://" + v;
+        if (v && !/^https?:\/\/[^\s/]+\.[^\s]+/i.test(v)) { toast("این شبیه یک لینک نیست"); return false; }
+        var all = lsGet(TOOL_URL_KEY, {}) || {}; if (v) all[id] = v; else delete all[id]; lsSet(TOOL_URL_KEY, all);
+        toast(v ? "لینک ذخیره شد" : "لینک پاک شد"); toolsView();
+        return false;
       };
     });
   }
@@ -502,18 +597,6 @@
     res.state = res.n >= 2 ? "ok" : "insufficient";
     return res;
   }
-  function computePosts(posts, mk, rg, now) {
-    var from = now - rg.ms;
-    var dated = posts.map(function (p) { return { p: p, t: tsOf(p.published) }; }).filter(function (x) { return x.t != null; });
-    var inR = dated.filter(function (x) { return x.t >= from && x.t <= now; }).sort(function (a, b) { return a.t - b.t; });
-    var oldest = dated.length ? Math.min.apply(null, dated.map(function (x) { return x.t; })) : null;
-    return {
-      from: from, to: now, dated: dated.length, oldest: oldest,
-      items: inR.map(function (x) { return { t: x.t, y: x.p[mk] == null ? null : x.p[mk], title: x.p.title || "" }; }),
-      n: inR.filter(function (x) { return x.p[mk] != null; }).length, count: inR.length
-    };
-  }
-
   // items: [{label, y (number|null), tip}]; oldest on the left
   function svgChart(items, type, fmt, opts) {
     opts = opts || {};
@@ -564,7 +647,112 @@
     return '<div class="chart" dir="ltr" data-state="ok" data-n="' + vals.length + '" data-slots="' + n + '" data-first="' + esc(first.label) + '" data-last="' + esc(last.label) + '">' + s + '<div class="axis">' + ax + "</div></div>";
   }
 
-  // -------------------------------------------------------------- analytics
+  // -------------------------------------------------------------- analytics (v6: per-post, one page-level filter)
+  // data/posts_history.json keeps, for every account, the time of every successful read ("runs") and for every
+  // listed post its views/likes/comments at each read (a point is stored when a number changed).
+  // Gain of a post in [a, b] = value at b − value at a. A post published inside the selected window counts from 0.
+  // A post published before the window but first seen inside it counts from its first reading (labelled).
+  var K3 = ["v", "l", "c"];
+  var KNAME = { v: "بازدید", l: "لایک", c: "کامنت" };
+  var MKEY = { views: "v", likes: "l", comments: "c" };
+  var VIEW_KEY = "sp_view";
+  function viewPref() {
+    var p = lsGet(VIEW_KEY, {}) || {};
+    return { r: rangeById(p.r || "24h").id, m: /^(views|likes|comments)$/.test(p.m || "") ? p.m : "views", type: p.type === "line" ? "line" : "bar" };
+  }
+  function saveViewPref(p) { lsSet(VIEW_KEY, { r: p.r, m: p.m, type: p.type }); }
+
+  function loadPH(pid, pl) {
+    var c = (((state.postsHist || {}).channels) || {})[pid + "/" + pl];
+    if (!c) return null;
+    var runs = (c.runs || []).map(tsOf).filter(function (t) { return t != null; }).sort(function (a, b) { return a - b; });
+    var posts = Object.keys(c.posts || {}).map(function (id) {
+      var e = c.posts[id] || {};
+      var pts = (e.s || []).map(function (q) { return { t: tsOf(q[0]), v: num(q[1]), l: num(q[2]), c: num(q[3]) }; })
+        .filter(function (q) { return q.t != null; }).sort(function (a, b) { return a.t - b.t; });
+      return { id: id, title: e.title || "", url: e.url || "", thumb: e.thumb || "", published: tsOf(e.published),
+        first: pts.length ? pts[0].t : null, last: tsOf(e.last) || (pts.length ? pts[pts.length - 1].t : null), pts: pts };
+    }).filter(function (p) { return p.pts.length; });
+    return { runs: runs, posts: posts };
+  }
+  // value of metric k at time T (undefined before the first reading; may be null when the platform did not give it)
+  function valAt(p, k, T) {
+    if (p.first == null || T < p.first) return undefined;
+    var v;
+    for (var i = 0; i < p.pts.length && p.pts[i].t <= T; i++) v = p.pts[i][k];
+    return v;
+  }
+  function firstWith(p, k, a, b) {
+    for (var i = 0; i < p.pts.length; i++) { var q = p.pts[i]; if (q.t > b) break; if (q.t > a && q[k] != null) return q; }
+    return null;
+  }
+  // gain of one post in [a, b]; winFrom = start of the selected window (decides "published in the window -> from 0")
+  function postGain(p, k, a, b, winFrom) {
+    if (p.first == null || p.first > b) return null; // not read yet at b
+    var end = valAt(p, k, b);
+    var fresh = p.published != null && p.published >= winFrom;
+    if (end == null) return { g: null, fresh: fresh };
+    var base = p.first <= a ? valAt(p, k, a) : null, since = null;
+    if (base == null) {
+      var f = firstWith(p, k, p.first <= a ? a : p.first - 1, b);
+      if (!f) return { g: null, fresh: fresh };
+      if (fresh) base = 0; else { base = f[k]; since = f.t; }
+    }
+    return { g: end - base, fresh: fresh, since: since, end: end };
+  }
+  function computeWindow(ph, rg, now) {
+    var from = now - rg.ms;
+    var res = { from: from, to: now, runsIn: 0, firstRun: null, lastRun: null, posts: [], totals: {}, avail: {}, sortKey: "v" };
+    if (!ph) { res.none = true; return res; }
+    var runs = ph.runs.filter(function (t) { return t <= now; });
+    res.firstRun = runs.length ? runs[0] : null;
+    res.lastRun = runs.length ? runs[runs.length - 1] : null;
+    res.runsIn = runs.filter(function (t) { return t >= from; }).length;
+    K3.forEach(function (k) { res.avail[k] = ph.posts.some(function (p) { return p.pts.some(function (q) { return q[k] != null; }); }); });
+    res.sortKey = res.avail.v ? "v" : res.avail.l ? "l" : "c";
+    ph.posts.forEach(function (p) {
+      if (p.first == null || p.first > now) return;
+      if (p.last != null && p.last < from) return; // left the platform's list before this window: unknown
+      var row = { p: p, g: {}, cur: {}, fresh: p.published != null && p.published >= from && p.published <= now, since: null };
+      K3.forEach(function (k) {
+        var r = postGain(p, k, from, now, from);
+        row.g[k] = r ? r.g : null;
+        var cv = valAt(p, k, now); row.cur[k] = cv == null ? null : cv;
+        if (r && r.since != null && (row.since == null || r.since < row.since)) row.since = r.since;
+      });
+      res.posts.push(row);
+    });
+    K3.forEach(function (k) {
+      var have = res.posts.filter(function (r) { return r.g[k] != null; });
+      res.totals[k] = have.length ? have.reduce(function (s, r) { return s + r.g[k]; }, 0) : null;
+    });
+    var sk = res.sortKey;
+    res.posts.sort(function (a, b) {
+      var ga = a.g[sk] == null ? -Infinity : a.g[sk], gb = b.g[sk] == null ? -Infinity : b.g[sk];
+      if (gb !== ga) return gb - ga;
+      return (b.p.published || 0) - (a.p.published || 0);
+    });
+    return res;
+  }
+  // window gains over time: one value per Tehran-aligned bucket (null = no reading in that bucket)
+  function computeTimeline(ph, k, rg, now) {
+    var from = now - rg.ms, bs = buckets(rg, now);
+    var runs = ph ? ph.runs : [];
+    var items = bs.map(function (bk, i) {
+      var has = runs.some(function (t) { return (i === 0 ? t >= bk.a : t > bk.a) && t <= bk.b; });
+      if (!has) return { t: bk.a, b: bk.b, y: null };
+      var sum = 0;
+      ph.posts.forEach(function (p) { var r = postGain(p, k, bk.a, bk.b, from); if (r && r.g != null) sum += r.g; });
+      return { t: bk.a, b: bk.b, y: sum };
+    });
+    var fi = -1;
+    for (var j = 0; j < items.length; j++) if (items[j].y != null) { fi = j; break; }
+    items = fi < 0 ? [] : items.slice(fi);
+    var acc = 0;
+    items.forEach(function (d) { if (d.y != null) { acc += d.y; d.cum = acc; } else d.cum = null; });
+    return { items: items, n: items.filter(function (d) { return d.y != null; }).length, total: acc };
+  }
+
   function sumOf(posts, k) {
     var have = posts.filter(function (p) { return p[k] != null; });
     if (!have.length) return null;
@@ -574,107 +762,147 @@
     return '<div class="kpi"><div class="k">' + esc(label) + '</div><div class="v">' + esc(value) + "</div>" +
       (sub ? '<div class="pct">' + esc(sub) + "</div>" : "") + (note ? '<div class="n">' + esc(note) + "</div>" : "") + "</div>";
   }
-  var BOX_KEY = "sp_box";
-  function boxDefault(def) { return { r: "30d", type: def.kind === "level" ? "line" : "bar", m: "views" }; }
-  function boxPref(key, def) {
-    var all = lsGet(BOX_KEY, {}), p = all[key] || {}, d = boxDefault(def);
-    return { r: rangeById(p.r || d.r).id, type: p.type === "bar" || p.type === "line" ? p.type : d.type, m: /^(views|likes|comments)$/.test(p.m || "") ? p.m : d.m };
-  }
-  function saveBoxPref(key, p) { var all = lsGet(BOX_KEY, {}); all[key] = { r: p.r, type: p.type, m: p.m }; lsSet(BOX_KEY, all); }
-
   function metricUnavailable(pl, k) {
     if (k === "f") return "تعداد " + FOLLOW_LABEL[pl] + " از " + PNAME[pl] + " در دسترس نیست";
-    if (k === "v" && pl === "instagram") return "اینستاگرام بازدید را بدون توکن Graph API نمی‌دهد";
+    if (k === "v" && pl === "instagram") return "اینستاگرام تعداد بازدید را بدون اتصال رسمی (توکن) نمی‌دهد";
     if (k === "v" && pl === "tiktok") return "تیک‌تاک بازدید را بدون دسترسی به اکانت نمی‌دهد";
-    if (k === "l" && pl === "aparat") return "آپارات لایک را عمومی نمی‌دهد";
-    if (k === "c" && pl === "youtube") return "تعداد کامنت یوتیوب با کلید YouTube API خوانده می‌شود";
-    if (k === "c" && (pl === "aparat" || pl === "tiktok")) return PNAME[pl] + " کامنت را عمومی نمی‌دهد";
+    if (k === "l" && pl === "aparat") return "آپارات تعداد لایک را عمومی نمی‌دهد";
+    if (k === "c" && pl === "youtube") return "یوتیوب تعداد کامنت را بدون کلید API نمی‌دهد";
+    if (k === "c" && (pl === "aparat" || pl === "tiktok")) return PNAME[pl] + " تعداد کامنت را عمومی نمی‌دهد";
     return "این عدد از " + PNAME[pl] + " در دسترس نیست";
   }
+  var NO_POSTS_MSG = { tiktok: "تیک‌تاک آمار تک‌تک ویدیوها را بدون دسترسی به اکانت نمی‌دهد؛ فقط مجموع لایک‌ها و تعداد دنبال‌کننده‌ها خوانده می‌شود." };
+  var BUCKET_FA = { "3h": "نیم ساعت", "24h": "ساعت", "30d": "روز", "90d": "۳ روز" };
+  function fmtWhen(t) { return fmtFmt(t, { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }); }
+  function gainTxt(g) { return g == null ? "—" : g > 0 ? "+" + fa(g) : g === 0 ? "۰" : "−" + fa(Math.abs(g)); }
+  function dataAttr(v) { return v == null ? "" : String(v); }
+
   function rangeNote(a, b, rg, extra) {
     return '<div class="range-note" data-from="' + (a == null ? "" : new Date(a).toISOString()) + '" data-to="' + (b == null ? "" : new Date(b).toISOString()) + '">' +
       esc(a == null ? "در این بازه داده‌ای ثبت نشده" : "داده‌ی نمودار: " + tFull(a, rg) + (b != null && b !== a ? " تا " + tFull(b, rg) : "") + (extra || "")) + "</div>";
   }
 
-  function boxBody(ctx, def, pref, nowArg) {
-    var rg = rangeById(pref.r), now = nowArg || Date.now();
-    var s = ctx.series, pl = ctx.pl, html = "";
-    if (def.kind === "level" || def.kind === "delta") {
-      var k = def.key, R = computeLevelDelta(s, k, def.kind, rg, now);
-      if (R.state === "unavailable") return '<div class="chart" data-state="unavailable" data-n="0"><div class="empty">' + esc(metricUnavailable(pl, k)) + "</div></div>";
-      var anchorNote = R.anchorFirst != null ? " (از اولین ثبت: " + fmtShort(R.anchorFirst) + ")" : "";
-      if (def.kind === "level") html += '<div class="bhead"><b>' + esc(fa(R.value)) + '</b><span class="chg" data-change="' + (R.change == null ? "" : R.change) + '">' + esc(R.change == null ? "در " + rg.label + " اندازه‌گیری نشده" : signed(R.change) + " در " + rg.label + anchorNote) + "</span></div>";
-      else html += '<div class="bhead"><b class="chg" data-change="' + (R.change == null ? "" : R.change) + '">' + esc(R.change == null ? "—" : signed(R.change)) + "</b><span>" + esc("در " + rg.label + anchorNote) + "</span></div>";
-      if (R.state === "insufficient") {
-        html += '<div class="chart" data-state="insufficient" data-n="' + R.n + '"><div class="empty">' + esc("هنوز داده کافی برای این بازه نیست — از " + fmtShort(R.firstEver) + " جمع‌آوری شده" + (R.count ? "" : " · آخرین اندازه‌گیری: " + fmtShort(R.lastEver))) + "</div></div>";
-      } else {
-        var items = R.items.map(function (d) { var lb = tLabel(d.t, rg); return { label: lb, y: d.y, tip: d.at != null ? fmtShort(d.at) : lb }; });
-        html += svgChart(items, pref.type, function (v) { return compact(v); }, { label: def.title, zero: def.kind === "delta" });
-      }
-      html += rangeNote(R.coverage && R.coverage.a, R.coverage && R.coverage.b, rg, R.count ? " · " + fa(R.count) + " اندازه‌گیری" : "");
-      return html;
+  // ---- page parts (pure HTML builders; `now` injectable for tests)
+  function summaryHTML(A, pl, rg, W, chan) {
+    var h = '<section class="sumbox" id="summary" data-r="' + rg.id + '" data-from="' + new Date(W.from).toISOString() + '" data-to="' + new Date(W.to).toISOString() + '"' +
+      ' data-gv="' + dataAttr(W.totals.v) + '" data-gl="' + dataAttr(W.totals.l) + '" data-gc="' + dataAttr(W.totals.c) + '" data-runs="' + W.runsIn + '" data-nposts="' + W.posts.length + '">';
+    h += '<div class="sum-h"><b>' + esc(rg.label) + '</b><span class="win" id="win">' + esc("از " + fmtWhen(W.from) + " تا " + fmtWhen(W.to)) + " <small>(به وقت تهران)</small></span></div>";
+    if (A.noPosts) {
+      h += '<div class="sum-msg">' + esc(A.noPosts) + "</div>";
+    } else {
+      h += '<div class="sum3">' + K3.map(function (k) {
+        var av = W.avail[k], t = W.totals[k];
+        return '<div class="s1" data-k="' + k + '"><div class="sv">' + esc(av ? gainTxt(t == null ? 0 : t) : "—") + '</div><div class="sk">' + KNAME[k] + " تازه</div>" +
+          (av ? "" : '<div class="sn">' + esc(metricUnavailable(pl, k)) + "</div>") + "</div>";
+      }).join("") + "</div>";
+      h += '<div class="sum-sub">' + esc("جمع " + fa(W.posts.length) + " " + POSTS_LABEL[pl] + "ی که در این بازه زیر نظر بوده‌اند") + "</div>";
     }
-    // per-post metrics, filtered by post date
-    var mk = pref.m || "views";
-    var mlabel = { views: "بازدید", likes: "لایک", comments: "کامنت" }[mk];
-    if (!ctx.posts.length) return '<div class="chart" data-state="unavailable" data-n="0"><div class="empty">' + esc(pl === "tiktok" ? "تیک‌تاک فهرست و تاریخ ویدیوها را بدون دسترسی به اکانت نمی‌دهد" : "هنوز " + POSTS_LABEL[pl] + "ی شناسایی نشده") + "</div></div>";
-    var P = computePosts(ctx.posts, mk, rg, now);
-    if (!P.dated) return '<div class="chart" data-state="unavailable" data-n="0"><div class="empty">تاریخ انتشار ' + esc(POSTS_LABEL[pl]) + "‌ها در دسترس نیست</div></div>";
-    html += '<div class="seg small" role="group">' + ["views", "likes", "comments"].map(function (m) {
-      return '<button type="button" data-m="' + m + '" class="' + (m === mk ? "on" : "") + '">' + { views: "بازدید", likes: "لایک", comments: "کامنت" }[m] + "</button>";
+    // coverage, stated exactly
+    var cov;
+    if (W.firstRun == null) cov = "هنوز اندازه‌گیری‌ای برای این اکانت ثبت نشده.";
+    else {
+      cov = "اندازه‌گیری در این بازه: " + fa(W.runsIn) + " بار" + (W.lastRun ? " · آخرین: " + fmtWhen(W.lastRun) + " (" + ago(new Date(W.lastRun).toISOString()) + ")" : "");
+      if (W.firstRun > W.from) cov += " · داده از " + fmtWhen(W.firstRun) + " موجود است؛ قبل از آن عددی ثبت نشده و افزایش‌ها از همان زمان حساب شده‌اند.";
+      if (!W.runsIn) cov += " · در این بازه اندازه‌گیری تازه‌ای انجام نشده، پس افزایشی دیده نمی‌شود.";
+    }
+    h += '<div class="cov" id="coverage" data-first="' + (W.firstRun == null ? "" : new Date(W.firstRun).toISOString()) + '">' + esc(cov) + "</div>";
+    if (chan) h += chan;
+    return h + "</section>";
+  }
+  // channel-wide totals (all videos, not only the listed ones) from data/history.json, when the platform gives them
+  function channelTotalHTML(series, pl, r, rg, now) {
+    var parts = [];
+    [["v", "بازدید"], ["l", "لایک"]].forEach(function (x) {
+      var k = x[0], last = null;
+      for (var i = series.length - 1; i >= 0; i--) if (series[i][k] != null) { last = series[i]; break; }
+      if (!last || ((last.b || {})[k] || "") !== "t") return;
+      var R = computeLevelDelta(series, k, "delta", rg, now);
+      if (R.change == null) return;
+      parts.push('<span data-k="' + k + '" data-change="' + R.change + '">' + esc(gainTxt(R.change) + " " + x[1]) + "</span>");
+    });
+    if (!parts.length) return "";
+    return '<div class="chan-total" id="chan-total">کل کانال (همه‌ی ' + esc(POSTS_LABEL[pl]) + "‌ها، طبق آمار خود " + esc(PNAME[pl]) + "): " + parts.join(" · ") + "</div>";
+  }
+  function trendHTML(A, pl, rg, pref, now) {
+    var k = MKEY[pref.m];
+    if (!A.noPosts && !A.W.avail[k] && A.W.avail[A.W.sortKey]) k = A.W.sortKey; // e.g. Instagram has no views: show likes
+    var em = { v: "views", l: "likes", c: "comments" }[k];
+    var h = '<section class="abox" id="trend" data-m="' + em + '" data-type="' + pref.type + '">';
+    h += '<div class="abh"><h3>روند ' + KNAME[k] + " تازه</h3>" +
+      '<div class="seg type" role="group" aria-label="نوع نمودار"><button type="button" data-type="bar" class="' + (pref.type === "bar" ? "on" : "") + '">میله‌ای</button><button type="button" data-type="line" class="' + (pref.type === "line" ? "on" : "") + '">خطی</button></div></div>';
+    h += '<div class="seg small mseg" role="group" aria-label="کدام عدد">' + ["views", "likes", "comments"].map(function (m) {
+      var na = !A.noPosts && !A.W.avail[MKEY[m]];
+      return '<button type="button" data-m="' + m + '" class="' + (m === em ? "on" : "") + (na ? " na" : "") + '"' + (na ? ' disabled title="' + esc(metricUnavailable(pl, MKEY[m])) + '"' : "") + ">" + KNAME[MKEY[m]] + "</button>";
     }).join("") + "</div>";
-    var inPosts = P.items, sum = inPosts.filter(function (d) { return d.y != null; }).reduce(function (a, d) { return a + d.y; }, 0);
-    html += '<div class="bhead"><b class="chg" data-change="' + P.count + '">' + esc(fa(P.count)) + " " + esc(POSTS_LABEL[pl]) + "</b><span>" + esc("در " + rg.label + (P.count ? " · مجموع " + mlabel + " " + (P.n ? fa(sum) : "—") : "")) + "</span></div>";
-    var unavailable = ctx.posts.every(function (p) { return p[mk] == null; });
-    if (unavailable) return html + '<div class="chart" data-state="unavailable" data-n="0"><div class="empty">' + esc(metricUnavailable(pl, { views: "v", likes: "l", comments: "c" }[mk])) + "</div></div>";
-    var items2 = inPosts.map(function (d) { var lb = tLabel(d.t, rg); return { label: lb, y: d.y, tip: d.title.slice(0, 40) + " · " + fmtShort(d.t) }; });
-    html += svgChart(items2, pref.type, function (v) { return compact(v); }, { label: mlabel, zero: true, empty: "در " + rg.label + " " + POSTS_LABEL[pl] + "ی منتشر نشده" });
-    var listNote = P.oldest != null && P.oldest > P.from ? " · فهرست فقط " + fa(P.dated) + " " + POSTS_LABEL[pl] + "ِ آخر را دارد (از " + fmtDayOnly(P.oldest) + ")" : "";
-    html += rangeNote(inPosts.length ? inPosts[0].t : null, inPosts.length ? inPosts[inPosts.length - 1].t : null, rg, listNote);
-    return html;
+    if (A.noPosts) return h + '<div class="chart" data-state="unavailable" data-n="0"><div class="empty">' + esc(A.noPosts) + "</div></div></section>";
+    if (!A.W.avail[k]) return h + '<div class="chart" data-state="unavailable" data-n="0"><div class="empty">' + esc(metricUnavailable(pl, k)) + "</div></div></section>";
+    var T = computeTimeline(A.ph, k, rg, now);
+    h += '<p class="chart-cap">' + esc(pref.type === "bar" ? KNAME[k] + " تازه در هر " + BUCKET_FA[rg.id] + " (جمع همه‌ی " + POSTS_LABEL[pl] + "‌ها)" : "جمع " + KNAME[k] + " تازه از ابتدای بازه") + "</p>";
+    if (T.n < 1) {
+      h += '<div class="chart" data-state="insufficient" data-n="0"><div class="empty">' + esc("در این بازه اندازه‌گیری‌ای نیست" + (A.W.firstRun ? " — داده از " + fmtWhen(A.W.firstRun) + " جمع‌آوری شده" : "")) + "</div></div>";
+    } else {
+      var items = T.items.map(function (d) { return { label: tLabel(d.t, rg), y: pref.type === "bar" ? d.y : d.cum, tip: tFull(d.t, rg) + " تا " + fmtTime(d.b) }; });
+      h += svgChart(items, pref.type, function (v) { return gainTxt(v); }, { label: KNAME[k], zero: true });
+      h += '<div class="tl-meta" data-total="' + T.total + '" data-n="' + T.n + '"></div>';
+    }
+    return h + "</section>";
   }
-  function boxInner(ctx, def, pref) {
-    return '<div class="abh"><h3>' + esc(def.title) + "</h3>" +
-      '<div class="seg type" role="group" aria-label="نوع نمودار"><button type="button" data-type="line" class="' + (pref.type === "line" ? "on" : "") + '">خطی</button><button type="button" data-type="bar" class="' + (pref.type === "bar" ? "on" : "") + '">میله‌ای</button></div></div>' +
-      '<div class="seg range" role="group" aria-label="بازه‌ی زمانی">' + RANGES.map(function (r) {
-        return '<button type="button" data-r="' + r.id + '" class="' + (r.id === pref.r ? "on" : "") + '" aria-pressed="' + (r.id === pref.r) + '">' + r.short + "</button>";
-      }).join("") + "</div>" +
-      '<div class="abody">' + boxBody(ctx, def, pref) + "</div>";
+  function followersHTML(series, pl, rg, pref, now) {
+    var R = computeLevelDelta(series, "f", "level", rg, now);
+    var h = '<section class="abox" id="followers"><div class="abh"><h3>' + esc(FOLLOW_LABEL[pl]) + "‌ها</h3></div>";
+    if (R.state === "unavailable") return h + '<div class="chart" data-state="unavailable" data-n="0"><div class="empty">' + esc(metricUnavailable(pl, "f")) + "</div></div></section>";
+    h += '<div class="bhead"><b>' + esc(fa(R.value)) + '</b><span class="chg" data-change="' + dataAttr(R.change) + '">' + esc(R.change == null ? "در این بازه اندازه‌گیری نشده" : (R.change === 0 ? "بدون تغییر" : signed(R.change)) + " در " + rangeById(pref.r).label + (R.anchorFirst != null ? " (از اولین ثبت: " + fmtShort(R.anchorFirst) + ")" : "")) + "</span></div>";
+    if (R.state === "insufficient") h += '<div class="chart" data-state="insufficient" data-n="' + R.n + '"><div class="empty">' + esc("برای رسم نمودار هنوز اندازه‌گیری کافی در این بازه نیست — از " + fmtShort(R.firstEver) + " جمع‌آوری شده") + "</div></div>";
+    else {
+      var fitems = R.items.map(function (d) { var lb = tLabel(d.t, rg); return { label: lb, y: d.y, tip: d.at != null ? fmtShort(d.at) : lb }; });
+      // the change is measured from the start value; if the first bucket only shows a later value, show the start too
+      var startV = R.change == null ? null : R.value - R.change, startT = R.anchorFirst != null ? R.anchorFirst : R.from;
+      if (startV != null && fitems.length && fitems[0].y !== startV) fitems.unshift({ label: tLabel(startT, rg), y: startV, tip: "شروع: " + fmtShort(startT) });
+      h += svgChart(fitems, pref.type === "bar" ? "bar" : "line", function (v) { return fa(v); }, { label: FOLLOW_LABEL[pl] });
+    }
+    h += rangeNote(R.coverage && R.coverage.a, R.coverage && R.coverage.b, rg, R.count ? " · " + fa(R.count) + " اندازه‌گیری" : "");
+    return h + "</section>";
   }
-  function boxHTML(ctx, def) {
-    var key = ctx.pid + "/" + ctx.pl + "/" + def.id;
-    var pref = boxPref(key, def);
-    return '<section class="abox" data-box="' + esc(def.id) + '" data-key="' + esc(key) + '" data-r="' + pref.r + '" data-type="' + pref.type + '">' + boxInner(ctx, def, pref) + "</section>";
+  function postsHTML(A, pl) {
+    var W = A.W;
+    if (A.noPosts) return '<div class="muted-note" id="plist-empty">' + esc(A.noPosts) + "</div>";
+    if (!W.posts.length) return '<div class="muted-note" id="plist-empty">' + esc(A.ph && A.ph.runs.length ? "در این بازه " + POSTS_LABEL[pl] + "ی زیر نظر نبوده (هنوز " + POSTS_LABEL[pl] + "ی منتشر نشده یا فهرستش در دسترس نیست)." : "هنوز داده‌ی " + POSTS_LABEL[pl] + "‌ها ثبت نشده.") + "</div>";
+    return '<div class="plist" id="plist">' + W.posts.map(function (row, i) {
+      var p = row.p;
+      var gains = K3.map(function (k) {
+        var av = W.avail[k];
+        return '<span class="g g' + k + (av && row.g[k] > 0 ? " up" : "") + '"' + (av ? "" : ' title="' + esc(metricUnavailable(pl, k)) + '"') + "><b>" + esc(av ? gainTxt(row.g[k]) : "—") + "</b> " + KNAME[k] + "</span>";
+      }).join("");
+      var tot = K3.map(function (k) { return (W.avail[k] && row.cur[k] != null ? fa(row.cur[k]) : "—") + " " + KNAME[k]; }).join(" · ");
+      var notes = [];
+      if (row.fresh) notes.push('<span class="tag new">منتشرشده در همین بازه — از صفر حساب شده</span>');
+      else if (row.since != null) notes.push('<span class="tag">از اولین ثبت (' + esc(fmtWhen(row.since)) + ") حساب شده</span>");
+      var quiet = !K3.some(function (k) { return row.g[k]; });
+      return '<a class="prow' + (quiet ? " quiet" : "") + '" href="' + esc(p.url || "#") + '" target="_blank" rel="noopener" data-id="' + esc(p.id) + '" data-gv="' + dataAttr(row.g.v) + '" data-gl="' + dataAttr(row.g.l) + '" data-gc="' + dataAttr(row.g.c) + '" data-fresh="' + (row.fresh ? 1 : 0) + '">' +
+        '<span class="pn">' + fa(i + 1) + "</span>" +
+        '<span class="pthumb">' + (p.thumb ? '<img loading="lazy" referrerpolicy="no-referrer" alt="" src="' + esc(p.thumb) + '" onerror="this.remove()">' : "") + "</span>" +
+        '<span class="pbody"><span class="pt">' + esc(p.title || "(بدون عنوان)") + "</span>" +
+        '<span class="pd">' + esc(p.published != null ? "انتشار: " + fmtWhen(p.published) : "تاریخ انتشار نامشخص") + "</span>" +
+        '<span class="pg">' + gains + "</span>" +
+        '<span class="ptot">' + esc("الان در مجموع: " + tot) + "</span>" + notes.join("") + "</span></a>";
+    }).join("") + "</div>";
   }
-  // one delegated listener per render of the analytics view; each box reads its own key/def at click time
-  function bindBoxes(ctx, defs) {
-    var wrap = document.querySelector(".aboxes"); if (!wrap) return;
-    wrap.onclick = function (e) {
-      var b = e.target.closest ? e.target.closest("button") : null; if (!b) return;
-      var el = b.closest(".abox"); if (!el || !wrap.contains(el)) return;
-      var def = defs.filter(function (d) { return d.id === el.getAttribute("data-box"); })[0]; if (!def) return;
-      var key = el.getAttribute("data-key"), pref = boxPref(key, def);
-      if (b.hasAttribute("data-r")) pref.r = b.getAttribute("data-r");
-      else if (b.hasAttribute("data-type")) pref.type = b.getAttribute("data-type");
-      else if (b.hasAttribute("data-m")) pref.m = b.getAttribute("data-m");
-      else return;
-      saveBoxPref(key, pref);
-      el.setAttribute("data-r", pref.r); el.setAttribute("data-type", pref.type);
-      el.innerHTML = boxInner(ctx, def, pref);
-    };
-  }
-  window.__spChart = { tsOf: function (v) { return tsOf(v); }, computeLevelDelta: computeLevelDelta, computePosts: computePosts, buckets: buckets, RANGES: RANGES, comparable: comparable };
+  window.__spChart = { tsOf: function (v) { return tsOf(v); }, computeLevelDelta: computeLevelDelta, buckets: buckets, RANGES: RANGES, comparable: comparable,
+    loadPH: loadPH, valAt: valAt, postGain: postGain, computeWindow: computeWindow, computeTimeline: computeTimeline };
 
-  function analyticsView(pid, pl) {
+  function analyticsView(pid, pl, nowArg) {
     var cp = cpById(pid);
     if (!cp || PLATFORMS.indexOf(pl) < 0) { location.hash = "#/channels"; return; }
     var page = pageData(cp), r = page.platforms[pl] || {};
     var ok = hasData(r);
-    var posts = ok ? (r.recent || []).slice().sort(function (a, b) { return (tsOf(b.published) || 0) - (tsOf(a.published) || 0); }) : [];
+    var handle = r.handle || (cp.accounts || {})[pl] || "";
     var html = topbar(cp.name);
     html += '<button class="back" id="back">→ کانال‌ها</button>';
-    html += '<div class="ahead" data-page="' + esc(pid) + '" data-platform="' + pl + '">' + logoHTML(cp, page, "big", pl) + '<div class="at"><h1>' + esc(cp.name) + "</h1>" +
-      '<div class="asub">' + picon(pl) + "<span><b>" + PNAME[pl] + '</b> · <span class="ah" dir="ltr">' + esc(r.handle || (cp.accounts || {})[pl] || "") + '</span></span><a href="' + esc(r.url || "#") + '" target="_blank" rel="noopener">باز کردن ↗</a></div></div></div>';
+    html += '<div class="ahead" data-page="' + esc(pid) + '" data-platform="' + pl + '">' +
+      '<span class="aplat">' + picon(pl) + "</span>" + logoHTML(cp, page, "big", pl) +
+      '<div class="at"><h1 id="a-title">' + esc(cp.name) + '</h1><div class="asub"><b class="pname" id="a-platform">' + PNAME[pl] + '</b><span class="ah" dir="ltr">' + esc(pl === "tiktok" ? "@" + String(handle).replace(/^@/, "") : handle) + "</span></div>" +
+      '<div class="alinks"><a href="' + esc(r.url || "#") + '" target="_blank" rel="noopener">صفحه‌ی عمومی ↗</a>' +
+      adminLinks(cp, pl, r).map(function (x) { return '<a class="admin" href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.long) + " ↗</a>"; }).join("") + "</div></div></div>";
 
     if (!ok) {
       var why = pl === "instagram" ? "داده اینستاگرام هنوز در دسترس نیست (نیاز به توکن)"
@@ -688,51 +916,54 @@
       document.getElementById("back").onclick = function () { location.hash = "#/channels"; };
       return;
     }
-    if (r.stale) html += '<div class="alert">آخرین تلاش ناموفق بود؛ عددها مربوط به ' + esc(fmtDateTime(r.fetched_at)) + " هستند.</div>";
-
-    html += '<div class="kpis three">' +
-      kpi(FOLLOW_LABEL[pl], fa(r.followers)) +
-      kpi("کل " + POSTS_LABEL[pl] + "‌ها", fa(r.posts)) +
-      kpi(pl === "tiktok" ? "کل لایک‌ها" : "کل بازدیدها", fa(pl === "tiktok" ? r.total_likes : r.total_views), "", (pl === "tiktok" ? r.total_likes : r.total_views) == null ? NO_ACCESS : "") +
-      "</div>";
-    var act = platformActivity(pid, pl, r);
-    html += '<p class="lastpost">' + esc(act ? (act.dated ? "آخرین انتشار: " : "آخرین تغییر تعداد محتوا: ") + fmtDateTime(new Date(act.t).toISOString()) + " (" + ago(new Date(act.t).toISOString()) + ")" : "هنوز انتشاری شناسایی نشده") + "</p>";
-
-    var ctx = { pid: pid, pl: pl, series: seriesOf(pid, pl), posts: posts };
-    var defs = [
-      { id: "followers", title: "روند " + FOLLOW_LABEL[pl] + "‌ها", kind: "level", key: "f" },
-      { id: "views", title: "بازدید تازه", kind: "delta", key: "v" },
-      { id: "likes", title: "لایک تازه", kind: "delta", key: "l" },
-      { id: "comments", title: "کامنت تازه", kind: "delta", key: "c" },
-      { id: "posts", title: "عملکرد هر " + POSTS_LABEL[pl] + " (بر اساس تاریخ انتشار)", kind: "posts" }
-    ];
-    html += '<div class="aboxes">' + defs.map(function (d) { return boxHTML(ctx, d); }).join("") + "</div>";
-
-    html += "<h3>محتوا به ترتیب آخرین انتشار</h3>";
-    if (!posts.length) {
-      html += '<div class="muted-note">' + esc(r.posts === 0 ? "هنوز " + POSTS_LABEL[pl] + "ی منتشر نشده" :
-        pl === "tiktok" ? "تیک‌تاک آمار تک‌ویدیو را بدون دسترسی به اکانت نمی‌دهد" : "فهرست در دسترس نیست") + "</div>";
-    } else {
-      html += '<div class="posts">' + posts.map(function (p, i) {
-        var m = [];
-        m.push("بازدید " + fa(p.views));
-        m.push("لایک " + fa(p.likes) + (p.likes != null && p.views ? " (" + pct((p.likes / p.views) * 100) + ")" : ""));
-        m.push("کامنت " + fa(p.comments));
-        if (p.shares != null) m.push("اشتراک " + fa(p.shares));
-        if (p.saves != null) m.push("ذخیره " + fa(p.saves));
-        return '<a class="post" href="' + esc(p.url) + '" target="_blank" rel="noopener">' +
-          '<span class="pn">' + fa(i + 1) + "</span>" +
-          (p.thumb ? '<img loading="lazy" referrerpolicy="no-referrer" alt="" src="' + esc(p.thumb) + '" onerror="this.remove()">' : "") +
-          '<div class="body"><div class="pt">' + esc(p.title || "(بدون عنوان)") + '</div><div class="pm2">' + esc(p.published ? fmtShort(p.published) + " · " + ago(p.published) : "تاریخ نامشخص") + "</div>" +
-          '<div class="pm">' + m.map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("") + "</div></div></a>";
-      }).join("") + "</div>";
-    }
-    html += '<p class="footnote">هر جعبه فیلتر زمانی و نوع نمودار خودش را دارد. عددهای «تازه» تفاوت بین اندازه‌گیری‌های ثبت‌شده است (هر ۳۰ دقیقه، تا ۹۰ روز). «—» یعنی عدد در دسترس نبود؛ هیچ عددی حدس زده نمی‌شود.</p>';
+    var pref = viewPref();
+    html += '<div class="gfilter" id="gfilter"><span class="gl">بازه‌ی زمانی همه‌ی این صفحه:</span><div class="seg range" role="group" aria-label="بازه‌ی زمانی">' + RANGES.map(function (x) {
+      return '<button type="button" data-r="' + x.id + '" class="' + (x.id === pref.r ? "on" : "") + '" aria-pressed="' + (x.id === pref.r) + '">' + x.short + "</button>";
+    }).join("") + "</div></div>";
+    if (r.stale) html += '<div class="alert">آخرین تلاش برای خواندن ' + esc(PNAME[pl]) + " ناموفق بود؛ عددهای فعلی مربوط به " + esc(fmtDateTime(r.fetched_at)) + " هستند.</div>";
+    html += '<div id="abody"></div>';
+    html += '<p class="footnote">همه‌ی عددهای «تازه» از مقایسه‌ی اندازه‌گیری‌های واقعیِ ثبت‌شده به دست می‌آیند (حدود هر ۳۰ تا ۶۰ دقیقه، تا ۹۰ روز) و حدس زده نمی‌شوند. «—» یعنی آن عدد را خود پلتفرم نمی‌دهد. عدد منفی یعنی خود پلتفرم شمارش را اصلاح کرده. ساعت‌ها به وقت تهران است.</p>';
     app.innerHTML = html;
     window.scrollTo(0, 0);
     bindTopbar();
-    bindBoxes(ctx, defs);
     document.getElementById("back").onclick = function () { location.hash = "#/channels"; };
+
+    var ph = loadPH(pid, pl);
+    var hasPostLists = ph && ph.posts.length;
+    var A = { ph: ph, noPosts: null };
+    if (!hasPostLists && r.posts === 0 && pl !== "tiktok") A.noPosts = "هنوز " + POSTS_LABEL[pl] + "ی در این کانال منتشر نشده.";
+    else if (!hasPostLists && (pl === "tiktok" || !(r.recent || []).length && r.posts > 0)) A.noPosts = NO_POSTS_MSG[pl] || ("فهرست " + POSTS_LABEL[pl] + "‌های " + PNAME[pl] + " در دسترس نیست؛ آمار تک‌تک " + POSTS_LABEL[pl] + "‌ها نداریم.");
+    var series = seriesOf(pid, pl);
+    function draw() {
+      var now = nowArg || Date.now(), rg = rangeById(pref.r);
+      A.W = computeWindow(ph, rg, now);
+      var b = '<div class="kpis three">' +
+        kpi(FOLLOW_LABEL[pl], fa(r.followers)) +
+        kpi("کل " + POSTS_LABEL[pl] + "‌ها", fa(r.posts)) +
+        kpi(pl === "tiktok" ? "کل لایک‌ها" : "کل بازدیدها", fa(pl === "tiktok" ? r.total_likes : r.total_views), "", (pl === "tiktok" ? r.total_likes : r.total_views) == null ? NO_ACCESS : "") + "</div>";
+      b += summaryHTML(A, pl, rg, A.W, channelTotalHTML(series, pl, r, rg, now));
+      if (!A.noPosts) { // without per-post data the summary already says so; no empty chart/list boxes
+        b += trendHTML(A, pl, rg, pref, now);
+        b += "<h3 id=\"plist-h\">" + esc(POSTS_LABEL[pl] + "‌ها در " + rg.label + " — به ترتیب " + KNAME[A.W.sortKey] + " تازه") + "</h3>";
+        b += postsHTML(A, pl);
+      }
+      b += followersHTML(series, pl, rg, pref, now);
+      document.getElementById("abody").innerHTML = b;
+      var gf = document.getElementById("gfilter");
+      Array.prototype.forEach.call(gf.querySelectorAll("button[data-r]"), function (x) { var on = x.getAttribute("data-r") === pref.r; x.className = on ? "on" : ""; x.setAttribute("aria-pressed", on); });
+    }
+    draw();
+    document.getElementById("gfilter").onclick = function (e) {
+      var bt = e.target.closest ? e.target.closest("button[data-r]") : null; if (!bt) return;
+      pref.r = bt.getAttribute("data-r"); saveViewPref(pref); draw();
+    };
+    document.getElementById("abody").onclick = function (e) {
+      var bt = e.target.closest ? e.target.closest("button") : null; if (!bt) return;
+      if (bt.hasAttribute("data-type")) pref.type = bt.getAttribute("data-type");
+      else if (bt.hasAttribute("data-m")) pref.m = bt.getAttribute("data-m");
+      else return;
+      saveViewPref(pref); draw();
+    };
   }
 
   // ------------------------------------------------------------- encrypted token sync
@@ -789,32 +1020,103 @@
   function pullToken(pw, opts) {
     opts = opts || {};
     return fetchEnc().then(function (obj) {
-      state.syncAvailable = !!obj;
+      state.syncAvailable = !!obj; state.encCreated = obj ? obj.created_at : null;
       if (!obj) return { pulled: false, exists: false };
       if (getToken() && !(opts.force || (tokSrc() && tokSrc() !== obj.created_at))) return { pulled: false, exists: true };
       if (!pw) return { pulled: false, exists: true, needPw: true };
       return decryptToken(obj, pw).then(function (tok) {
         if (!/^(github_pat_|ghp_|gho_)/.test(tok)) throw new Error("bad");
         setToken(tok); setTokSrc(obj.created_at);
+        try { sessionStorage.removeItem(UNLOCK_LATER); } catch (e) {}
         return { pulled: true, exists: true };
       }, function () { return { pulled: false, exists: true, badPw: true }; });
     });
   }
-  // on app start: pick up a token synced from another device, or drop a synced token that was removed everywhere
+  // ONE place that says whether this device can talk to GitHub. Every page reads it from here.
+  //  connected : a token is stored on this device
+  //  locked    : no token here, but an encrypted copy is synced in the repo -> ask for the panel password once
+  //  none      : nothing anywhere
+  function tokenState() {
+    var t = getToken();
+    if (t) return { state: "connected", has: true, locked: false, label: "توکن ثبت شده" };
+    if (state.syncAvailable) return { state: "locked", has: false, locked: true, label: "اتصال منتظر رمز پنل" };
+    return { state: "none", has: false, locked: false, label: "توکن ثبت نشده" };
+  }
+  // decrypt the synced copy with the panel password; resolves {ok} or {ok:false, msg}
+  function unlockWith(pw) {
+    if (!pw) return Promise.resolve({ ok: false, msg: "رمز پنل را وارد کن." });
+    return pullToken(pw, { force: true }).then(function (r) {
+      if (r.pulled) { setSessPw(sessUser(), pw); return { ok: true }; }
+      if (r.badPw) return { ok: false, msg: "این رمز درست نیست (همان رمزی که با آن وارد پنل می‌شوی)." };
+      if (!r.exists) return { ok: false, msg: "نسخه‌ی همگام‌شده‌ی توکن در مخزن پیدا نشد؛ توکن را در تنظیمات بگذار." };
+      return { ok: false, msg: "باز کردن توکن ممکن نشد." };
+    }, function (e) { return { ok: false, msg: "اتصال به گیت‌هاب برقرار نشد (" + ((e && e.message) || "خطا") + "). اینترنت را بررسی کن و دوباره بزن." }; });
+  }
+  function sessUser() { try { return sessionStorage.getItem(USER_KEY) || ""; } catch (e) { return ""; } }
+  function unlockFormHTML(pfx) {
+    return '<form class="unlock-form" id="' + pfx + '-form" autocomplete="on" onsubmit="return false">' +
+      '<input type="text" name="username" autocomplete="username" value="" hidden aria-hidden="true">' +
+      '<label for="' + pfx + '-pw">رمز پنل</label><div class="pw"><input id="' + pfx + '-pw" name="password" type="password" autocomplete="current-password" required></div>' +
+      '<button type="submit" class="go" id="' + pfx + '-go">فعال‌سازی اتصال</button>' +
+      '<div class="msg" id="' + pfx + '-msg" data-state="idle"></div></form>';
+  }
+  function bindUnlockForm(pfx, done) {
+    var f = document.getElementById(pfx + "-form"); if (!f) return;
+    var busy = false;
+    f.onsubmit = function (e) {
+      if (e) e.preventDefault();
+      if (busy) return false;
+      var pwI = document.getElementById(pfx + "-pw"), m = document.getElementById(pfx + "-msg"), go = document.getElementById(pfx + "-go");
+      busy = true; go.disabled = true; m.textContent = "در حال باز کردن…"; m.setAttribute("data-state", "busy");
+      unlockWith(pwI.value).then(function (res) {
+        busy = false; go.disabled = false;
+        if (res.ok) { m.textContent = "✓ اتصال فعال شد"; m.setAttribute("data-state", "ok"); done(); }
+        else { m.textContent = "✗ " + res.msg; m.setAttribute("data-state", "error"); pwI.select && pwI.select(); }
+      });
+      return false;
+    };
+  }
+  var UNLOCK_LATER = "sp_unlock_later";
+  function closeUnlock() { var m = document.getElementById("unlock-modal"); if (m) m.remove(); document.documentElement.classList.remove("modal-open"); }
+  // shown over ANY page while a synced token waits for the password (inline on #/publish and #/settings instead)
+  function ensureUnlockUI() {
+    var ts = tokenState(), inline = onFormPage();
+    var later = false; try { later = sessionStorage.getItem(UNLOCK_LATER) === "1"; } catch (e) {}
+    if (!authed() || !ts.locked || inline || later) { closeUnlock(); return; }
+    if (document.getElementById("unlock-modal")) return;
+    var d = document.createElement("div");
+    d.id = "unlock-modal"; d.className = "modal"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-labelledby", "unlock-title");
+    d.innerHTML = '<div class="modal-card"><div class="vi">' + ICON_LOCK + '</div><h2 id="unlock-title">اتصال به گیت‌هاب</h2>' +
+      "<p>برای فعال‌سازی اتصال، رمز پنل را یک بار وارد کن. توکنی که روی دستگاه دیگری همگام شده با همین رمز باز می‌شود و روی این دستگاه می‌ماند.</p>" +
+      unlockFormHTML("unlock") + '<button type="button" class="ghost later" id="unlock-later">بعداً</button></div>';
+    document.body.appendChild(d);
+    document.documentElement.classList.add("modal-open");
+    bindUnlockForm("unlock", function () { setTimeout(function () { closeUnlock(); toast("اتصال فعال شد ✓ — انتشار و به‌روزرسانی آماده است"); render(); }, 500); });
+    document.getElementById("unlock-later").onclick = function () { try { sessionStorage.setItem(UNLOCK_LATER, "1"); } catch (e) {} closeUnlock(); };
+    setTimeout(function () { var i = document.getElementById("unlock-pw"); if (i && document.activeElement === document.body) try { i.focus({ preventScroll: true }); } catch (e) {} }, 50);
+  }
+  // on app start: pick up a token synced from another device, or drop a synced token that was removed everywhere.
+  // Never re-renders the channel list (rows must not move under a finger); the modal is an overlay.
   function syncOnStart() {
-    if (!authed()) return;
+    if (!authed()) return Promise.resolve();
     var had = getToken(), src = tokSrc();
-    fetchEnc().then(function (obj) {
-      state.syncAvailable = !!obj;
+    return fetchEnc().then(function (obj) {
+      state.syncAvailable = !!obj; state.encCreated = obj ? obj.created_at : null;
       if (!obj) {
-        if (had && src) { setToken(""); setTokSrc(""); toast("توکن از همه‌ی دستگاه‌ها حذف شده بود؛ از این دستگاه هم پاک شد", 4500); rerenderSafe(); }
+        if (had && src) { setToken(""); setTokSrc(""); toast("توکن از همه‌ی دستگاه‌ها حذف شده بود؛ از این دستگاه هم پاک شد", 4500); refreshTokenUI(); }
         return;
       }
       if (had && (!src || src === obj.created_at)) return;
       var pw = sessPw();
-      if (!pw) { if (!had) rerenderSafe(); return; }
-      return pullToken(pw).then(function (r) { if (r.pulled) { toast("توکن همگام شد"); rerenderSafe(); } });
+      if (pw) return pullToken(pw).then(function (r) { if (r.pulled) { toast("توکن همگام شد"); refreshTokenUI(); } else if (!getToken()) refreshTokenUI(); });
+      if (had) return; // a newer synced copy exists, but this device still has a working token: keep it
+      refreshTokenUI();
     }).catch(function () {});
+  }
+  // update only what depends on the token (never rebuilds the channel tree)
+  function refreshTokenUI() {
+    var h = location.hash || "#/";
+    if (/^#\/(publish|settings)/.test(h) || h === "#/" || h === "#") render(); else ensureUnlockUI();
   }
   function credsOk(u, p) { return sha256hex(AUTH_SALT + u + "|" + p).then(function (h) { return h === AUTH_HASH; }); }
   // password for encryption: from this session's login, or typed into the settings form (checked against the login hash)
@@ -836,9 +1138,10 @@
 
   // ------------------------------------------------------------- settings
   function settingsView() {
-    var tok = getToken(), havePw = !!sessPw();
+    var tok = getToken(), havePw = !!sessPw(), ts = tokenState();
     var html = topbar("تنظیمات");
     html += '<button class="back" id="back">→ صفحه‌ی اصلی</button>';
+    if (ts.locked) html += '<section class="card form unlock-card" id="unlock-card"><h2>اتصال فعال نیست</h2><p class="help">یک توکن روی دستگاه دیگری همگام شده است. برای فعال‌سازی اتصال، رمز پنل را یک بار وارد کن.</p>' + unlockFormHTML("sunlock") + "</section>";
     html += '<section class="card form" id="token-card">' +
       "<h2>توکن گیت‌هاب</h2>" +
       '<div class="tok-status ' + (tok ? "" : "bad") + '" id="token-status" data-state="' + (tok ? "checking" : "none") + '">' + (tok ? "در حال بررسی اتصال…" : "✗ متصل نیست") + "</div>" +
@@ -860,6 +1163,7 @@
       (!tok && state.syncAvailable ? '<button type="button" class="ghost" id="pull-token">دریافت توکن همگام‌شده</button>' : "") +
       '<button type="button" class="ghost danger" id="del-token-all">حذف توکن از همه دستگاه‌ها</button></div>' +
       '<div class="msg" id="sync-msg" data-state="idle">' + (state.syncAvailable ? "یک نسخه‌ی رمزگذاری‌شده‌ی توکن در مخزن هست." : "") + "</div></div></section>";
+    html += '<p class="footnote" id="app-version">نسخه‌ی پنل: ' + SP_VERSION + "</p>";
     app.innerHTML = html;
     bindTopbar();
     document.getElementById("back").onclick = function () { location.hash = "#/"; };
@@ -932,6 +1236,7 @@
         m.textContent = "✓ نسخه‌ی همگام‌شده حذف شد و توکن از این دستگاه پاک شد. دستگاه‌های دیگر دفعه‌ی بعد که پنل را باز کنند آن را پاک می‌کنند. برای باطل کردن کامل، توکن را در گیت‌هاب هم حذف کن."; m.setAttribute("data-state", "ok");
       }).catch(function (e) { say("✗ " + ghErrorFa(e), "error"); });
     };
+    bindUnlockForm("sunlock", function () { setTimeout(function () { settingsView(); toast("اتصال فعال شد ✓"); }, 400); });
     if (tok) testToken();
   }
   function testToken() {
@@ -971,15 +1276,18 @@
   }
 
   function publishView(preId, prePl) {
-    var tok = getToken();
+    var ts = tokenState();
     var html = topbar("انتشار محتوا");
     html += '<button class="back" id="back">→ صفحه‌ی اصلی</button>';
-    if (!tok) {
-      html += '<section class="card lilac-note"><div class="vi">' + ICON_SEND + "</div><h2>اول توکن گیت‌هاب را اضافه کن</h2>" +
+    if (!ts.has) {
+      if (ts.locked) html += '<section class="card lilac-note form" id="pub-unlock"><div class="vi">' + ICON_LOCK + "</div><h2>اتصال هنوز روی این دستگاه فعال نشده</h2>" +
+        "<p>برای فعال‌سازی اتصال، رمز پنل را یک بار وارد کن. توکنی که روی دستگاه دیگر همگام شده باز می‌شود و از این به بعد روی این دستگاه می‌ماند.</p>" + unlockFormHTML("punlock") + "</section>";
+      else html += '<section class="card lilac-note" id="pub-notoken"><div class="vi">' + ICON_SEND + "</div><h2>اول توکن گیت‌هاب را اضافه کن</h2>" +
         "<p>انتشار از داخل این پنل با یک توکن گیت‌هاب انجام می‌شود (فایل در صف انتشار گذاشته می‌شود و GitHub Action آن را منتشر می‌کند). توکن فقط در مرورگر همین گوشی می‌ماند.</p>" +
         '<a class="go" href="#/settings">رفتن به تنظیمات</a></section>';
       app.innerHTML = html; bindTopbar();
       document.getElementById("back").onclick = function () { location.hash = "#/"; };
+      bindUnlockForm("punlock", function () { setTimeout(function () { publishView(preId, prePl); toast("اتصال فعال شد ✓"); }, 400); });
       return;
     }
     var sel = preId ? preId + "|" + (prePl || "*") : "all";
@@ -1188,8 +1496,11 @@
         if (h === AUTH_HASH) {
           try { localStorage.setItem(AUTH_KEY, h); } catch (e2) {}
           setSessPw(u, p); // kept only for this tab (token encryption/decryption), never in localStorage
+          try { sessionStorage.removeItem(UNLOCK_LATER); } catch (e2) {}
           render();
-          if (!getToken()) pullToken(p).then(function (r) { if (r.pulled) { toast("توکن همگام شد"); rerenderSafe(); } }).catch(function () {});
+          // a synced token is opened right here with the password just typed (no second prompt);
+          // if that fails for any reason, the "enter panel password" box appears instead
+          if (!getToken()) pullToken(p).then(function (r) { if (r.pulled) { toast("اتصال گیت‌هاب فعال شد ✓"); render(); } else ensureUnlockUI(); }, function () { ensureUnlockUI(); });
           else syncOnStart();
         }
         else { document.getElementById("err").textContent = "نام کاربری یا رمز عبور اشتباه است"; }
@@ -1207,8 +1518,10 @@
     if (a) analyticsView(a[1], a[2]);
     else if (pb) publishView(pb[1], pb[2]);
     else if (/^#\/settings/.test(h)) settingsView();
+    else if (/^#\/tools/.test(h)) toolsView();
     else if (/^#\/(channels|p\/)/.test(h)) channelsView();
     else homeView();
+    ensureUnlockUI();
   }
   function getJSON(url, fresh) {
     return fetch(url + (fresh ? "?t=" + Date.now() : ""), { cache: "no-store" }).then(function (r) {
@@ -1220,22 +1533,43 @@
     return Promise.all([
       getJSON("config.json", fresh),
       getJSON("data/latest.json", true).catch(function () { return null; }),
-      getJSON("data/history.json", true).catch(function () { return { series: {} }; })
+      getJSON("data/history.json", true).catch(function () { return { series: {} }; }),
+      getJSON("data/posts_history.json", true).catch(function () { return { channels: {} }; })
     ]).then(function (res) {
-      state.config = res[0]; state.latest = res[1]; state.history = res[2]; state.error = null;
+      state.config = res[0]; state.latest = res[1]; state.history = res[2]; state.postsHist = res[3]; state.error = null;
       if (!quiet) rerenderSafe();
     }).catch(function (e) { state.error = e; if (!quiet) render(); });
   }
 
-  window.addEventListener("hashchange", render);
+  // hooks for the automated tests (read-only helpers; nothing here bypasses the login)
+  window.__spDebug = {
+    load: function (fresh) { return load(fresh); }, render: function () { render(); }, syncOnStart: function () { return syncOnStart(); }, tokenState: function () { return tokenState(); },
+    mutateActivity: function () { // pretend new posts arrived on the channel currently listed last
+      var ids = channelOrder(), last = ids[ids.length - 1], pg = state.latest && state.latest.pages[last];
+      if (pg) PLATFORMS.forEach(function (pl) { if (pg.platforms[pl]) pg.platforms[pl].last_post_at = new Date().toISOString(); });
+      render();
+    }
+  };
+  var pendingReload = false;
+  window.addEventListener("hashchange", function () { if (pendingReload && !onFormPage()) { location.reload(); return; } render(); });
   if (!authed()) loginView();
   load(false).then(syncOnStart);
 
+  // Service worker: a new version takes over at once (skipWaiting + clients.claim in sw.js) and the page
+  // reloads ONCE so old code never lingers. On a half-filled form the reload waits for the next navigation.
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
-    window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
-    var reloaded = false, hadController = !!navigator.serviceWorker.controller;
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(function (reg) {
+        document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") reg.update().catch(function () {}); });
+      }).catch(function () {});
+    });
+    var hadController = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener("controllerchange", function () {
-      if (!hadController || reloaded || onFormPage()) return; reloaded = true; location.reload();
+      if (!hadController) { hadController = true; return; } // first install on this visit: nothing old to replace
+      var key = "sp_sw_reload";
+      try { if (sessionStorage.getItem(key) === String(Date.now()).slice(0, -4)) return; sessionStorage.setItem(key, String(Date.now()).slice(0, -4)); } catch (e) {}
+      if (onFormPage()) { pendingReload = true; return; }
+      location.reload();
     });
   }
 })();

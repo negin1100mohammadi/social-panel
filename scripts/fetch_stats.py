@@ -41,6 +41,8 @@ CONFIG_PATH = os.path.join(ROOT, "config.json")
 DATA_DIR = os.path.join(ROOT, "data")
 LATEST_PATH = os.path.join(DATA_DIR, "latest.json")
 HISTORY_PATH = os.path.join(DATA_DIR, "history.json")
+POSTS_HISTORY_PATH = os.path.join(DATA_DIR, "posts_history.json")
+POSTS_KEEP_DAYS = 95
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
@@ -239,12 +241,18 @@ def youtube(handle, prev):
         raise RuntimeError("could not resolve channel id")
     out["channel_id"] = channel_id
 
-    r = get("https://www.youtube.com/feeds/videos.xml", params={"channel_id": channel_id})
-    r.raise_for_status()
+    rss_ok = False
+    try:
+        r = get("https://www.youtube.com/feeds/videos.xml", params={"channel_id": channel_id})
+        r.raise_for_status()
+        root = ET.fromstring(r.content)
+        rss_ok = True
+    except Exception as e:  # the RSS feed has been returning 404 since Nov 2026: use the channel tabs instead
+        out["notes"].append(f"RSS feed failed: {type(e).__name__}: {str(e)[:60]}")
+        root = None
     ns = {"a": "http://www.w3.org/2005/Atom", "yt": "http://www.youtube.com/xml/schemas/2015",
           "m": "http://search.yahoo.com/mrss/"}
-    root = ET.fromstring(r.content)
-    for e in root.findall("a:entry", ns)[:n]:
+    for e in (root.findall("a:entry", ns)[:n] if root is not None else []):
         vid = e.findtext("yt:videoId", default="", namespaces=ns)
         link = e.find("a:link", ns)
         grp = e.find("m:group", ns)
@@ -260,21 +268,63 @@ def youtube(handle, prev):
         out["recent"].append(post(vid, e.findtext("a:title", default="", namespaces=ns),
                                   link.get("href") if link is not None else f"https://www.youtube.com/watch?v={vid}",
                                   pub, views, likes, None, thumb))
+    tabs_ok = False
     if not out["recent"]:
-        # RSS can lag or be empty right after upload; read the Videos / Shorts tabs too
+        # RSS missing/empty: read the Videos / Shorts / Live tabs, then each video's own page for exact numbers
         try:
-            youtube_tabs(channel_id, out, n)
+            tabs_ok = youtube_tabs(channel_id, out, n)
         except Exception as e:
             out["notes"].append(f"videos/shorts tabs failed: {type(e).__name__}")
+        if out["recent"]:
+            youtube_details(out, prev)
+    if not rss_ok and not tabs_ok:
+        raise RuntimeError("YouTube RSS feed and channel tabs both unavailable")
     if out["posts"] is None and not out["recent"]:
         out["posts"] = 0
-        out["notes"].append("video count from empty RSS feed (no public videos)")
+        out["notes"].append("no public videos found")
     if out["followers"] is None:
         out["notes"].append("subscriber count not shown publicly (zero or hidden)")
-    out["notes"].append("no API key: comments unavailable; likes/views from RSS feed (last 15 videos max)")
-    out["source"] = "YouTube channel page + RSS feed"
-    out["ok"] = True  # channel resolved and RSS feed read
+    out["notes"].append("no API key: comments unavailable")
+    out["source"] = "YouTube channel page + RSS feed" if rss_ok else "YouTube channel page + video pages"
+    out["ok"] = True
     return out
+
+
+def youtube_details(out, prev):
+    """Exact numbers for each listed video from its watch page (views, likes, publish time).
+    Values the page does not give stay as read from the tabs; dates fall back to the previous run's."""
+    prev_by_id = {x.get("id"): x for x in ((prev or {}).get("recent") or [])}
+    exact = 0
+    exact_date = set()
+    for p in out["recent"]:
+        old = prev_by_id.get(p["id"]) or {}
+        try:
+            r = get("https://www.youtube.com/watch", params={"v": p["id"], "hl": "en", "gl": "US"},
+                    cookies={"CONSENT": "YES+1", "SOCS": "CAI"})
+            if r.status_code != 200 or "/sorry/" in r.url:
+                raise RuntimeError(f"HTTP {r.status_code}")
+            t = r.text
+            vc = re.search(r'"videoDetails":\{.*?"viewCount":"(\d+)"', t, re.S)
+            if vc:
+                p["views"] = int(vc.group(1))
+                p.pop("views_approx", None)
+                exact += 1
+            pd = re.search(r'"publishDate":"([^"]+)"', t) or re.search(r'"uploadDate":"([^"]+)"', t)
+            if pd and len(pd.group(1)) > 10:
+                dt = parse_ts(pd.group(1))
+                if dt:
+                    p["published"] = iso(dt)
+                    exact_date.add(p["id"])
+            lk = (re.search(r'along with ([\d,]+) other', t) or re.search(r'"likeCount":"?(\d+)', t))
+            if lk:
+                p["likes"] = to_int(lk.group(1))
+        except Exception as e:
+            out["notes"].append(f"video page {p['id']}: {type(e).__name__}")
+        if p["id"] not in exact_date and old.get("published"):
+            p["published"] = old.get("published")  # the earlier exact date beats "3 days ago" from the tab
+    if exact:
+        out["notes"].append(f"exact view counts from {exact}/{len(out['recent'])} video pages")
+    log(f"      youtube details: {exact}/{len(out['recent'])} exact")
 
 
 def _ago_to_dt(text):
@@ -301,6 +351,7 @@ def _walk(o, key):
 
 def youtube_tabs(channel_id, out, n):
     seen = {p["id"] for p in out["recent"]}
+    parsed = False
     for tab in ("videos", "shorts", "streams"):
         r = get(f"https://www.youtube.com/channel/{channel_id}/{tab}", params={"hl": "en", "gl": "US"},
                 cookies={"CONSENT": "YES+1", "SOCS": "CAI"})
@@ -310,6 +361,7 @@ def youtube_tabs(channel_id, out, n):
         if not m:
             continue
         data = json.loads(m.group(1))
+        parsed = True
         for v in _walk(data, "videoRenderer"):
             vid = v.get("videoId")
             if not vid or vid in seen:
@@ -326,13 +378,19 @@ def youtube_tabs(channel_id, out, n):
                 continue
             seen.add(vid)
             title = ((v.get("overlayMetadata") or {}).get("primaryText") or {}).get("content", "")
-            out["recent"].append(post(vid, title, f"https://www.youtube.com/shorts/{vid}", None,
-                                      thumb=f"https://i.ytimg.com/vi/{vid}/mqdefault.jpg"))
+            vtxt = ((v.get("overlayMetadata") or {}).get("secondaryText") or {}).get("content", "")
+            views, approx = parse_compact(vtxt) if re.search(r"\d", vtxt or "") else (None, False)
+            p = post(vid, title, f"https://www.youtube.com/shorts/{vid}", None, views,
+                     thumb=f"https://i.ytimg.com/vi/{vid}/mqdefault.jpg")
+            if approx:
+                p["views_approx"] = True
+            out["recent"].append(p)
     out["recent"] = out["recent"][:n]
     if out["recent"]:
-        out["notes"].append("recent videos from channel tabs (dates approximate)")
+        out["notes"].append("recent videos from channel tabs")
         if out["posts"] is None:
             out["posts"] = len(out["recent"])
+    return parsed
 
 
 # --------------------------------------------------------------------------
@@ -694,6 +752,106 @@ def prune_series(pts, now):
     return out
 
 
+def resolution_key(t, now):
+    """Same resolution policy as history.json: every point for 3 days, one per hour to 14 days, one per Tehran day after."""
+    age = now - t
+    if age <= timedelta(days=3):
+        return None
+    if age <= timedelta(days=14):
+        return "h" + t.astimezone(timezone.utc).strftime("%Y%m%d%H")
+    return "d" + t.astimezone(TEHRAN).date().isoformat()
+
+
+def prune_times(items, now, tf, keep_first=False):
+    """Keep the newest item per resolution bucket; drop items older than POSTS_KEEP_DAYS
+    (keep_first: the oldest item is always kept, it marks the first observation)."""
+    parsed = [(tf(x), x) for x in items]
+    parsed = [(t, x) for t, x in parsed if t is not None]
+    parsed.sort(key=lambda q: q[0])
+    first = parsed[0][1] if (keep_first and parsed) else None
+    out, seen = [], set()
+    for t, x in reversed(parsed):
+        if now - t > timedelta(days=POSTS_KEEP_DAYS) and x is not first:
+            continue
+        k = resolution_key(t, now)
+        if k is not None and x is not first:
+            if k in seen:
+                continue
+            seen.add(k)
+        out.append(x)
+    out.reverse()
+    return out
+
+
+def update_posts_history(ph, latest, run_at):
+    """Per-post snapshot history (data/posts_history.json).
+
+    channels["<page>/<platform>"] = {
+      "runs": [iso, ...]          every successful read of this account (coverage of the data)
+      "posts": {"<post id>": {"title","url","thumb","published","first","last",
+                              "s": [[iso, views, likes, comments], ...]}}
+    }
+    "s" stores the first observation and then a point only when a number changed, so the value at any
+    time between first and last is the last point at or before it. Views that the source gave only
+    rounded (e.g. "1.2K") are stored as null - never as a guessed number."""
+    chans = ph.setdefault("channels", {})
+    for pid, pb in latest["pages"].items():
+        for plat, r in pb["platforms"].items():
+            if not r.get("ok") or r.get("stale"):
+                continue
+            t = parse_ts(r.get("fetched_at")) or run_at
+            ts = iso(t)
+            ch = chans.setdefault(f"{pid}/{plat}", {"runs": [], "posts": {}})
+            if ts in ch["runs"]:
+                continue
+            ch["runs"].append(ts)
+            for x in r.get("recent") or []:
+                post_id = str(x.get("id") or "")
+                if not post_id:
+                    continue
+                vals = [None if x.get("views_approx") else to_int(x.get("views")), to_int(x.get("likes")),
+                        to_int(x.get("comments"))]
+                e = ch["posts"].setdefault(post_id, {"s": []})
+                e["title"] = (x.get("title") or "")[:120]
+                e["url"] = x.get("url")
+                e["thumb"] = x.get("thumb")
+                if x.get("published"):
+                    e["published"] = x.get("published")
+                e.setdefault("first", ts)
+                if parse_ts(e.get("last")) is None or parse_ts(e["last"]) < t:
+                    e["last"] = ts
+                if not e["s"] or e["s"][-1][1:] != vals:
+                    e["s"].append([ts] + vals)
+    return ph
+
+
+def prune_posts_history(ph, now):
+    for key, ch in ph.get("channels", {}).items():
+        ch["runs"] = prune_times(ch.get("runs", []), now, parse_ts)
+        posts = {}
+        for post_id, e in (ch.get("posts") or {}).items():
+            last = parse_ts(e.get("last"))
+            if last is None or now - last > timedelta(days=POSTS_KEEP_DAYS):
+                continue
+            e["s"] = prune_times(e.get("s", []), now, lambda q: parse_ts(q[0]), keep_first=True)
+            if e["s"]:
+                e["first"] = min(e.get("first") or e["s"][0][0], e["s"][0][0], key=lambda v: parse_ts(v))
+            posts[post_id] = e
+        ch["posts"] = posts
+    ph["v"] = 1
+    ph["updated_at"] = iso(now)
+    ph["resolution"] = "all runs for 3 days, hourly to 14 days, daily to 95 days; post values stored on change"
+    return ph
+
+
+def write_compact(path, obj):
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, separators=(",", ":"))
+        f.write("\n")
+    os.replace(tmp, path)
+
+
 def snapshot_point(r, at):
     recent = r.get("recent") or []
 
@@ -831,11 +989,13 @@ def main():
 
     latest["summary"] = {"ok": ok_count, "failed": fail_count}
     write_json(LATEST_PATH, latest)
-    tmp = HISTORY_PATH + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:  # compact: this file grows with every run
-        json.dump(history, f, ensure_ascii=False, separators=(",", ":"))
-        f.write("\n")
-    os.replace(tmp, HISTORY_PATH)
+    write_compact(HISTORY_PATH, history)  # compact: this file grows with every run
+
+    # ---- per-post history (views/likes/comments of every listed post, per run)
+    ph = load_json(POSTS_HISTORY_PATH, {"v": 1, "channels": {}})
+    update_posts_history(ph, latest, run_at)
+    prune_posts_history(ph, run_at)
+    write_compact(POSTS_HISTORY_PATH, ph)
     log(f"done: {ok_count} ok, {fail_count} failed")
 
 

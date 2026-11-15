@@ -59,5 +59,55 @@
         "aparat": "u_44295339"
       }
     }
-  ]
+  ],
+  "tools": {
+    "accounts": [
+      {
+        "id": "negin",
+        "name": "نگین"
+      },
+      {
+        "id": "amirhossein",
+        "name": "امیرحسین"
+      }
+    ],
+    "items": [
+      {
+        "id": "hark",
+        "name": "Hark",
+        "url": "https://hark.com"
+      },
+      {
+        "id": "muse",
+        "name": "Muse",
+        "url": "",
+        "editable": true
+      },
+      {
+        "id": "gemini",
+        "name": "Gemini",
+        "url": "https://gemini.google.com/app"
+      },
+      {
+        "id": "chatgpt",
+        "name": "ChatGPT",
+        "url": "https://chatgpt.com"
+      },
+      {
+        "id": "claude",
+        "name": "Claude",
+        "url": "https://claude.ai"
+      },
+      {
+        "id": "aistudio",
+        "name": "Google AI Studio",
+        "url": "https://aistudio.google.com"
+      },
+      {
+        "id": "flow",
+        "name": "Google Flow",
+        "url": "https://labs.google/fx/tools/flow"
+      }
+    ]
+  }
 }
