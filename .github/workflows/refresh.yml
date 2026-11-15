@@ -54,8 +54,9 @@ jobs:
             echo "No data changes."
           else
             git commit -m "data: refresh stats $(TZ=Asia/Tehran date '+%Y-%m-%d %H:%M') Tehran"
-            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
-            git push
+            # other workflows (yt-connect, yt-reply, publish, the panel) also push to main: rebase + retry
+            for i in 1 2 3 4 5; do git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push && exit 0; sleep $((i*3)); done
+            exit 1
           fi
 
   deploy:
