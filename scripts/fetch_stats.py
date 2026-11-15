@@ -15,6 +15,10 @@ Rules:
 
 Optional environment variables:
   YT_API_KEY                   YouTube Data API v3 key
+  YT_CLIENT_ID, YT_CLIENT_SECRET, TOKEN_KEY
+                               connected YouTube channels (config/yt_tokens.enc.json, see yt_tokens.py):
+                               exact per-video views/likes/comments + subscribers via the owner's OAuth
+                               token, and the newest comments -> data/comments.json
   IG_ACCESS_TOKEN, IG_USER_ID  Instagram Graph API (Business Discovery)
 
 Only `requests` + the standard library are used.
@@ -42,6 +46,8 @@ DATA_DIR = os.path.join(ROOT, "data")
 LATEST_PATH = os.path.join(DATA_DIR, "latest.json")
 HISTORY_PATH = os.path.join(DATA_DIR, "history.json")
 POSTS_HISTORY_PATH = os.path.join(DATA_DIR, "posts_history.json")
+COMMENTS_PATH = os.path.join(DATA_DIR, "comments.json")
+COMMENTS_KEEP = 100
 POSTS_KEEP_DAYS = 95
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -288,6 +294,126 @@ def youtube(handle, prev):
     out["source"] = "YouTube channel page + RSS feed" if rss_ok else "YouTube channel page + video pages"
     out["ok"] = True
     return out
+
+
+# --------------------------------------------------------------------------
+# YouTube via a connected channel (official OAuth; the owner's own token)
+# --------------------------------------------------------------------------
+def yt_store():
+    """Connected channels, or {} when the store / TOKEN_KEY is unavailable (public scraping then)."""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import yt_tokens
+        return yt_tokens, yt_tokens.load()
+    except Exception as e:  # cryptography missing etc.
+        log(f"yt token store unavailable: {type(e).__name__}")
+        return None, {"channels": {}}
+
+
+def yt_api(path, access, params):
+    import yt_tokens
+    r = get(f"{yt_tokens.API}/{path}", params=params, headers={"Authorization": f"Bearer {access}"})
+    if r.status_code != 200:
+        try:
+            reason = ((r.json().get("error") or {}).get("errors") or [{}])[0].get("reason")
+        except Exception:
+            reason = None
+        raise RuntimeError(f"{path} HTTP {r.status_code}" + (f" {reason}" if reason else ""))
+    return r.json()
+
+
+def youtube_oauth(handle, prev, ent, yt_tokens):
+    """Exact stats for a connected channel. Returns (platform block, comments block)."""
+    h = handle if handle.startswith("@") else "@" + handle
+    out = blank("youtube", h, f"https://www.youtube.com/{h}")
+    n = int(CONFIG.get("recent_posts", 12))
+    access = yt_tokens.access_token(yt_tokens.decrypt(ent), session=SESSION)
+    d = yt_api("channels", access, {"part": "snippet,statistics,contentDetails", "mine": "true"})
+    items = d.get("items") or []
+    if not items:
+        raise RuntimeError("connected account has no channel")
+    ch = items[0]
+    if ch["id"] != ent["channel_id"]:
+        raise RuntimeError("token now belongs to another channel")
+    st, sn = ch.get("statistics", {}), ch.get("snippet", {})
+    out["channel_id"] = ch["id"]
+    out["title"] = sn.get("title")
+    _th = sn.get("thumbnails", {})
+    out["avatar"] = (_th.get("medium") or _th.get("default") or {}).get("url")
+    subs = None if st.get("hiddenSubscriberCount") else to_int(st.get("subscriberCount"))
+    out["followers"] = subs
+    # the Data API rounds subscriber counts to 3 significant figures, so below 1,000 the number is exact
+    out["followers_approx"] = bool(subs is not None and subs >= 1000)
+    out["posts"] = to_int(st.get("videoCount"))
+    out["total_views"] = to_int(st.get("viewCount"))
+    titles = {}
+    uploads = ch.get("contentDetails", {}).get("relatedPlaylists", {}).get("uploads")
+    if uploads:
+        pl = yt_api("playlistItems", access, {"part": "contentDetails", "playlistId": uploads, "maxResults": n})
+        ids = [it["contentDetails"]["videoId"] for it in pl.get("items", [])]
+        if ids:
+            vd = yt_api("videos", access, {"part": "snippet,statistics,status", "id": ",".join(ids)})
+            byid = {v["id"]: v for v in vd.get("items", [])}
+            for vid in ids:  # keep the uploads order (newest first)
+                v = byid.get(vid)
+                if not v:
+                    continue
+                vsn, vs = v.get("snippet", {}), v.get("statistics", {})
+                if (v.get("status") or {}).get("privacyStatus") not in (None, "public"):
+                    continue  # the owner's token also sees private/unlisted uploads; the panel lists public ones
+                thumbs = vsn.get("thumbnails", {})
+                thumb = (thumbs.get("medium") or thumbs.get("default") or {}).get("url")
+                titles[vid] = vsn.get("title")
+                out["recent"].append(post(vid, vsn.get("title"), f"https://www.youtube.com/watch?v={vid}",
+                                          vsn.get("publishedAt"), vs.get("viewCount"), vs.get("likeCount"),
+                                          vs.get("commentCount"), thumb))
+    comments = None
+    try:
+        comments = youtube_comments(ch["id"], access, titles)
+    except Exception as e:
+        out["notes"].append(f"comments failed: {str(e)[:80]}")
+    out["source"] = "YouTube Data API v3 (حساب متصل)"
+    out["oauth"] = {"channel_id": ch["id"], "status": "ok"}
+    out["ok"] = True
+    return out, comments
+
+
+def youtube_comments(channel_id, access, titles):
+    d = yt_api("commentThreads", access, {"part": "snippet,replies", "allThreadsRelatedToChannelId": channel_id,
+                                          "maxResults": 50, "order": "time", "textFormat": "plainText"})
+    threads = []
+    for it in d.get("items", []):
+        sn = it.get("snippet", {})
+        top = (sn.get("topLevelComment") or {})
+        ts = top.get("snippet", {})
+        reps = []
+        for rp in ((it.get("replies") or {}).get("comments") or []):
+            rs = rp.get("snippet", {})
+            reps.append({"id": rp.get("id"), "author": rs.get("authorDisplayName"),
+                         "author_channel_id": (rs.get("authorChannelId") or {}).get("value"),
+                         "avatar": rs.get("authorProfileImageUrl"), "text": rs.get("textDisplay") or rs.get("textOriginal"),
+                         "likes": to_int(rs.get("likeCount")), "published": rs.get("publishedAt")})
+        reps.sort(key=lambda x: x.get("published") or "")
+        vid = sn.get("videoId") or ts.get("videoId")
+        threads.append({"id": it.get("id"), "comment_id": top.get("id"), "video_id": vid,
+                        "video_title": titles.get(vid), "author": ts.get("authorDisplayName"),
+                        "author_channel_id": (ts.get("authorChannelId") or {}).get("value"),
+                        "avatar": ts.get("authorProfileImageUrl"),
+                        "text": ts.get("textDisplay") or ts.get("textOriginal"), "likes": to_int(ts.get("likeCount")),
+                        "published": ts.get("publishedAt"), "updated": ts.get("updatedAt"),
+                        "reply_count": to_int(sn.get("totalReplyCount")), "can_reply": bool(sn.get("canReply", True)),
+                        "replies": reps})
+    threads.sort(key=lambda x: x.get("published") or "", reverse=True)
+    return {"channel_id": channel_id, "fetched_at": iso(now_utc()), "threads": threads}
+
+
+def merge_comments(old, new):
+    """Keep threads seen before (newest COMMENTS_KEEP), refreshed by the newest read."""
+    byid = {t["id"]: t for t in (old or {}).get("threads", []) if t.get("id")}
+    for t in new.get("threads", []):
+        byid[t["id"]] = t
+    th = sorted(byid.values(), key=lambda x: x.get("published") or "", reverse=True)[:COMMENTS_KEEP]
+    return {"channel_id": new.get("channel_id"), "fetched_at": new.get("fetched_at"), "threads": th}
 
 
 def youtube_details(out, prev):
@@ -886,6 +1012,10 @@ def main():
     prev_latest = load_json(LATEST_PATH, {"pages": {}})
     history = load_json(HISTORY_PATH, {"days": 0, "series": {}})
 
+    yt_mod, yt_st = yt_store()
+    comments = load_json(COMMENTS_PATH, {"v": 1, "channels": {}})
+    comments.setdefault("channels", {})
+
     run_at = now_utc()
     latest = {"updated_at": iso(run_at), "timezone": CONFIG.get("timezone", "Asia/Tehran"), "pages": {},
               "summary": {}}
@@ -904,8 +1034,30 @@ def main():
                 if prev:
                     pblock["platforms"][plat] = prev
                 continue
+            oauth_info = None
             try:
-                res = FETCHERS[plat](handle, prev)
+                res = None
+                if plat == "youtube":
+                    ent = yt_mod.entry_for_page(yt_st, pid) if yt_mod else None
+                    bad = (yt_mod.entry_for_page(yt_st, pid, allow_mismatch=True) if yt_mod and not ent else None)
+                    if bad:
+                        oauth_info = {"channel_id": bad["channel_id"], "status": "mismatch"}
+                    if ent:
+                        try:
+                            res, cm = youtube_oauth(handle, prev, ent, yt_mod)
+                            if cm is not None:
+                                key = f"{pid}/youtube"
+                                comments["channels"][key] = merge_comments(comments["channels"].get(key), cm)
+                        except Exception as e:  # messages here never contain a token (Bearer header / POST body)
+                            msg = str(e)[:160]
+                            oauth_info = {"channel_id": ent["channel_id"], "status": "revoked" if msg == "revoked" else "error",
+                                          "error": msg, "at": iso(now_utc())}
+                            log(f"WARN  {pid:16s} youtube   connected-channel API failed: {msg}; using public pages")
+                            res = None
+                if res is None:
+                    res = FETCHERS[plat](handle, prev)
+                    if oauth_info:
+                        res["oauth"] = oauth_info
                 res["fetched_at"] = iso(now_utc())
                 src = res.get("avatar")
                 res["avatar_src"] = src
@@ -928,6 +1080,7 @@ def main():
                     res = dict(prev)
                     res["stale"] = True
                     res["error"] = err
+                    res.pop("oauth", None)
                 else:
                     res = blank(plat, handle, "")
                     res["url"] = {"instagram": f"https://www.instagram.com/{handle}/",
@@ -936,6 +1089,8 @@ def main():
                                   "tiktok": f"https://www.tiktok.com/@{handle.lstrip('@')}"}[plat]
                     res["error"] = err
                 res["last_attempt_at"] = iso(now_utc())
+                if oauth_info:
+                    res["oauth"] = oauth_info
 
             # activity markers: newest dated post, and when the post count / newest post last changed
             res["last_post_at"] = newest_post(res)
@@ -996,6 +1151,13 @@ def main():
     update_posts_history(ph, latest, run_at)
     prune_posts_history(ph, run_at)
     write_compact(POSTS_HISTORY_PATH, ph)
+
+    # ---- comments of connected YouTube channels (only channels still connected are kept)
+    live = {f"{e.get('page')}/youtube" for e in yt_st.get("channels", {}).values()}
+    comments["channels"] = {k: v for k, v in comments["channels"].items() if k in live}
+    if comments["channels"] or os.path.exists(COMMENTS_PATH):
+        comments["updated_at"] = iso(run_at)
+        write_json(COMMENTS_PATH, comments)
     log(f"done: {ok_count} ok, {fail_count} failed")
 
 

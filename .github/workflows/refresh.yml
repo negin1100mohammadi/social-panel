@@ -33,11 +33,14 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install requests pillow
+        run: pip install requests pillow cryptography
 
       - name: Fetch stats
         env:
           YT_API_KEY: ${{ secrets.YT_API_KEY }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}          # connected YouTube channels (exact stats + comments)
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          TOKEN_KEY: ${{ secrets.TOKEN_KEY }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
         run: python scripts/fetch_stats.py
@@ -70,7 +73,7 @@ jobs:
       - name: Build site folder
         run: |
           mkdir -p _site
-          cp -r index.html app.js styles.css sw.js manifest.json config.json favicon.png icons data _site/
+          cp -r index.html oauth.html app.js styles.css sw.js manifest.json config.json favicon.png icons data _site/
           touch _site/.nojekyll
 
       - uses: actions/configure-pages@v5

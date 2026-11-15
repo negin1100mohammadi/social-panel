@@ -1,9 +1,9 @@
 /* Service worker: network-first for everything (fresh data, avatars and app code),
    falling back to the last cached copy only when offline. */
-const VERSION = "v6";
+const VERSION = "v7";
 const SHELL = `shell-${VERSION}`;
 const DATA = `data-${VERSION}`;
-const SHELL_FILES = ["./", "index.html", "styles.css", "app.js", "styles.css?v=6", "app.js?v=6", "manifest.json",
+const SHELL_FILES = ["./", "index.html", "styles.css", "app.js", "styles.css?v=7", "app.js?v=7", "manifest.json",
   "icons/icon.svg", "icons/icon-192.png", "icons/apple-touch-icon.png"];
 
 self.addEventListener("install", (e) => {
@@ -21,6 +21,8 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return; // GitHub API, fonts, thumbnails: browser default
+  // Google's OAuth return carries a one-time code in the query: never cache it, never touch it
+  if (url.pathname.endsWith("/oauth.html")) return;
   const isData = url.pathname.endsWith(".json") || url.pathname.includes("/data/");
   if (isData) {
     // data/*.json and data/avatars/*: always the network (no HTTP cache), offline copy as fallback

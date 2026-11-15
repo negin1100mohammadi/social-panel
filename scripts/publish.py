@@ -14,7 +14,8 @@ Flow
 Secrets (all optional; a platform without its secrets => "needs_setup", never a crash).
 They are passed one by one as env variables by publish.yml.
 <PAGE> = page id upper-cased with "-" -> "_", e.g. shode-dige -> SHODE_DIGE.
-  YouTube : YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN_<PAGE>
+  YouTube : YT_CLIENT_ID, YT_CLIENT_SECRET, TOKEN_KEY + the page's connected channel in
+            config/yt_tokens.enc.json (connect it in the panel; legacy YT_REFRESH_TOKEN_<PAGE> still read)
   Instagram: IG_ACCESS_TOKEN_<PAGE>, IG_USER_ID_<PAGE>
   Aparat  : APARAT_USER_<PAGE>, APARAT_PASS_<PAGE>   (legacy etc/api; currently 503)
   TikTok  : TIKTOK_ACCESS_TOKEN_<PAGE>               (Content Posting API, approved app)
@@ -191,24 +192,46 @@ def is_video(job):
 
 
 # --------------------------------------------------------------------------- YouTube
+def youtube_refresh_token(page):
+    """Refresh token of the page's connected channel (config/yt_tokens.enc.json, decrypted with TOKEN_KEY).
+    A legacy per-page secret YT_REFRESH_TOKEN_<PAGE> is still honoured when present."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import yt_tokens
+    try:
+        store = yt_tokens.load()
+        ent = yt_tokens.entry_for_page(store, page)
+        if ent:
+            return yt_tokens, yt_tokens.decrypt(ent)
+        if yt_tokens.entry_for_page(store, page, allow_mismatch=True):
+            raise NeedsSetup("حساب یوتیوبِ متصل به این پیج با کانال تعریف‌شده‌ی پیج یکی نیست؛ برای امنیت منتشر نشد. "
+                             "در پنل «اتصال» را دوباره بزن و کانال درست را انتخاب کن.")
+    except yt_tokens.StoreError as e:
+        raise NeedsSetup(f"خواندن توکن یوتیوب ممکن نشد: {e}")
+    legacy = secret(f"YT_REFRESH_TOKEN_{suffix(page)}")
+    if legacy:
+        yt_tokens.mask(legacy)
+        return yt_tokens, legacy
+    raise NeedsSetup("این پیج حساب یوتیوب متصل ندارد؛ در پنل (کانال‌ها ← یوتیوب) دکمه‌ی «اتصال» را بزن.")
+
+
 def publish_youtube(job, page):
-    cid, csec = secret("YT_CLIENT_ID"), secret("YT_CLIENT_SECRET")
-    rt = secret(f"YT_REFRESH_TOKEN_{suffix(page)}")
-    if not (cid and csec and rt):
-        raise NeedsSetup(f"برای یوتیوب Secretهای YT_CLIENT_ID، YT_CLIENT_SECRET و YT_REFRESH_TOKEN_{suffix(page)} لازم است.")
+    yt_tokens, rt = youtube_refresh_token(page)
     if not is_video(job):
         return {"status": "skipped", "reason": "یوتیوب فقط ویدیو می‌پذیرد؛ عکس منتشر نشد."}
-    tok = requests.post("https://oauth2.googleapis.com/token", data={
-        "client_id": cid, "client_secret": csec, "refresh_token": rt, "grant_type": "refresh_token"}, timeout=30)
-    if tok.status_code != 200:
-        raise RuntimeError(f"توکن یوتیوب تمدید نشد (HTTP {tok.status_code}): {tok.text[:150]}")
-    access = tok.json()["access_token"]
+    try:
+        access = yt_tokens.access_token(rt)
+    except yt_tokens.StoreError as e:
+        if str(e) == "revoked":
+            raise NeedsSetup("دسترسی پنل به این کانال لغو یا منقضی شده؛ در پنل «اتصال» را دوباره بزن.")
+        if "missing" in str(e):
+            raise NeedsSetup(f"برای یوتیوب Secretهای YT_CLIENT_ID و YT_CLIENT_SECRET لازم است ({e}).")
+        raise RuntimeError(f"توکن یوتیوب تمدید نشد: {e}")
     path = local_file(job)
     size = os.path.getsize(path)
     meta = {"snippet": {"title": (job.get("title") or "ویدیو")[:100], "description": job.get("caption") or "",
                         "categoryId": "22"},
             "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False}}
-    init = requests.post("https://www.googleapis.com/upload/youtube/v3/videos",
+    init = requests.post(os.environ.get("SP_YT_UPLOAD") or "https://www.googleapis.com/upload/youtube/v3/videos",
                          params={"uploadType": "resumable", "part": "snippet,status"},
                          headers={"Authorization": f"Bearer {access}", "Content-Type": "application/json; charset=UTF-8",
                                   "X-Upload-Content-Length": str(size),

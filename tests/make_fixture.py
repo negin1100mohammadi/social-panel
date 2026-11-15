@@ -27,7 +27,7 @@ fs.CONFIG = cfg
 if os.path.exists(out):
     shutil.rmtree(out)
 os.makedirs(out)
-for f in ["index.html", "app.js", "styles.css", "sw.js", "manifest.json", "config.json", "favicon.png"]:
+for f in ["index.html", "oauth.html", "app.js", "styles.css", "sw.js", "manifest.json", "config.json", "favicon.png"]:
     shutil.copy(os.path.join(ROOT, f), out)
 shutil.copytree(os.path.join(ROOT, "icons"), os.path.join(out, "icons"))
 os.makedirs(os.path.join(out, "data"))

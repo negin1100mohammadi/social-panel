@@ -1,0 +1,62 @@
+name: YouTube reply
+run-name: "yt-reply ${{ inputs.page }} ${{ inputs.req }}"
+
+# Started by the panel's comments inbox. Posts one reply with comments.insert using the page's connected
+# channel (config/yt_tokens.enc.json) and records the outcome in config/yt_replies.json.
+on:
+  workflow_dispatch:
+    inputs:
+      page:
+        description: "Panel page key"
+        required: true
+        type: string
+      parent_id:
+        description: "Top-level comment id to reply to"
+        required: true
+        type: string
+      text:
+        description: "Reply text"
+        required: true
+        type: string
+      req:
+        description: "Request id chosen by the browser"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: yt-config
+  cancel-in-progress: false
+
+jobs:
+  reply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests cryptography
+
+      - name: Post reply
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          TOKEN_KEY: ${{ secrets.TOKEN_KEY }}
+        run: python scripts/yt_reply.py
+
+      - name: Commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add config/yt_replies.json 2>/dev/null || true
+          if git diff --cached --quiet; then echo "Nothing to commit."; exit 0; fi
+          git commit -m "config: youtube reply $(TZ=Asia/Tehran date '+%Y-%m-%d %H:%M') Tehran"
+          for i in 1 2 3 4 5; do git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push && exit 0; sleep $((i*3)); done
+          exit 1

@@ -21,7 +21,7 @@
   var MEDIA_BRANCH = "media-upload";
   var MAX_UPLOAD = 70 * 1024 * 1024; // GitHub blob API limit is 100 MB after base64
 
-  var SP_VERSION = "v6";
+  var SP_VERSION = "v7";
   window.SP_VERSION = SP_VERSION;
   var state = { config: null, latest: null, history: null, postsHist: null, error: null, busy: false, progress: "", syncAvailable: false, encCreated: null, chOrder: null };
   var app = document.getElementById("app");
@@ -422,6 +422,7 @@
             adminLinks(cp, pl, r).map(function (x, i) {
               return '<a class="bbtn adm' + (i ? " alt" : "") + '" data-admin="' + pl + '" href="' + esc(x.url) + '" target="_blank" rel="noopener" title="' + esc(x.long) + '">' + (i ? "" : ICON_LOGIN) + "<span>" + esc(x.label) + "</span></a>";
             }).join("") +
+            (pl === "youtube" ? ytBtnHTML(cp.id) : "") +
             '<a class="bbtn chartbtn" data-route="' + esc(route.slice(2)) + '" href="' + esc(route) + '" title="آمار ' + PNAME[pl] + " " + esc(cp.name) + '" aria-label="آمار ' + PNAME[pl] + " " + esc(cp.name) + '">' + ICON_CHART + "</a>" +
             "</div>";
         });
@@ -435,6 +436,7 @@
     app.innerHTML = html;
     bindTopbar();
     document.getElementById("back").onclick = function () { location.hash = "#/"; };
+    loadYt();
     Array.prototype.forEach.call(document.querySelectorAll(".cbox"), function (b) {
       b.onclick = function () {
         var id = b.getAttribute("data-id"), o = openSet();
@@ -903,6 +905,8 @@
       '<div class="at"><h1 id="a-title">' + esc(cp.name) + '</h1><div class="asub"><b class="pname" id="a-platform">' + PNAME[pl] + '</b><span class="ah" dir="ltr">' + esc(pl === "tiktok" ? "@" + String(handle).replace(/^@/, "") : handle) + "</span></div>" +
       '<div class="alinks"><a href="' + esc(r.url || "#") + '" target="_blank" rel="noopener">صفحه‌ی عمومی ↗</a>' +
       adminLinks(cp, pl, r).map(function (x) { return '<a class="admin" href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.long) + " ↗</a>"; }).join("") + "</div></div></div>";
+    var isYt = pl === "youtube";
+    if (isYt) html += '<section class="card ytcard" id="yt-conn-card" data-page="' + esc(pid) + '">' + ytConnCardHTML(pid) + "</section>";
 
     if (!ok) {
       var why = pl === "instagram" ? "داده اینستاگرام هنوز در دسترس نیست (نیاز به توکن)"
@@ -911,9 +915,11 @@
       html += '<div class="nodata" id="nodata"><div class="nd-ic">' + picon(pl) + "</div><b>" + esc(why) + "</b>" +
         (pl === "instagram" ? "<p>اینستاگرام از سرور گیت‌هاب گاهی مسدود است. برای آمار کامل، توکن Instagram Graph API را به‌عنوان Secret مخزن (IG_ACCESS_TOKEN و IG_USER_ID) اضافه کن.</p>" : "") +
         (r.error ? '<p class="err" dir="ltr">' + esc(r.error) + "</p>" : "") + "</div>";
+      if (isYt) html += '<section class="card ytinbox" id="yt-inbox" data-page="' + esc(pid) + '"></section>';
       app.innerHTML = html;
       window.scrollTo(0, 0); bindTopbar();
       document.getElementById("back").onclick = function () { location.hash = "#/channels"; };
+      if (isYt) { renderInbox(pid); bindInbox(pid); loadYt(); }
       return;
     }
     var pref = viewPref();
@@ -922,6 +928,7 @@
     }).join("") + "</div></div>";
     if (r.stale) html += '<div class="alert">آخرین تلاش برای خواندن ' + esc(PNAME[pl]) + " ناموفق بود؛ عددهای فعلی مربوط به " + esc(fmtDateTime(r.fetched_at)) + " هستند.</div>";
     html += '<div id="abody"></div>';
+    if (isYt) html += '<section class="card ytinbox" id="yt-inbox" data-page="' + esc(pid) + '"></section>';
     html += '<p class="footnote">همه‌ی عددهای «تازه» از مقایسه‌ی اندازه‌گیری‌های واقعیِ ثبت‌شده به دست می‌آیند (حدود هر ۳۰ تا ۶۰ دقیقه، تا ۹۰ روز) و حدس زده نمی‌شوند. «—» یعنی آن عدد را خود پلتفرم نمی‌دهد. عدد منفی یعنی خود پلتفرم شمارش را اصلاح کرده. ساعت‌ها به وقت تهران است.</p>';
     app.innerHTML = html;
     window.scrollTo(0, 0);
@@ -953,6 +960,7 @@
       Array.prototype.forEach.call(gf.querySelectorAll("button[data-r]"), function (x) { var on = x.getAttribute("data-r") === pref.r; x.className = on ? "on" : ""; x.setAttribute("aria-pressed", on); });
     }
     draw();
+    if (isYt) { renderInbox(pid); bindInbox(pid); loadYt(); }
     document.getElementById("gfilter").onclick = function (e) {
       var bt = e.target.closest ? e.target.closest("button[data-r]") : null; if (!bt) return;
       pref.r = bt.getAttribute("data-r"); saveViewPref(pref); draw();
@@ -1163,6 +1171,7 @@
       (!tok && state.syncAvailable ? '<button type="button" class="ghost" id="pull-token">دریافت توکن همگام‌شده</button>' : "") +
       '<button type="button" class="ghost danger" id="del-token-all">حذف توکن از همه دستگاه‌ها</button></div>' +
       '<div class="msg" id="sync-msg" data-state="idle">' + (state.syncAvailable ? "یک نسخه‌ی رمزگذاری‌شده‌ی توکن در مخزن هست." : "") + "</div></div></section>";
+    html += ytAccountsSectionHTML();
     html += '<p class="footnote" id="app-version">نسخه‌ی پنل: ' + SP_VERSION + "</p>";
     app.innerHTML = html;
     bindTopbar();
@@ -1237,6 +1246,7 @@
       }).catch(function (e) { say("✗ " + ghErrorFa(e), "error"); });
     };
     bindUnlockForm("sunlock", function () { setTimeout(function () { settingsView(); toast("اتصال فعال شد ✓"); }, 400); });
+    loadYt();
     if (tok) testToken();
   }
   function testToken() {
@@ -1251,6 +1261,233 @@
       status(true, push ? "✓ متصل" : "✓ متصل (فقط خواندن)");
       if (msg) msg.textContent = parts.join(" · ");
     }).catch(function (e) { status(false, "✗ متصل نیست"); if (msg) msg.textContent = "✗ " + ghErrorFa(e); });
+  }
+
+  // ------------------------------------------------------------- YouTube: official account connection (OAuth)
+  // "اتصال" sends the browser to Google's consent page (authorization-code flow, offline access). Google returns to
+  // oauth.html, which hands the one-time code to the yt-connect.yml workflow with this device's GitHub token. The
+  // workflow exchanges it with the client secret (a repo secret) and commits the refresh token AES-GCM-encrypted
+  // with TOKEN_KEY to config/yt_tokens.enc.json. Nothing secret ever exists in this browser except the GitHub token.
+  var YT_STORE_PATH = "config/yt_tokens.enc.json", YT_REPLIES_PATH = "config/yt_replies.json";
+  var OAUTH_STATE_KEY = "sp_oauth_state", YT_PENDING_KEY = "sp_yt_pending";
+  var YT_SCOPES_DEFAULT = ["https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/youtube.force-ssl",
+    "https://www.googleapis.com/auth/youtube.readonly", "https://www.googleapis.com/auth/yt-analytics.readonly"];
+  state.yt = { store: null, replies: null, loadedAt: 0, loading: null };
+  function ytConf() {
+    var c = (state.config && state.config.youtube_oauth) || {};
+    return { client_id: c.client_id || "", redirect_uri: c.redirect_uri || "https://negin1100mohammadi.github.io/social-panel/oauth.html",
+      scopes: c.scopes && c.scopes.length ? c.scopes : YT_SCOPES_DEFAULT };
+  }
+  function randHex(n) { var a = crypto.getRandomValues(new Uint8Array(n)); return Array.prototype.map.call(a, function (x) { return ("0" + x.toString(16)).slice(-2); }).join(""); }
+  function oauthURL(page, nonce) {
+    var c = ytConf();
+    var q = { client_id: c.client_id, redirect_uri: c.redirect_uri, response_type: "code", scope: c.scopes.join(" "),
+      access_type: "offline", prompt: "consent select_account", include_granted_scopes: "true", state: page + "." + nonce };
+    return "https://accounts.google.com/o/oauth2/v2/auth?" + Object.keys(q).map(function (k) { return k + "=" + encodeURIComponent(q[k]); }).join("&");
+  }
+  function startYtConnect(page, st) {
+    var cp = cpById(page); if (!cp || !(cp.accounts || {}).youtube) return;
+    var ts = tokenState();
+    if (!ts.has) {
+      if (ts.locked) { try { sessionStorage.removeItem(UNLOCK_LATER); } catch (e) {} toast("برای اتصال یوتیوب، اول اتصال گیت‌هاب را با رمز پنل فعال کن.", 4500); ensureUnlockUI(); }
+      else { toast("برای اتصال یوتیوب، اول توکن گیت‌هاب را در تنظیمات بگذار.", 4500); location.hash = "#/settings"; }
+      return;
+    }
+    var c = ytConf();
+    if (!c.client_id) { toast("شناسه‌ی OAuth گوگل در config.json تنظیم نشده."); return; }
+    if (st === "ok" && !window.confirm("یوتیوب " + cp.name + " متصل است. دوباره وصل شود؟")) return;
+    var nonce = randHex(16), saved = JSON.stringify({ nonce: nonce, page: page, ret: location.hash || "#/channels", at: Date.now() });
+    try { sessionStorage.setItem(OAUTH_STATE_KEY, saved); } catch (e) {}
+    // copy for an installed (home-screen) app, where Google may return in a browser tab with its own sessionStorage;
+    // oauth.html deletes both copies on first use and refuses anything older than 30 minutes
+    try { localStorage.setItem(OAUTH_STATE_KEY, saved); } catch (e) {}
+    var url = oauthURL(page, nonce);
+    if (window.__spNoNavigate) { window.__spLastOAuth = url; return; }
+    location.assign(url);
+  }
+  // read a file of the repo (public) — with the token when there is one (fresh, 5000 req/h), else unauthenticated
+  function fetchRepoJSON(path) {
+    var api = "https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + path + "?ref=" + GH_BRANCH + "&t=" + Date.now();
+    var raw = "https://raw.githubusercontent.com/" + GH_OWNER + "/" + GH_REPO + "/" + GH_BRANCH + "/" + path + "?t=" + Date.now();
+    function get(url, hdr) {
+      return fetch(url, { cache: "no-store", headers: hdr || {} }).then(function (r) {
+        if (r.status === 404) return null;
+        if (!r.ok) { var e = new Error("HTTP " + r.status); e.status = r.status; throw e; }
+        return r.json();
+      });
+    }
+    var h = { Accept: "application/vnd.github.raw+json" };
+    var tok = getToken(); if (tok) h.Authorization = "Bearer " + tok;
+    return get(api, h).catch(function () { return get(raw); });
+  }
+  function loadYt(force) {
+    if (state.yt.loading) return state.yt.loading;
+    if (!force && Date.now() - state.yt.loadedAt < 30000) return Promise.resolve();
+    state.yt.loading = Promise.all([
+      fetchRepoJSON(YT_STORE_PATH).catch(function () { return state.yt.store; }),
+      fetchRepoJSON(YT_REPLIES_PATH).catch(function () { return state.yt.replies; })
+    ]).then(function (res) {
+      state.yt.store = res[0] || { channels: {} }; state.yt.replies = res[1] || { items: [] };
+      state.yt.loadedAt = Date.now(); state.yt.loading = null;
+      updateYtUI();
+    }, function () { state.yt.loading = null; });
+    return state.yt.loading;
+  }
+  function ytEntries(pid) {
+    var ch = (state.yt.store && state.yt.store.channels) || {};
+    return Object.keys(ch).map(function (k) { return ch[k]; }).filter(function (e) { return e && e.page === pid; })
+      .sort(function (a, b) { return (a.mismatch ? 1 : 0) - (b.mismatch ? 1 : 0) || (tsOf(b.connected_at) || 0) - (tsOf(a.connected_at) || 0); });
+  }
+  // one status per page: none | ok | mismatch | revoked | error | unknown (store not loaded yet)
+  function ytStatus(pid) {
+    if (!state.yt.store) return { st: "unknown", label: "…", btn: "اتصال" };
+    var es = ytEntries(pid), e = es[0];
+    if (!e) return { st: "none", label: "متصل نیست", btn: "اتصال" };
+    var cp = cpById(pid), r = cp ? (pageData(cp).platforms.youtube || {}) : {}, o = r.oauth || null;
+    if (e.mismatch) return { st: "mismatch", label: "کانال دیگری متصل شده", btn: "اتصال دوباره", e: e };
+    if (o && o.channel_id === e.channel_id && o.status === "revoked" && tsOf(o.at) > tsOf(e.connected_at)) return { st: "revoked", label: "دسترسی لغو شده", btn: "اتصال دوباره", e: e };
+    if (o && o.channel_id === e.channel_id && o.status === "error" && tsOf(o.at) > tsOf(e.connected_at)) return { st: "error", label: "خطا در خواندن API", btn: "اتصال", e: e, msg: o.error };
+    return { st: "ok", label: "متصل", btn: "متصل ✓", e: e };
+  }
+  var YT_PILL = { ok: "good", mismatch: "warn", revoked: "bad", error: "warn", none: "", unknown: "" };
+  function ytBtnHTML(pid, cls) {
+    var s = ytStatus(pid);
+    return '<button type="button" class="' + (cls || "bbtn ytc") + '" data-ytc="' + esc(pid) + '" data-st="' + s.st + '" title="اتصال رسمی حساب یوتیوب (Google)">' + esc(s.btn) + "</button>";
+  }
+  function ytConnCardHTML(pid) {
+    var s = ytStatus(pid), e = s.e, h = '<div class="ytc-head"><b>اتصال رسمی یوتیوب</b><span class="pill ' + (YT_PILL[s.st] || "") + '" data-yst="' + s.st + '">' + esc(s.label) + "</span></div>";
+    if (e) {
+      h += '<div class="ytc-ch"><span dir="ltr">' + esc(e.title || e.channel_id) + "</span>" + (e.handle ? ' <small dir="ltr">' + esc(e.handle) + "</small>" : "") +
+        '<small> · وصل‌شده ' + esc(fmtDateTime(e.connected_at)) + "</small></div>";
+      if (s.st === "mismatch") h += '<div class="alert">حسابی که تأیید شد (<span dir="ltr">' + esc(e.title || e.channel_id) + '</span>) کانال این پیج نیست' +
+        (e.expected_channel_id ? ' (<span dir="ltr">' + esc(e.expected_channel_id) + "</span>)" : "") + ". آمار و انتشار از این حساب استفاده نمی‌کنند؛ «اتصال دوباره» را بزن و در صفحه‌ی گوگل کانال درست را انتخاب کن.</div>";
+      if (s.st === "revoked") h += '<div class="alert bad">گوگل دسترسی پنل را نپذیرفت (لغو یا منقضی شده). «اتصال دوباره» را بزن.</div>';
+      if (s.st === "error") h += '<div class="alert">آخرین خواندن از API ناموفق بود' + (s.msg ? ' (<span dir="ltr">' + esc(s.msg) + "</span>)" : "") + "؛ تا درست شود، آمار عمومی نشان داده می‌شود.</div>";
+      if (s.st === "ok") h += '<p class="help">آمار دقیق (بازدید، لایک و کامنت هر ویدیو و مشترک‌ها) و کامنت‌ها از API رسمی یوتیوب خوانده می‌شود و انتشار ویدیو از صف انتشار با همین حساب انجام می‌شود.</p>';
+    } else if (s.st === "none") {
+      h += '<p class="help">با اتصال، آمار دقیق هر ویدیو، صندوق کامنت‌ها با امکان پاسخ، و انتشار مستقیم ویدیو فعال می‌شود. ورود در صفحه‌ی خود گوگل انجام می‌شود و رمز گوگل به پنل داده نمی‌شود.</p>';
+    }
+    return h + '<div class="row-btns">' + ytBtnHTML(pid, "go sm ytc-big") +
+      (s.st === "ok" || s.st === "error" ? '<button type="button" class="ghost sm" data-jump="yt-inbox">صندوق کامنت‌ها ↓</button>' : "") + "</div>";
+  }
+  // in-place updates only (the channel tree never re-renders in the background)
+  function updateYtUI() {
+    Array.prototype.forEach.call(document.querySelectorAll("button[data-ytc]"), function (b) {
+      var s = ytStatus(b.getAttribute("data-ytc")); b.textContent = s.btn; b.setAttribute("data-st", s.st);
+    });
+    var card = document.getElementById("yt-conn-card"); if (card) card.innerHTML = ytConnCardHTML(card.getAttribute("data-page"));
+    var acc = document.getElementById("yt-accounts-list"); if (acc) acc.innerHTML = ytAccountsListHTML();
+    var ib = document.getElementById("yt-inbox"); if (ib) renderInbox(ib.getAttribute("data-page"));
+  }
+  function ytAccountsListHTML() {
+    var rows = state.config.pages.filter(function (cp) { return (cp.accounts || {}).youtube; }).map(function (cp) {
+      var s = ytStatus(cp.id), e = s.e, page = pageData(cp);
+      return '<div class="yacc" data-page="' + esc(cp.id) + '" data-yst="' + s.st + '">' + logoHTML(cp, page, "", "youtube") +
+        '<div class="yacc-t"><b>' + esc(cp.name) + '</b><small dir="ltr">' + esc(e ? (e.title || e.channel_id) : cp.accounts.youtube) + "</small>" +
+        '<span class="yacc-s"><span class="pill ' + (YT_PILL[s.st] || "") + '">' + esc(s.label) + "</span>" + (e ? "<small>وصل‌شده " + esc(ago(e.connected_at)) + "</small>" : "") + "</span></div>" +
+        ytBtnHTML(cp.id, "bbtn ytc") + "</div>";
+    }).join("");
+    return rows || '<div class="muted-note">هیچ پیجی حساب یوتیوب ندارد.</div>';
+  }
+  function ytAccountsSectionHTML() {
+    return '<section class="card form" id="yt-accounts"><h2>حساب‌های متصل</h2>' +
+      '<p class="help">یوتیوب هر پیج را با دکمه‌ی «اتصال» به‌صورت رسمی وصل کن (مثل Zoho Social). ورود در صفحه‌ی گوگل انجام می‌شود؛ اگر گوگل نوشت «این برنامه تأیید نشده»، روی <b>Advanced</b> و بعد <b dir="ltr">Go to social-panel-app</b> بزن و همه‌ی دسترسی‌ها را تیک بزن. اگر کانال روی یک Brand Account است، در صفحه‌ی گوگل همان کانال را انتخاب کن.</p>' +
+      '<div class="yacc-list" id="yt-accounts-list">' + ytAccountsListHTML() + "</div>" +
+      '<p class="muted-note">توکن دائمی هر کانال فقط به‌صورت رمزگذاری‌شده (AES-GCM) در مخزن ذخیره می‌شود و فقط اجراهای گیت‌هاب می‌توانند بازش کنند. برای قطع کامل دسترسی: <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">myaccount.google.com/permissions ↗</a></p></section>';
+  }
+
+  // ---- comments inbox (connected channels): data/comments.json + queued replies
+  function pendingReplies() { var a = lsGet(YT_PENDING_KEY, []); return Array.isArray(a) ? a : []; }
+  function savePending(a) { lsSet(YT_PENDING_KEY, a.filter(function (x) { return Date.now() - x.at < 3 * DAY; }).slice(-50)); }
+  function replyResult(req) { var it = ((state.yt.replies && state.yt.replies.items) || []).filter(function (x) { return x.req === req; }); return it[it.length - 1] || null; }
+  function threadsOf(pid) {
+    var c = state.comments && state.comments.channels && state.comments.channels[pid + "/youtube"];
+    var th = (c && c.threads) || [];
+    return { meta: c || null, threads: th.slice().sort(function (a, b) { return (tsOf(b.published) || 0) - (tsOf(a.published) || 0); }) };
+  }
+  function renderInbox(pid) {
+    var box = document.getElementById("yt-inbox"); if (!box) return;
+    var s = ytStatus(pid);
+    var drafts = {}; Array.prototype.forEach.call(box.querySelectorAll("textarea[data-thread]"), function (t) { if (t.value) drafts[t.getAttribute("data-thread")] = t.value; });
+    var focused = document.activeElement && document.activeElement.getAttribute && document.activeElement.getAttribute("data-thread");
+    var T = threadsOf(pid), h = '<h3>کامنت‌های یوتیوب' + (T.threads.length ? " <small>(" + fa(T.threads.length) + ")</small>" : "") + "</h3>";
+    if (s.st === "unknown") { box.innerHTML = h + '<div class="muted-note">در حال بررسی اتصال…</div>'; return; }
+    if (s.st === "none" || s.st === "mismatch") { box.innerHTML = h + '<div class="muted-note" id="inbox-empty" data-why="' + s.st + '">برای دیدن کامنت‌ها و پاسخ دادن، اول یوتیوب این پیج را (با کانال درست) متصل کن.</div>'; return; }
+    if (T.meta) h += '<p class="muted-note">آخرین دریافت کامنت‌ها: ' + esc(fmtShort(T.meta.fetched_at)) + " (" + esc(ago(T.meta.fetched_at)) + ") · جدیدترین بالا · با دکمه‌ی به‌روزرسانی بالای صفحه دوباره خوانده می‌شود.</p>";
+    if (!T.threads.length) { box.innerHTML = h + '<div class="muted-note" id="inbox-empty" data-why="nodata">' + (T.meta ? "هنوز کامنتی روی ویدیوهای این کانال نیست." : "کامنت‌ها با اولین به‌روزرسانی بعد از اتصال این‌جا می‌آیند.") + "</div>"; return; }
+    var pend = pendingReplies().filter(function (x) { return x.page === pid; });
+    h += '<div class="cmts">' + T.threads.map(function (t) {
+      var known = {}; (t.replies || []).forEach(function (r) { known[r.id] = 1; });
+      var reps = (t.replies || []).map(function (r) {
+        return '<div class="crep"><b dir="auto">' + esc(r.author || "") + '</b> <small>' + esc(ago(r.published)) + '</small><p dir="auto">' + esc(r.text || "") + "</p></div>";
+      });
+      pend.filter(function (x) { return x.parent_id === t.id; }).forEach(function (x) {
+        var res = replyResult(x.req);
+        if (res && res.reply_id && known[res.reply_id]) return; // already in the comments read from YouTube
+        var st = !res ? "queued" : res.status === "sent" ? "sent" : "failed";
+        var lab = st === "queued" ? (Date.now() - x.at > 20 * 60000 ? "وضعیت نامشخص — صفحه را دوباره باز کن" : "در صف ارسال…") : st === "sent" ? "ارسال شد ✓" : "✗ " + (res.error_fa || "ارسال نشد");
+        reps.push('<div class="crep mine ' + st + '" data-req="' + esc(x.req) + '" data-rst="' + st + '"><b>پاسخ تو</b> <small>' + esc(lab) + '</small><p dir="auto">' + esc(x.text) + "</p></div>");
+      });
+      var vt = t.video_title || t.video_id || "";
+      return '<div class="cmt" data-thread="' + esc(t.id) + '">' +
+        (t.avatar ? '<img class="cav" alt="" referrerpolicy="no-referrer" src="' + esc(t.avatar) + '" onerror="this.remove()">' : '<span class="cav"></span>') +
+        '<div class="cbody"><div class="chd"><b dir="auto">' + esc(t.author || "") + '</b><small>' + esc(ago(t.published)) + "</small></div>" +
+        '<p class="ctext" dir="auto">' + esc(t.text || "") + "</p>" +
+        '<div class="cmeta">' + (t.likes ? "♥ " + fa(t.likes) + " · " : "") + (t.video_id ? '<a href="https://www.youtube.com/watch?v=' + encodeURIComponent(t.video_id) + "&lc=" + encodeURIComponent(t.comment_id || t.id) + '" target="_blank" rel="noopener" dir="auto">' + esc(vt) + " ↗</a>" : "") + "</div>" +
+        (reps.length ? '<div class="creps">' + reps.join("") + "</div>" : "") +
+        (t.can_reply === false ? '<div class="muted-note">پاسخ به این کامنت ممکن نیست.</div>' :
+          '<form class="rform" data-thread="' + esc(t.id) + '" onsubmit="return false"><textarea data-thread="' + esc(t.id) + '" rows="1" maxlength="5000" placeholder="پاسخ به ' + esc(t.author || "این کامنت") + '…" dir="auto">' + esc(drafts[t.id] || "") + '</textarea><button type="submit" class="go sm">ارسال پاسخ</button></form>') +
+        "</div></div>";
+    }).join("") + "</div>";
+    box.innerHTML = h;
+    if (focused) { var ft = box.querySelector('textarea[data-thread="' + focused.replace(/"/g, "") + '"]'); if (ft) ft.focus(); }
+  }
+  function bindInbox(pid) {
+    var box = document.getElementById("yt-inbox"); if (!box) return;
+    box.onsubmit = function (e) {
+      var f = e.target; if (!f.classList || !f.classList.contains("rform")) return;
+      e.preventDefault();
+      var ta = f.querySelector("textarea"), text = (ta.value || "").trim(), tid = f.getAttribute("data-thread");
+      if (!text) { toast("متن پاسخ خالی است"); return; }
+      sendReply(pid, tid, text, f);
+    };
+  }
+  // find the run this browser started (run-name carries the request id), then wait for it to finish
+  function waitRun(wf, req, say, maxMs) {
+    var started = Date.now() - 60000, deadline = Date.now() + (maxMs || 10 * 60000), runId = null;
+    function poll() {
+      if (Date.now() > deadline) return Promise.resolve({ timeout: true });
+      return sleep(runId ? 4000 : 3000).then(function () {
+        var q = runId ? gh("/actions/runs/" + runId) : gh("/actions/workflows/" + wf + "/runs?event=workflow_dispatch&per_page=10").then(function (d) {
+          return (d.workflow_runs || []).filter(function (x) { return String(x.display_title || x.name || "").indexOf(req) >= 0 && tsOf(x.created_at) >= started; })[0] || null;
+        });
+        return q.then(function (run) {
+          if (!run) { if (say) say("queued"); return poll(); }
+          runId = run.id;
+          if (run.status === "completed") return { run: run };
+          if (say) say(run.status === "in_progress" ? "running" : "queued");
+          return poll();
+        }, function () { return poll(); });
+      });
+    }
+    return poll();
+  }
+  function sendReply(pid, parentId, text, form) {
+    if (!tokenState().has) { toast(tokenState().locked ? "برای ارسال پاسخ، اول اتصال گیت‌هاب را با رمز پنل فعال کن." : "برای ارسال پاسخ، توکن گیت‌هاب را در تنظیمات بگذار.", 4500); ensureUnlockUI(); return; }
+    var req = "r" + Date.now().toString(36) + randHex(3);
+    var btn = form && form.querySelector("button"); if (btn) btn.disabled = true;
+    gh("/actions/workflows/yt-reply.yml/dispatches", { method: "POST", body: { ref: GH_BRANCH, inputs: { page: pid, parent_id: parentId, text: text, req: req } } }).then(function () {
+      var a = pendingReplies(); a.push({ req: req, page: pid, parent_id: parentId, text: text, at: Date.now() }); savePending(a);
+      var ta = form && form.querySelector("textarea"); if (ta) ta.value = "";
+      renderInbox(pid); toast("پاسخ در صف ارسال قرار گرفت");
+      return waitRun("yt-reply.yml", req).then(function () { return loadYt(true); }).then(function () {
+        var r = replyResult(req);
+        if (r) toast(r.status === "sent" ? "پاسخ در یوتیوب منتشر شد ✓" : "✗ " + (r.error_fa || "ارسال پاسخ ناموفق بود"), 5000);
+      });
+    }).catch(function (e) {
+      if (btn) btn.disabled = false;
+      toast("ارسال پاسخ ممکن نشد: " + ghErrorFa(e), 5000);
+    });
   }
 
   // ------------------------------------------------------------- publish
@@ -1534,22 +1771,33 @@
       getJSON("config.json", fresh),
       getJSON("data/latest.json", true).catch(function () { return null; }),
       getJSON("data/history.json", true).catch(function () { return { series: {} }; }),
-      getJSON("data/posts_history.json", true).catch(function () { return { channels: {} }; })
+      getJSON("data/posts_history.json", true).catch(function () { return { channels: {} }; }),
+      getJSON("data/comments.json", true).catch(function () { return { channels: {} }; })
     ]).then(function (res) {
-      state.config = res[0]; state.latest = res[1]; state.history = res[2]; state.postsHist = res[3]; state.error = null;
+      state.config = res[0]; state.latest = res[1]; state.history = res[2]; state.postsHist = res[3]; state.comments = res[4]; state.error = null;
       if (!quiet) rerenderSafe();
     }).catch(function (e) { state.error = e; if (!quiet) render(); });
   }
 
   // hooks for the automated tests (read-only helpers; nothing here bypasses the login)
   window.__spDebug = {
-    load: function (fresh) { return load(fresh); }, render: function () { render(); }, syncOnStart: function () { return syncOnStart(); }, tokenState: function () { return tokenState(); },
+    load: function (fresh) { return load(fresh); }, render: function () { render(); },
+    oauthURL: function (page, nonce) { return oauthURL(page, nonce); }, loadYt: function () { return loadYt(true); }, ytStatus: function (p) { return ytStatus(p); }, syncOnStart: function () { return syncOnStart(); }, tokenState: function () { return tokenState(); },
     mutateActivity: function () { // pretend new posts arrived on the channel currently listed last
       var ids = channelOrder(), last = ids[ids.length - 1], pg = state.latest && state.latest.pages[last];
       if (pg) PLATFORMS.forEach(function (pl) { if (pg.platforms[pl]) pg.platforms[pl].last_post_at = new Date().toISOString(); });
       render();
     }
   };
+  // "اتصال" buttons (channel rows, analytics card, settings list) — one delegated handler
+  document.addEventListener("click", function (e) {
+    var j = e.target && e.target.closest ? e.target.closest("button[data-jump]") : null;
+    if (j) { var t = document.getElementById(j.getAttribute("data-jump")); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+    var b = e.target && e.target.closest ? e.target.closest("button[data-ytc]") : null;
+    if (!b) return;
+    e.preventDefault();
+    startYtConnect(b.getAttribute("data-ytc"), b.getAttribute("data-st"));
+  });
   var pendingReload = false;
   window.addEventListener("hashchange", function () { if (pendingReload && !onFormPage()) { location.reload(); return; } render(); });
   if (!authed()) loginView();

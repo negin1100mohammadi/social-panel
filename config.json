@@ -109,5 +109,15 @@
         "url": "https://labs.google/fx/tools/flow"
       }
     ]
+  },
+  "youtube_oauth": {
+    "client_id": "37619814235-dmnoad0krqqla6bcgpp5kc7vnrre1c66.apps.googleusercontent.com",
+    "redirect_uri": "https://negin1100mohammadi.github.io/social-panel/oauth.html",
+    "scopes": [
+      "https://www.googleapis.com/auth/youtube.upload",
+      "https://www.googleapis.com/auth/youtube.force-ssl",
+      "https://www.googleapis.com/auth/youtube.readonly",
+      "https://www.googleapis.com/auth/yt-analytics.readonly"
+    ]
   }
 }

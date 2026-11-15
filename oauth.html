@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex">
+  <title>اتصال یوتیوب — پنل پیج‌ها</title>
+  <meta name="theme-color" content="#f7f5fc">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem("sp_theme"); } catch (e) {}
+      if (t !== "light" && t !== "dark") t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=7">
+</head>
+<body>
+  <main class="oauth-wrap">
+    <section class="card oauth-card" id="o-card" data-state="start">
+      <div class="vi"><svg viewBox="0 0 24 24" width="28" height="28"><path d="M10 8.5v7l6-3.5z" fill="#fff"/></svg></div>
+      <h1 id="o-title">اتصال حساب یوتیوب</h1>
+      <p id="o-msg" data-state="busy"><span class="spin-dot" id="o-spin"></span><span id="o-text">در حال بررسی پاسخ گوگل…</span></p>
+      <div class="row-btns"><a class="ghost" id="o-back" href="./#/channels">بازگشت به پنل</a></div>
+    </section>
+  </main>
+  <noscript><p class="loading">برای اتصال یوتیوب، جاوااسکریپت را فعال کنید.</p></noscript>
+  <script>
+  /* Google returns here (authorization-code flow). This page:
+     1. reads code + state and removes them from the address bar at once,
+     2. checks the state nonce saved by the panel before it left (single use, 30 min max),
+     3. dispatches .github/workflows/yt-connect.yml with this device's GitHub token (inputs: code, page, req),
+     4. waits for the run, reads config/yt_connect_last.json (no secrets) and shows the result in Persian,
+     5. returns to the channel's YouTube page.
+     The code is never shown, stored or logged here. */
+  (function () {
+    "use strict";
+    var OWNER = "negin1100mohammadi", REPO = "social-panel", BRANCH = "main", WF = "yt-connect.yml";
+    var STATE_KEY = "sp_oauth_state", TOKEN_KEY = "sp_gh_token", MAX_AGE = 30 * 60000;
+    var $ = function (id) { return document.getElementById(id); };
+    function say(text, st, done) {
+      $("o-text").textContent = text; $("o-msg").setAttribute("data-state", st || "busy");
+      $("o-card").setAttribute("data-state", st || "busy");
+      $("o-spin").hidden = !!done;
+    }
+    function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+    var qs = new URLSearchParams(location.search);
+    var code = qs.get("code") || "", stateParam = qs.get("state") || "", gerr = qs.get("error") || "";
+    try { history.replaceState(null, "", location.pathname); } catch (e) {} // drop the code from the address bar / history
+    window.__oauth = { done: false };
+
+    function readSaved() {
+      var raw = null;
+      try { raw = sessionStorage.getItem(STATE_KEY); } catch (e) {}
+      if (!raw) try { raw = localStorage.getItem(STATE_KEY); } catch (e) {}
+      try { sessionStorage.removeItem(STATE_KEY); } catch (e) {}
+      try { localStorage.removeItem(STATE_KEY); } catch (e) {}
+      try { return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+    }
+    function finish(text, st, page, delay) {
+      say(text, st, true);
+      window.__oauth = { done: true, state: st, page: page || null };
+      var back = page ? "./#/a/" + page + "/youtube" : "./#/channels";
+      $("o-back").setAttribute("href", back);
+      $("o-back").textContent = page ? "بازگشت به صفحه‌ی یوتیوب کانال" : "بازگشت به پنل";
+      if (page && delay && !window.__oauthNoRedirect) setTimeout(function () { location.replace(back); }, delay);
+    }
+    function gh(path, opts) {
+      opts = opts || {};
+      var h = { "Accept": opts.accept || "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "Authorization": "Bearer " + token };
+      var init = { method: opts.method || "GET", headers: h, cache: "no-store" };
+      if (opts.body) { init.body = JSON.stringify(opts.body); h["Content-Type"] = "application/json"; }
+      return fetch("https://api.github.com/repos/" + OWNER + "/" + REPO + path, init).then(function (r) {
+        if (r.status === 204) return null;
+        return r.text().then(function (t) {
+          var d = null; try { d = t ? JSON.parse(t) : null; } catch (e) { d = t; }
+          if (!r.ok) { var err = new Error((d && d.message) || ("HTTP " + r.status)); err.status = r.status; throw err; }
+          return d;
+        });
+      });
+    }
+    function ghErr(e) {
+      if (e.status === 401) return "توکن گیت‌هاب این دستگاه نامعتبر یا منقضی است؛ در «تنظیمات» پنل توکن تازه بگذار و دوباره «اتصال» را بزن.";
+      if (e.status === 403) return "توکن گیت‌هاب اجازه‌ی اجرای Actions را ندارد (Actions: Read and write لازم است).";
+      if (e.status === 404) return "گردش‌کار yt-connect در مخزن پیدا نشد.";
+      if (e.status === 422) return "گیت‌هاب درخواست را نپذیرفت: " + e.message;
+      return "اتصال به گیت‌هاب برقرار نشد؛ اینترنت را بررسی کن.";
+    }
+
+    if (gerr) {
+      var saved0 = readSaved();
+      var pg0 = saved0 && /^[\w-]{1,64}$/.test(saved0.page || "") ? saved0.page : null;
+      finish(gerr === "access_denied" ? "اجازه‌ی دسترسی در صفحه‌ی گوگل داده نشد؛ چیزی تغییر نکرد." : "گوگل اتصال را کامل نکرد (" + gerr + ").", "warn", pg0, 0);
+      return;
+    }
+    if (!code || !stateParam) { readSaved(); finish("این صفحه فقط برای برگشت از صفحه‌ی ورود گوگل است. برای اتصال، در پنل روی «اتصال» کنار یوتیوب بزن.", "warn", null, 0); return; }
+    var saved = readSaved();
+    var dot = stateParam.lastIndexOf(".");
+    var page = dot > 0 ? stateParam.slice(0, dot) : "", nonce = dot > 0 ? stateParam.slice(dot + 1) : "";
+    if (!saved || !saved.nonce || saved.nonce !== nonce || saved.page !== page || !/^[\w-]{1,64}$/.test(page)) {
+      finish("این پاسخ گوگل با درخواست این مرورگر جور نیست (کد امنیتی state نادرست یا قبلاً استفاده شده). برای امنیت ادامه داده نشد؛ دوباره از پنل «اتصال» را بزن.", "error", null, 0);
+      return;
+    }
+    if (Date.now() - (saved.at || 0) > MAX_AGE) { finish("درخواست اتصال قدیمی است (بیش از ۳۰ دقیقه). دوباره از پنل «اتصال» را بزن.", "error", page, 0); return; }
+    var token = "";
+    try { token = (localStorage.getItem(TOKEN_KEY) || "").trim(); } catch (e) {}
+    if (!token) { finish("اتصال گیت‌هاب روی این مرورگر فعال نیست؛ پنل را باز کن، رمز پنل را وارد کن و دوباره «اتصال» را بزن.", "error", page, 0); return; }
+
+    var req = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    var started = Date.now() - 60000;
+    say("در حال فرستادن به گیت‌هاب برای ذخیره‌ی امن اتصال…");
+    gh("/actions/workflows/" + WF + "/dispatches", { method: "POST", body: { ref: BRANCH, inputs: { code: code, page: page, req: req } } }).then(function () {
+      code = ""; // not needed any more
+      var deadline = Date.now() + 8 * 60000, runId = null;
+      function poll() {
+        if (Date.now() > deadline) return Promise.resolve(null);
+        return sleep(runId ? 3500 : 2500).then(function () {
+          var q = runId ? gh("/actions/runs/" + runId) : gh("/actions/workflows/" + WF + "/runs?event=workflow_dispatch&per_page=10").then(function (d) {
+            return ((d && d.workflow_runs) || []).filter(function (x) { return String(x.display_title || "").indexOf(req) >= 0 && Date.parse(x.created_at) >= started; })[0] || null;
+          });
+          return q.then(function (run) {
+            if (!run) { say("در صف اجرای گیت‌هاب…"); return poll(); }
+            runId = run.id;
+            if (run.status === "completed") return run;
+            say(run.status === "in_progress" ? "در حال دریافت توکن از گوگل و ذخیره‌ی رمزگذاری‌شده…" : "در صف اجرای گیت‌هاب…");
+            return poll();
+          }, function () { return poll(); });
+        });
+      }
+      return poll();
+    }).then(function (run) {
+      if (!run) { finish("اجرا بیش از حد طول کشید. چند دقیقه بعد وضعیت را در «تنظیمات ← حساب‌های متصل» ببین.", "warn", page, 0); return; }
+      if (run.conclusion !== "success") { finish("اجرای اتصال در گیت‌هاب ناموفق بود (" + run.conclusion + "). دوباره «اتصال» را بزن.", "error", page, 0); return; }
+      say("در حال خواندن نتیجه…");
+      var tries = 0;
+      function readResult() {
+        return gh("/contents/config/yt_connect_last.json?ref=" + BRANCH + "&t=" + Date.now(), { accept: "application/vnd.github.raw+json" }).then(function (r) {
+          if ((!r || r.req !== req) && ++tries < 6) return sleep(2500).then(readResult);
+          return r && r.req === req ? r : null;
+        }, function () { return ++tries < 6 ? sleep(2500).then(readResult) : null; });
+      }
+      return readResult().then(function (r) {
+        if (!r) { finish("اجرا تمام شد ولی نتیجه خوانده نشد. وضعیت را در «تنظیمات ← حساب‌های متصل» ببین.", "warn", page, 5000); return; }
+        if (!r.ok) { finish("✗ " + (r.error_fa || "اتصال انجام نشد."), "error", page, 0); return; }
+        var name = r.title || r.channel_id;
+        if (r.mismatch) { finish("⚠ کانال «" + name + "» متصل شد، اما این کانالِ تعریف‌شده برای این پیج نیست. آمار و انتشار از آن استفاده نمی‌کنند؛ در صفحه‌ی کانال «اتصال دوباره» را بزن و کانال درست را انتخاب کن.", "warn", page, 9000); return; }
+        var extra = r.missing_scopes && r.missing_scopes.length ? " (بعضی دسترسی‌ها تیک نخورده بود: " + r.missing_scopes.join("، ") + ")" : "";
+        finish("✓ کانال «" + name + "» با موفقیت متصل شد" + extra + ". در حال بازگشت…", extra ? "warn" : "ok", page, extra ? 6000 : 2500);
+      });
+    }).catch(function (e) { finish("✗ " + ghErr(e), "error", page, 0); });
+  })();
+  </script>
+</body>
+</html>

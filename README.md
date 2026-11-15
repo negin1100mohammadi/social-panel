@@ -104,6 +104,21 @@ All handles live in `config.json` (`pages[].accounts`). Page order on the Home s
 
 The vault button only links to `https://vault.vaultwarden.com/`. Never commit passwords, tokens or vault content to this repo — use GitHub Secrets.
 
+## v7 (2026-11-15) — اتصال رسمی یوتیوب
+
+### فارسی
+- کنار هر ردیف یوتیوب در «کانال‌ها»، در صفحه‌ی آمار یوتیوب و در «تنظیمات ← حساب‌های متصل» دکمه‌ی **«اتصال»** هست. با آن صفحه‌ی رسمی گوگل باز می‌شود (حساب/کانال را انتخاب کن و همه‌ی دسترسی‌ها را تأیید کن). اگر گوگل نوشت «این برنامه تأیید نشده»، Advanced ← Go to social-panel-app.
+- گوگل به `oauth.html` برمی‌گردد؛ این صفحه کد یک‌بارمصرف را با توکن گیت‌هاب همین دستگاه به گردش‌کار `yt-connect.yml` می‌دهد و نتیجه را نشان می‌دهد. توکن دائمی فقط رمزگذاری‌شده (AES-GCM با Secret `TOKEN_KEY`) در `config/yt_tokens.enc.json` ذخیره می‌شود.
+- اگر کانالِ تأییدشده با کانال تعریف‌شده‌ی پیج یکی نباشد، باز هم ذخیره می‌شود ولی با برچسب «کانال دیگری متصل شده»؛ آمار و انتشار از آن استفاده نمی‌کنند.
+- برای کانال متصل: آمار دقیق از API (بازدید/لایک/کامنت هر ویدیو، مشترک‌ها)، صندوق کامنت‌ها (جدیدترین بالا) با جعبه‌ی پاسخ؛ پاسخ‌ها در صف می‌روند و `yt-reply.yml` با `comments.insert` منتشرشان می‌کند. صف انتشار هم توکن یوتیوب را از همین فایل می‌خواند.
+
+### English
+- Secrets: `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `TOKEN_KEY` (32 random bytes, base64). Public client id also in `config.json → youtube_oauth`.
+- Flow: app → Google (`response_type=code`, `access_type=offline`, `prompt=consent select_account`, `include_granted_scopes=true`, `state=<page>.<nonce>` kept in sessionStorage, with a 30-min single-use localStorage copy for home-screen apps) → `oauth.html` (state check, URL cleared) → `workflow_dispatch yt-connect.yml {code,page,req}` → `scripts/yt_connect.py` reads inputs from `$GITHUB_EVENT_PATH`, `::add-mask::`s the code first, exchanges it, reads `channels?mine=true`, stores the AES-GCM-encrypted refresh token (channel id as AAD) keyed by channel id, writes `config/yt_connect_last.json` (no secrets).
+- `scripts/fetch_stats.py`: connected (non-mismatched) channels use the owner's token → exact stats + `data/comments.json`; on failure falls back to public pages and records `oauth.status` (`revoked`/`error`/`mismatch`) in `latest.json`.
+- `yt-reply.yml` + `scripts/yt_reply.py` → `config/yt_replies.json`. `scripts/publish.py` reads YouTube refresh tokens from the store (per-page `YT_REFRESH_TOKEN_*` secrets no longer needed).
+- Tests: `python3 tests/test_youtube_oauth.py` (mock Google on localhost) and `FIXTURE_NOW=$NOW node tests/v7.test.js /tmp/fx`.
+
 ## v6 (2026-11-15)
 
 ### فارسی — تغییرات نسخه‌ی ۶

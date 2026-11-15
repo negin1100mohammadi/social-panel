@@ -1,0 +1,58 @@
+name: YouTube connect
+run-name: "yt-connect ${{ inputs.page }} ${{ inputs.req }}"
+
+# Started by oauth.html (the panel) after Google's consent screen. The authorization code is read by the
+# script from the event file and masked before anything else; it never appears in a step's env or script.
+on:
+  workflow_dispatch:
+    inputs:
+      code:
+        description: "One-time Google authorization code (masked)"
+        required: true
+        type: string
+      page:
+        description: "Panel page key (config.json pages[].id)"
+        required: true
+        type: string
+      req:
+        description: "Request id chosen by the browser"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: yt-config
+  cancel-in-progress: false
+
+jobs:
+  connect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests cryptography
+
+      - name: Exchange code and store encrypted refresh token
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          TOKEN_KEY: ${{ secrets.TOKEN_KEY }}
+        run: python scripts/yt_connect.py
+
+      - name: Commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add config/yt_tokens.enc.json config/yt_connect_last.json 2>/dev/null || true
+          if git diff --cached --quiet; then echo "Nothing to commit."; exit 0; fi
+          git commit -m "config: youtube connection $(TZ=Asia/Tehran date '+%Y-%m-%d %H:%M') Tehran"
+          for i in 1 2 3 4 5; do git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push && exit 0; sleep $((i*3)); done
+          exit 1

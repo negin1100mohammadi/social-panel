@@ -474,7 +474,7 @@ const hashTo = async (page, h, sel) => { await page.evaluate((x) => { location.h
   {
     let swVer = "v6";
     const swSrc = fs.readFileSync(path.join(FX, "sw.js"), "utf8");
-    const { srv: srv3, url: base3 } = await serve(FX, { override: { "/sw.js": () => swSrc.replace('const VERSION = "v6"', `const VERSION = "${swVer}"`) } });
+    const { srv: srv3, url: base3 } = await serve(FX, { override: { "/sw.js": () => swSrc.replace(/const VERSION = "v\d+"/, `const VERSION = "${swVer}"`) } });
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "allow" });
     await ctx.addInitScript((h) => { localStorage.setItem("sp_auth", h); sessionStorage.setItem("sp_unlock_later", "1"); }, REAL_HASH);
     await ctx.route(/https:\/\/(api\.github\.com|raw\.githubusercontent\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)\/.*/, (r) => r.fulfill({ status: 404, body: "" }));
