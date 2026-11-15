@@ -28,9 +28,32 @@
   "blob_sha": "6fc5f718194648557d03c082799c052d82dfe380",
   "name": "1000351936.mp4",
   "type": "video/mp4",
-  "size": 6634299
+  "size": 6634299,
+  "asset_id": 752147549
  },
- "asset_url": null,
- "status": "pending",
- "results": {}
+ "asset_url": "https://github.com/negin1100mohammadi/social-panel/releases/download/media-queue/20261115-231717-o2hb.mp4",
+ "status": "needs_setup",
+ "results": {
+  "titan-station/instagram": {
+   "status": "needs_setup",
+   "reason": "برای اینستاگرام Secretهای IG_ACCESS_TOKEN_TITAN_STATION و IG_USER_ID_TITAN_STATION لازم است (اکانت Business/Creator).",
+   "at": "2026-11-15T23:17:54+03:30"
+  },
+  "titan-station/youtube": {
+   "status": "needs_setup",
+   "reason": "برای یوتیوب Secretهای YT_CLIENT_ID، YT_CLIENT_SECRET و YT_REFRESH_TOKEN_TITAN_STATION لازم است.",
+   "at": "2026-11-15T23:17:54+03:30"
+  },
+  "titan-station/aparat": {
+   "status": "needs_setup",
+   "reason": "آپارات API عمومی و مستند برای آپلود ندارد (API قدیمی etc/api از کار افتاده). با Secretهای APARAT_USER_TITAN_STATION و APARAT_PASS_TITAN_STATION روش قدیمی امتحان می‌شود.",
+   "at": "2026-11-15T23:17:54+03:30"
+  },
+  "titan-station/tiktok": {
+   "status": "needs_setup",
+   "reason": "تیک‌تاک برای انتشار به اپ تأییدشده‌ی Content Posting API و Secret TIKTOK_ACCESS_TOKEN_TITAN_STATION نیاز دارد.",
+   "at": "2026-11-15T23:17:54+03:30"
+  }
+ },
+ "finished_at": "2026-11-15T23:17:54+03:30"
 }
