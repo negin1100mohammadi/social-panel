@@ -1,0 +1,87 @@
+{
+ "v": 1,
+ "updated_at": "2026-11-16T13:37:30+03:30",
+ "note": "written by scripts/publish.py: whether each channel can publish automatically (no secret values)",
+ "channels": {
+  "hamrah-seller/youtube": {
+   "ready": false,
+   "reason_fa": "یوتیوب این پیج هنوز متصل نیست"
+  },
+  "hamrah-seller/instagram": {
+   "ready": false,
+   "reason_fa": "کلید API اینستاگرام (Business) ثبت نشده"
+  },
+  "hamrah-seller/tiktok": {
+   "ready": false,
+   "reason_fa": "کلید API تیک‌تاک ثبت نشده"
+  },
+  "hamrah-seller/aparat": {
+   "ready": false,
+   "reason_fa": "آپارات API انتشار عمومی ندارد"
+  },
+  "titan-station/youtube": {
+   "ready": true,
+   "reason_fa": null
+  },
+  "titan-station/instagram": {
+   "ready": false,
+   "reason_fa": "کلید API اینستاگرام (Business) ثبت نشده"
+  },
+  "titan-station/tiktok": {
+   "ready": false,
+   "reason_fa": "کلید API تیک‌تاک ثبت نشده"
+  },
+  "titan-station/aparat": {
+   "ready": false,
+   "reason_fa": "آپارات API انتشار عمومی ندارد"
+  },
+  "fancatstic-four/youtube": {
+   "ready": false,
+   "reason_fa": "یوتیوب این پیج هنوز متصل نیست"
+  },
+  "fancatstic-four/instagram": {
+   "ready": false,
+   "reason_fa": "کلید API اینستاگرام (Business) ثبت نشده"
+  },
+  "fancatstic-four/tiktok": {
+   "ready": false,
+   "reason_fa": "کلید API تیک‌تاک ثبت نشده"
+  },
+  "fancatstic-four/aparat": {
+   "ready": false,
+   "reason_fa": "آپارات API انتشار عمومی ندارد"
+  },
+  "shode-dige/youtube": {
+   "ready": false,
+   "reason_fa": "یوتیوب این پیج هنوز متصل نیست"
+  },
+  "shode-dige/instagram": {
+   "ready": false,
+   "reason_fa": "کلید API اینستاگرام (Business) ثبت نشده"
+  },
+  "shode-dige/tiktok": {
+   "ready": false,
+   "reason_fa": "کلید API تیک‌تاک ثبت نشده"
+  },
+  "shode-dige/aparat": {
+   "ready": false,
+   "reason_fa": "آپارات API انتشار عمومی ندارد"
+  },
+  "pretime-tv/youtube": {
+   "ready": false,
+   "reason_fa": "یوتیوب این پیج هنوز متصل نیست"
+  },
+  "pretime-tv/instagram": {
+   "ready": false,
+   "reason_fa": "کلید API اینستاگرام (Business) ثبت نشده"
+  },
+  "pretime-tv/tiktok": {
+   "ready": false,
+   "reason_fa": "کلید API تیک‌تاک ثبت نشده"
+  },
+  "pretime-tv/aparat": {
+   "ready": false,
+   "reason_fa": "آپارات API انتشار عمومی ندارد"
+  }
+ }
+}
