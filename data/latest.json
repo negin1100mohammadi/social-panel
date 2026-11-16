@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-11-16T01:24:11Z",
+ "updated_at": "2026-11-16T02:39:31Z",
  "timezone": "Asia/Tehran",
  "pages": {
   "hamrah-seller": {
@@ -24,7 +24,7 @@
      "notes": [],
      "error": "RuntimeError: public profile endpoint blocked (HTTP 429, text/plain); profile page HTTP 302",
      "fetched_at": null,
-     "last_attempt_at": "2026-11-16T01:24:20Z",
+     "last_attempt_at": "2026-11-16T02:39:39Z",
      "last_post_at": null,
      "last_change_at": null
     },
@@ -45,7 +45,7 @@
      "notes": [],
      "error": "LookupError: handle @hamkargram not found on YouTube (HTTP 404)",
      "fetched_at": null,
-     "last_attempt_at": "2026-11-16T01:24:23Z",
+     "last_attempt_at": "2026-11-16T02:39:42Z",
      "last_post_at": null,
      "last_change_at": null
     },
@@ -67,7 +67,7 @@
       "Aparat public API gives views; likes/comments are not exposed"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:24:29Z",
+     "fetched_at": "2026-11-16T02:39:47Z",
      "title": "Hamrah Seller",
      "avatar_src": "https://www.aparat.com/public/public/aparat/img/global/avatar-is-channel.png",
      "avatar_hash": null,
@@ -92,9 +92,9 @@
       "TikTok profile page exposes totals only; per-video stats and dates are not available"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:24:32Z",
+     "fetched_at": "2026-11-16T02:39:51Z",
      "title": "Hamrah Seller",
-     "avatar_src": "https://p16-common-sign.tiktokcdn-us.com/tos-useast2a-avt-0068-euttp/32eee754abab99a61c461357d77ab5b8~tplv-tiktokx-cropcenter:720:720.jpeg?dr=9640&refresh_token=4291cc24&x-expires=1794963600&x-signature=mh%2B47fWsKIwnFssxtRlkFKtnbdU%3D&t=4d5b0474&ps=13740610&shp=a5d48078&shcp=81f88b70&idc=useast5",
+     "avatar_src": "https://p16-common-sign.tiktokcdn-us.com/tos-useast2a-avt-0068-euttp/32eee754abab99a61c461357d77ab5b8~tplv-tiktokx-cropcenter:720:720.jpeg?dr=9640&refresh_token=2714029e&x-expires=1794967200&x-signature=tJAUjHVwvxBTkvF2IX3M6rJZEY4%3D&t=4d5b0474&ps=13740610&shp=a5d48078&shcp=81f88b70&idc=useast5",
      "avatar_hash": null,
      "last_post_at": null,
      "last_change_at": null
@@ -132,7 +132,7 @@
        "views": null,
        "likes": 22,
        "comments": 0,
-       "thumb": "https://scontent-sjc6-1.cdninstagram.com/v/t51.82787-15/904966280_18128601604825834_6946813437480924501_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=110&_nc_map=urlgen_bucketless&ig_cache_key=NDAzMDQ0ODU3NTY0NDk3MTMzOA%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=LTTS8g7-uY8Q7kNvwEp7rJy&_nc_oc=AdphUPeXQpOL6OLZshXJweDfV7bT740UqAdDshkMDIdmON7WBJh5x53lV4LjTEwyv_0&_nc_zt=23&_nc_ht=scontent-sjc6-1.cdninstagram.com&_nc_gid=yvKE2KpNtMxX5cIhtjufKA&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQTSxGMhI2kI8zbo3bET6WxX7jBI-qWdUXQ6Sh8WgyHblQ&oe=6B00181D"
+       "thumb": "https://scontent-sea5-1.cdninstagram.com/v/t51.82787-15/904966280_18128601604825834_6946813437480924501_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=110&_nc_map=urlgen_bucketless&ig_cache_key=NDAzMDQ0ODU3NTY0NDk3MTMzOA%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=LTTS8g7-uY8Q7kNvwEjfgqQ&_nc_oc=Adpd_uO-nfxxCa10h-smkHVx1M8pGJeOuQcGVFqHL_smxLamETKUGGY2-t5AdI9VNxc&_nc_zt=23&_nc_ht=scontent-sea5-1.cdninstagram.com&_nc_gid=EE0Eyx7JE1uzE1pExwDoaA&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQSBwsGA2mxpyGGlfM2QxImZn7IqFk1r84zTSeQm-bYkxg&oe=6B00505D"
       },
       {
        "shares": null,
@@ -146,7 +146,7 @@
        "views": null,
        "likes": 33,
        "comments": 0,
-       "thumb": "https://scontent-sjc6-1.cdninstagram.com/v/t51.82787-15/910467219_18128511739825834_326818424410140450_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=101&_nc_map=urlgen_bucketless&ig_cache_key=NDAzMDI0NDMwMTc3NDMwODg4MQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=RhJLlPGIswQQ7kNvwHwGUTs&_nc_oc=Adoyc2N4mT8VDxOYxaDWJsU3nK_qfCDaH0xJyIsfu1GTDR7_UQ-Z765-GrueLcitldA&_nc_zt=23&_nc_ht=scontent-sjc6-1.cdninstagram.com&_nc_gid=yvKE2KpNtMxX5cIhtjufKA&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQSIpH3qrmx4g-ZR_-46-gsjlf2VOI_jgXHjBHa5o3OMyQ&oe=6B001865"
+       "thumb": "https://scontent-sea5-1.cdninstagram.com/v/t51.82787-15/910467219_18128511739825834_326818424410140450_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=101&_nc_map=urlgen_bucketless&ig_cache_key=NDAzMDI0NDMwMTc3NDMwODg4MQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=RhJLlPGIswQQ7kNvwFpM3lF&_nc_oc=AdqMZ2RMaMcilbx51SPKhxMnEuXtwjaAGzb5QLvNzjO939AHwl6wxiRQ6fYE1r6iB2Y&_nc_zt=23&_nc_ht=scontent-sea5-1.cdninstagram.com&_nc_gid=EE0Eyx7JE1uzE1pExwDoaA&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQTnn25mwxfEqgTq-16rIG8T9eZu0gKRIAR5lkRJ9FSiUA&oe=6B0050A5"
       },
       {
        "shares": null,
@@ -160,7 +160,7 @@
        "views": null,
        "likes": 49,
        "comments": 0,
-       "thumb": "https://scontent-sjc6-1.cdninstagram.com/v/t51.82787-15/904133931_18128199508825834_39784178158937971_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=104&_nc_map=urlgen_bucketless&ig_cache_key=NDAyOTQ1MDYwMDQ1MDA4ODQ4OA%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=2b_4VPkpavkQ7kNvwGVmAqJ&_nc_oc=AdrylEwe1kXkfbk89OO0TrjrJG_34d5lqn-Ttm4Ix9kLEYGPZM1agXRdW8yPmF32miA&_nc_zt=23&_nc_ht=scontent-sjc6-1.cdninstagram.com&_nc_gid=yvKE2KpNtMxX5cIhtjufKA&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQR3WMtQlSAkiWO3OP8_mvn6blQx-Bke1F3n0OwxglYvKQ&oe=6B003A3E"
+       "thumb": "https://scontent-sea5-1.cdninstagram.com/v/t51.82787-15/904133931_18128199508825834_39784178158937971_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=104&_nc_map=urlgen_bucketless&ig_cache_key=NDAyOTQ1MDYwMDQ1MDA4ODQ4OA%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=2b_4VPkpavkQ7kNvwEwTKfL&_nc_oc=AdotNqmv2G-M4NBROpPej-0gLgV7LpMweXeF1qFyKeGFElLo0J3fWYptwrZzpZSkLr4&_nc_zt=23&_nc_ht=scontent-sea5-1.cdninstagram.com&_nc_gid=EE0Eyx7JE1uzE1pExwDoaA&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQQZW_Pdudadq8k2pHtfBl4VmucicCHW2gNq058u8FFxkQ&oe=6B003A3E"
       },
       {
        "shares": null,
@@ -174,7 +174,7 @@
        "views": null,
        "likes": 7,
        "comments": 0,
-       "thumb": "https://scontent-sjc6-1.cdninstagram.com/v/t51.82787-15/900541841_18127877119825834_9167169408203469560_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=105&_nc_map=urlgen_bucketless&ig_cache_key=NDAyODY4MDA5MTE5Mzg0NTExNg%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=31X10hJ2Gi4Q7kNvwH5cMS0&_nc_oc=AdrtEXJvHJysCAuGcdTTiCVAMXWEsWT8FZQVrOQTSiC0-1wK0ez6Oh6FJHOT5mKIZXY&_nc_zt=23&_nc_ht=scontent-sjc6-1.cdninstagram.com&_nc_gid=yvKE2KpNtMxX5cIhtjufKA&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQRNm2y2A1_iU5Qibilj7g8ebL9gzA4-BhdifnJVav3-Xg&oe=6B00470B"
+       "thumb": "https://scontent-sea5-1.cdninstagram.com/v/t51.82787-15/900541841_18127877119825834_9167169408203469560_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=105&_nc_map=urlgen_bucketless&ig_cache_key=NDAyODY4MDA5MTE5Mzg0NTExNg%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=31X10hJ2Gi4Q7kNvwFmVlPo&_nc_oc=AdrUFTI5IEBtP0M8ucx8_fT_pJrDc5VVbcyvqahcvuS8D4xIfTmx6O3VQGOoySAW2lU&_nc_zt=23&_nc_ht=scontent-sea5-1.cdninstagram.com&_nc_gid=EE0Eyx7JE1uzE1pExwDoaA&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQSd5DsmAA8F2v_CFd8ng2RWCkV2zcDMlbI2t4W8gA9K7g&oe=6B00470B"
       },
       {
        "shares": null,
@@ -188,7 +188,7 @@
        "views": null,
        "likes": 6,
        "comments": 0,
-       "thumb": "https://scontent-sjc6-1.cdninstagram.com/v/t51.82787-15/898778803_18127660417825834_830116138498291238_n.jpg?stp=dst-jpg_e35_s640x640_sh2.08_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=NDAyODEwMzE2ODAwOTA1NzU2NzE4MTI3NjYwNDE0ODI1ODM0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=K7jQ_8CaSzQQ7kNvwHzym4n&_nc_oc=AdrSuvsaW8bwIlHKFvDvV49qu0oNibeCgxdlL9liXehH7HkaATCiLuu3R7pPNFJlAx4&_nc_zt=23&_nc_ht=scontent-sjc6-1.cdninstagram.com&_nc_gid=yvKE2KpNtMxX5cIhtjufKA&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQSTaa7B7_LOUCA-KS5mrEnemKhBUexXRbl8cEpUcrVWFw&oe=6B001CE4"
+       "thumb": "https://scontent-sea5-2.cdninstagram.com/v/t51.82787-15/898778803_18127660417825834_830116138498291238_n.jpg?stp=dst-jpg_e35_s640x640_sh2.08_tt6&_nc_cat=108&_nc_map=urlgen_bucketless&ig_cache_key=NDAyODEwMzE2ODAwOTA1NzU2NzE4MTI3NjYwNDE0ODI1ODM0.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=K7jQ_8CaSzQQ7kNvwFuQ_SV&_nc_oc=AdpbTj1maAgZzEtvJdrBNDSS2aI4EOnd0zcekHt4YvLMnGljmKTbpEafF9H_a9_HoHc&_nc_zt=23&_nc_ht=scontent-sea5-2.cdninstagram.com&_nc_gid=EE0Eyx7JE1uzE1pExwDoaA&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQRXAl716ypdZpWGJj2jpyuM3v33FmcujIsLfkBlrfp4_Q&oe=6B005524"
       },
       {
        "shares": null,
@@ -202,16 +202,16 @@
        "views": null,
        "likes": 10,
        "comments": 0,
-       "thumb": "https://scontent-sjc3-1.cdninstagram.com/v/t51.82787-15/901797297_18127425547825834_5090847993092950387_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=104&_nc_map=urlgen_bucketless&ig_cache_key=NDAyNzUxNjYxMTM4MDE1NDMzMw%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=inL2Zic7nbQQ7kNvwF62F4S&_nc_oc=AdqOSWoPKJIqkwnKbJGiucgVsPn8GOrXw9XZ1WdFWSSS2e7Q2czp24OaB24ZhB3bJ_g&_nc_zt=23&_nc_ht=scontent-sjc3-1.cdninstagram.com&_nc_gid=yvKE2KpNtMxX5cIhtjufKA&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQQQnP3NkIqs1ksIiitxJG6rnAEJ2xpRGRkO-QP7qqzpXA&oe=6B001D0B"
+       "thumb": "https://scontent-sea5-2.cdninstagram.com/v/t51.82787-15/901797297_18127425547825834_5090847993092950387_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=104&_nc_map=urlgen_bucketless&ig_cache_key=NDAyNzUxNjYxMTM4MDE1NDMzMw%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=inL2Zic7nbQQ7kNvwHrwytu&_nc_oc=AdpF2Ov6VXZv0DKF6LPQ6gvQ-_dgM_EF73MEh1AUEBk0s-F1u3_dPtm4nzNygt-60oY&_nc_zt=23&_nc_ht=scontent-sea5-2.cdninstagram.com&_nc_gid=EE0Eyx7JE1uzE1pExwDoaA&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQTG81wgAm7DCVxVvLoU-886kTJDHETuKACxOYJ7vxFFkQ&oe=6B00554B"
       }
      ],
      "notes": [
       "public embed page: views/shares/saves need the Graph API token"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:24:38Z",
+     "fetched_at": "2026-11-16T02:39:57Z",
      "title": "TitanStation",
-     "avatar_src": "https://scontent-sjc3-1.cdninstagram.com/v/t51.82787-19/899689915_18128011468825834_4868610862395548308_n.jpg?stp=dst-jpg_s150x150_tt6&_nc_cat=110&_nc_map=urlgen_bucketless&ig_cache_key=GLstoDXqZBWUVGdAAJTiscrIx5BDbmNDAQAB1501500j-ccb7-5&ccb=7-5&_nc_sid=669407&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLnd3dy44MDAuQzMifQ%3D%3D&_nc_ohc=bDg9cUzeb4UQ7kNvwGSDlFC&_nc_oc=AdoQi_JQvyabafu4x_68k9nFZQVfoO0EDDDd9l9EdLJAZd5F5DOb3PDkyvYri7LKkyk&_nc_zt=24&_nc_ht=scontent-sjc3-1.cdninstagram.com&_nc_gid=yvKE2KpNtMxX5cIhtjufKA&_nc_ss=7360f&_nc_ct=RQosPBUCFQIAAAA&oh=00_AQTjHz2k7DIRya0i8d_KBHmPQSjZfEmJCAmGUB7pitOPUw&oe=6B0027C2",
+     "avatar_src": "https://scontent-sea5-1.cdninstagram.com/v/t51.82787-19/899689915_18128011468825834_4868610862395548308_n.jpg?stp=dst-jpg_s150x150_tt6&_nc_cat=110&_nc_map=urlgen_bucketless&ig_cache_key=GLstoDXqZBWUVGdAAJTiscrIx5BDbmNDAQAB1501500j-ccb7-5&ccb=7-5&_nc_sid=669407&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLnd3dy44MDAuQzMifQ%3D%3D&_nc_ohc=bDg9cUzeb4UQ7kNvwHsElN-&_nc_oc=AdpRe4Nf0SC2gg5RT7cu9A4PreE2bflOWJv4HvaL8CE4zWpGLTDGt99txTMkPuomRpI&_nc_zt=24&_nc_ht=scontent-sea5-1.cdninstagram.com&_nc_gid=EE0Eyx7JE1uzE1pExwDoaA&_nc_ss=7360f&_nc_ct=RQosPBUCFQIAAAA&oh=00_AQRbMK3hMBrN1S96fUB8OVTeGRcoZ2GtodFwnODLbM1_vg&oe=6B0027C2",
      "avatar_hash": "395d9571",
      "last_post_at": "2026-11-14T20:09:35Z",
      "last_change_at": "2026-11-14T20:14:52Z"
@@ -367,7 +367,7 @@
       "no API key: comments unavailable"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:25:22Z",
+     "fetched_at": "2026-11-16T02:40:42Z",
      "title": "AmirDecodes",
      "channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g",
      "avatar_src": "https://yt3.googleusercontent.com/uBmqKC1KAanMSRUdmgGGa_hEnvi-m_J6mqX0GCSwjOcOg_3WdJZNmjIXCmc3xrwHM7gUO-zIYw=s900-c-k-c0x00ffffff-no-rj",
@@ -385,7 +385,7 @@
      "followers": 0,
      "followers_approx": false,
      "posts": 8,
-     "total_views": 34,
+     "total_views": 35,
      "total_likes": null,
      "avatar": "data/avatars/titan-station-aparat.jpg",
      "recent": [
@@ -454,7 +454,7 @@
        "title": "چرا براش دلیل میاری؟",
        "url": "https://www.aparat.com/v/tadl86q",
        "published": "2026-11-10T18:54:26Z",
-       "views": 5,
+       "views": 6,
        "likes": null,
        "comments": null,
        "thumb": "https://static.cdn.asset.aparat.com/avt/74161130-2054-l__6421.jpg?width=300&quality=90&secret=EyYF9M5Qpgbw0fTlnHGHaw"
@@ -506,7 +506,7 @@
       "Aparat public API gives views; likes/comments are not exposed"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:25:31Z",
+     "fetched_at": "2026-11-16T02:40:51Z",
      "title": "TitanStation",
      "avatar_src": "https://static.cdn.asset.aparat.com/profile-photo/44223974-410983-m.jpg",
      "avatar_hash": "b9d44d32",
@@ -531,9 +531,9 @@
       "TikTok profile page exposes totals only; per-video stats and dates are not available"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:25:37Z",
+     "fetched_at": "2026-11-16T02:40:57Z",
      "title": "Titan Station",
-     "avatar_src": "https://p16-common-sign.tiktokcdn-us.com/tos-alisg-avt-0068/c955d53179075f2ea6e7a662854c87b9~tplv-tiktokx-cropcenter:720:720.jpeg?dr=9640&refresh_token=6b6f3bfc&x-expires=1794963600&x-signature=jYYrpvdzGhNvrG0eQAQQzfZNGI4%3D&t=4d5b0474&ps=13740610&shp=a5d48078&shcp=81f88b70&idc=useast5",
+     "avatar_src": "https://p16-common-sign.tiktokcdn-us.com/tos-alisg-avt-0068/c955d53179075f2ea6e7a662854c87b9~tplv-tiktokx-cropcenter:720:720.jpeg?dr=9640&refresh_token=6d2cf05e&x-expires=1794967200&x-signature=YhSBsPjoO4KFyzToTkmwbeIpBYw%3D&t=4d5b0474&ps=13740610&shp=a5d48078&shcp=81f88b70&idc=useast5",
      "avatar_hash": "0bcaae2b",
      "last_post_at": null,
      "last_change_at": "2026-11-14T20:14:52Z"
@@ -571,7 +571,7 @@
        "views": null,
        "likes": 3,
        "comments": 0,
-       "thumb": "https://scontent-sjc3-1.cdninstagram.com/v/t51.82787-15/869454061_18148721416559412_7663275396056789761_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=104&_nc_map=urlgen_bucketless&ig_cache_key=NDAxODExODQxNDM5MDQyNzM1Ng%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODcuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=S7WCzYh-IbQQ7kNvwGwHkYO&_nc_oc=AdoPplXnuq6BQJkLM-agZiMXENwvTxX7MMPxBv8QeSKkhMpyslLDJWN1RmmtEQN_rFw&_nc_zt=23&_nc_ht=scontent-sjc3-1.cdninstagram.com&_nc_gid=YkLn3a4O6b0Pc5BVP9Gfrw&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQR_vgUE-Jdl2roEip37IHRjnwd0ixLiaJbbyw0qrfi3_g&oe=6B002471"
+       "thumb": "https://scontent-sea5-2.cdninstagram.com/v/t51.82787-15/869454061_18148721416559412_7663275396056789761_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=104&_nc_map=urlgen_bucketless&ig_cache_key=NDAxODExODQxNDM5MDQyNzM1Ng%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODcuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=S7WCzYh-IbQQ7kNvwGnscwO&_nc_oc=AdrSBQIt87e_XF1Jngtjkx0qwPkq3buhLUWkCqRptY-L38szunBG001tKT52QwLYxr0&_nc_zt=23&_nc_ht=scontent-sea5-2.cdninstagram.com&_nc_gid=WJeZGJVMyxv0JwFI7tNOpQ&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQTuIl9ys75Kz3oOy2kecOvP9d2XHPRVR6lrlKPTgzFVAg&oe=6B002471"
       },
       {
        "shares": null,
@@ -585,16 +585,16 @@
        "views": null,
        "likes": 3,
        "comments": 0,
-       "thumb": "https://scontent-sjc6-1.cdninstagram.com/v/t51.82787-15/864436014_18146873614559412_1409284490367873761_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=100&_nc_map=urlgen_bucketless&ig_cache_key=NDAxNDg2NjczNTU2NzMzNjMzMw%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=l6CetsZj-eQQ7kNvwEDjrl6&_nc_oc=AdqjbrvgWpC2_RDLtuDGgQN69-VTFP8jjBY1bSciGVcRhd4hXfhzLjbVKBn1PdOTIsI&_nc_zt=23&_nc_ht=scontent-sjc6-1.cdninstagram.com&_nc_gid=YkLn3a4O6b0Pc5BVP9Gfrw&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQRw0d0FhkHw2Bc-bU-5lDpeGT18nl1wwbL0nyLFqtpgjQ&oe=6B00362F"
+       "thumb": "https://scontent-sea5-2.cdninstagram.com/v/t51.82787-15/864436014_18146873614559412_1409284490367873761_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=100&_nc_map=urlgen_bucketless&ig_cache_key=NDAxNDg2NjczNTU2NzMzNjMzMw%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=l6CetsZj-eQQ7kNvwH2fHTG&_nc_oc=AdqqtHtZjFW_DHVJLVB9VXaZQjBmGB-GL9VZbI4Q4uvkl1BakgPbEPlxUedXGfJuqm4&_nc_zt=23&_nc_ht=scontent-sea5-2.cdninstagram.com&_nc_gid=WJeZGJVMyxv0JwFI7tNOpQ&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQTmXR8UZVXdcu7WJnlWCAnBlsGKDK5e03-q5KpwKz35LQ&oe=6B00362F"
       }
      ],
      "notes": [
       "public embed page: views/shares/saves need the Graph API token"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:25:43Z",
+     "fetched_at": "2026-11-16T02:41:02Z",
      "title": "FanCATstic Four",
-     "avatar_src": "https://scontent-sjc6-1.cdninstagram.com/v/t51.82787-19/865790531_18146699743559412_6123876643222820661_n.jpg?stp=dst-jpg_s150x150_tt6&_nc_cat=103&_nc_map=urlgen_bucketless&ig_cache_key=GEPqmjP0fg-IU3hAADWXm39cYfxUbmNDAQAB1501500j-ccb7-5&ccb=7-5&_nc_sid=669407&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLnd3dy4xMDgwLkMzIn0%3D&_nc_ohc=ZK1hRObRdMsQ7kNvwFD3drb&_nc_oc=AdrPRtyz1dNKEuGXUYp4hVhy3OMzSL35EuV-rfC6avbOq1DMN7ttjaZaZMwkO91hpSw&_nc_zt=24&_nc_ht=scontent-sjc6-1.cdninstagram.com&_nc_gid=YkLn3a4O6b0Pc5BVP9Gfrw&_nc_ss=7360f&_nc_ct=RQosPBUCFQIAAAA&oh=00_AQREnIFKbuZALNmi0J-jN-jO_sCBN1cOTa_mNLAJSmnSPA&oe=6B00484A",
+     "avatar_src": "https://scontent-sea5-1.cdninstagram.com/v/t51.82787-19/865790531_18146699743559412_6123876643222820661_n.jpg?stp=dst-jpg_s150x150_tt6&_nc_cat=103&_nc_map=urlgen_bucketless&ig_cache_key=GEPqmjP0fg-IU3hAADWXm39cYfxUbmNDAQAB1501500j-ccb7-5&ccb=7-5&_nc_sid=669407&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLnd3dy4xMDgwLkMzIn0%3D&_nc_ohc=ZK1hRObRdMsQ7kNvwGEWyOy&_nc_oc=AdpmIhN8vDbf2plp6EN91Wc39vcLcm93vzRVTMFRjYngMMvzcic-l3aFsy_KkyXjqLA&_nc_zt=24&_nc_ht=scontent-sea5-1.cdninstagram.com&_nc_gid=WJeZGJVMyxv0JwFI7tNOpQ&_nc_ss=7360f&_nc_ct=RQosPBUCFQIAAAA&oh=00_AQQ31Mk6xjKBj0FVrtjd7F-AptgM_8rNBV0V_ASD5CuxHQ&oe=6B00484A",
      "avatar_hash": "b9a2cb22",
      "last_post_at": "2026-10-28T19:51:16Z",
      "last_change_at": "2026-11-14T13:43:05Z"
@@ -605,7 +605,7 @@
      "url": "https://www.youtube.com/@fancatsticfour",
      "ok": true,
      "stale": false,
-     "source": "YouTube channel page + video pages",
+     "source": "YouTube channel page + RSS feed",
      "followers": 6,
      "followers_approx": false,
      "posts": 2,
@@ -625,7 +625,7 @@
        "views": 388,
        "likes": 5,
        "comments": null,
-       "thumb": "https://i.ytimg.com/vi/xodL-2TLvOg/mqdefault.jpg"
+       "thumb": "https://i1.ytimg.com/vi/xodL-2TLvOg/hqdefault.jpg"
       },
       {
        "shares": null,
@@ -636,21 +636,17 @@
        "title": "بلفی و آب دهنش 💧😂",
        "url": "https://www.youtube.com/shorts/lAtPqFTNCzI",
        "published": "2026-10-24T08:14:44+00:00",
-       "views": 1000,
+       "views": 1029,
        "likes": 39,
        "comments": null,
-       "thumb": "https://i.ytimg.com/vi/lAtPqFTNCzI/mqdefault.jpg",
-       "views_approx": true
+       "thumb": "https://i1.ytimg.com/vi/lAtPqFTNCzI/hqdefault.jpg"
       }
      ],
      "notes": [
-      "RSS feed failed: HTTPError: 404 Client Error: Not Found for url: https://www.youtube.com",
-      "recent videos from channel tabs",
-      "exact view counts from 1/2 video pages",
       "no API key: comments unavailable"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:26:05Z",
+     "fetched_at": "2026-11-16T02:41:10Z",
      "title": "FanCATstic Four",
      "channel_id": "UCIQ32GL3mxkGKJoxToCrMDg",
      "avatar_src": "https://yt3.googleusercontent.com/6ozF407IGrKm5dA_AR3ZdAyhj6EE9twKjVoNmHiiB_RGq7lZ1QDOetJK23BOb1C8RYui8-HBLRk=s900-c-k-c0x00ffffff-no-rj",
@@ -676,7 +672,7 @@
       "Aparat public API gives views; likes/comments are not exposed"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:26:14Z",
+     "fetched_at": "2026-11-16T02:41:18Z",
      "title": "گربه‌ها",
      "avatar_src": "https://www.aparat.com/public/public/aparat/img/global/avatar-is-channel.png",
      "avatar_hash": null,
@@ -701,9 +697,9 @@
       "TikTok profile page exposes totals only; per-video stats and dates are not available"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:26:17Z",
+     "fetched_at": "2026-11-16T02:41:22Z",
      "title": "FanCATstic Four",
-     "avatar_src": "https://p16-common-sign.tiktokcdn-us.com/tos-useast2a-avt-0068-euttp/b3dedad19043203bd37d3f9469f147a8~tplv-tiktokx-cropcenter:720:720.jpeg?dr=9640&refresh_token=cc99280a&x-expires=1794963600&x-signature=1XnHeB%2FAtSUUNm%2Bzo7x0%2FPukZxw%3D&t=4d5b0474&ps=13740610&shp=a5d48078&shcp=81f88b70&idc=useast5",
+     "avatar_src": "https://p16-common-sign.tiktokcdn-us.com/tos-useast2a-avt-0068-euttp/b3dedad19043203bd37d3f9469f147a8~tplv-tiktokx-cropcenter:720:720.jpeg?dr=9640&refresh_token=d3582fa6&x-expires=1794967200&x-signature=6TdMcRhWiMCgLGz70UcwgvI8UEk%3D&t=4d5b0474&ps=13740610&shp=a5d48078&shcp=81f88b70&idc=useast5",
      "avatar_hash": null,
      "last_post_at": null,
      "last_change_at": null
@@ -741,7 +737,7 @@
        "views": null,
        "likes": 0,
        "comments": 0,
-       "thumb": "https://scontent-sjc3-1.cdninstagram.com/v/t51.82787-15/902621298_18141084844658586_6815872351226973187_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=109&_nc_map=urlgen_bucketless&ig_cache_key=NDAyOTUyMzM3MjA3MzI3MzE1OTE4MTQxMDg0ODQxNjU4NTg2.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=DOQmfOyXVLYQ7kNvwG84OuX&_nc_oc=AdpoPK52sE2zzzo54w-vAIoESDdQu_CpjvtztrqG9kWaCn1RX5u4XhVEVbK59_GUnos&_nc_zt=23&_nc_ht=scontent-sjc3-1.cdninstagram.com&_nc_gid=mdB1RQSMFLK_jMdfx_r_lw&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQTzuy2y-dgrMYSUSeAAhJLWRqhf02Ud_vRPllHTFQY-2g&oe=6B00412A"
+       "thumb": "https://scontent-sea5-1.cdninstagram.com/v/t51.82787-15/902621298_18141084844658586_6815872351226973187_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=109&_nc_map=urlgen_bucketless&ig_cache_key=NDAyOTUyMzM3MjA3MzI3MzE1OTE4MTQxMDg0ODQxNjU4NTg2.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=DOQmfOyXVLYQ7kNvwFwhTGq&_nc_oc=AdqPRa6bRmoN76aZlo2EASn2MMdBRz0Bjl-DYibuBfxyzIEGJ0ISwkwke0J8HAz_uP4&_nc_zt=23&_nc_ht=scontent-sea5-1.cdninstagram.com&_nc_gid=VVSPCxwKzUAICsBCZkO6ZQ&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQSowrCnoEXFr5ZO8NHgVclb9v23NZgVzDZf-qwoz_Ecww&oe=6B00412A"
       },
       {
        "shares": null,
@@ -755,7 +751,7 @@
        "views": null,
        "likes": 0,
        "comments": 0,
-       "thumb": "https://scontent-sjc3-1.cdninstagram.com/v/t51.82787-15/862574990_18134949511658586_8307430474085193365_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=101&_nc_map=urlgen_bucketless&ig_cache_key=NDAxNDE1NzQxMDkzMTI5NTI0NDE4MTM0OTQ5NTE0NjU4NTg2.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=T7sYuA8ZgqQQ7kNvwEcUwLg&_nc_oc=Adrq7KKgH00pvDz1BgPdSR6WDSs7pu7KRKlNuTgpTsevR9q66CEev3-qpFry8FrKbcM&_nc_zt=23&_nc_ht=scontent-sjc3-1.cdninstagram.com&_nc_gid=mdB1RQSMFLK_jMdfx_r_lw&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQQUgirgpSUbTvp4KKuM9E1-BKnkZKSa6bXmhynX-eFRmg&oe=6B00221A"
+       "thumb": "https://scontent-sea5-1.cdninstagram.com/v/t51.82787-15/862574990_18134949511658586_8307430474085193365_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=101&_nc_map=urlgen_bucketless&ig_cache_key=NDAxNDE1NzQxMDkzMTI5NTI0NDE4MTM0OTQ5NTE0NjU4NTg2.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjEwODAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=T7sYuA8ZgqQQ7kNvwGNwSo7&_nc_oc=Adqb0dvMLsle64FWCnSIXMWgTdP0B9FhUpSgehECFuLGnRlUSQrasy6SgXtndQieNcM&_nc_zt=23&_nc_ht=scontent-sea5-1.cdninstagram.com&_nc_gid=VVSPCxwKzUAICsBCZkO6ZQ&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQTlOjpakj-3X06-XkFqQPx6YkP6y4RNCeO1GtO8acXx3w&oe=6B005A5A"
       },
       {
        "shares": null,
@@ -769,7 +765,7 @@
        "views": null,
        "likes": 0,
        "comments": 0,
-       "thumb": "https://scontent-sjc3-1.cdninstagram.com/v/t51.71878-15/856541287_1485659560040769_1206582600954834217_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=111&_nc_map=urlgen_bucketless&ig_cache_key=NDAxMTU1OTMyNDI0MDAwMTE1Ng%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fZmlyc3RfZnJhbWVfdGh1bWJuYWlsLkMzIn0%3D&_nc_ohc=BWoap83wtY4Q7kNvwFM0QuF&_nc_oc=AdqdyNDsU7R3seNnl1vV-LcPjmr5vBn2Wijh1WFSqopmkJcJQrW-91cwW1i7BXUIgk4&_nc_zt=23&_nc_ht=scontent-sjc3-1.cdninstagram.com&_nc_gid=mdB1RQSMFLK_jMdfx_r_lw&_nc_ss=7360f&_nc_ct=RQosPBUIFQolBAAAAA&oh=00_AQQn8vo14d1nEPBYtrc9TtaGzl4OrLcKDZ7tiO8Oa6HLHQ&oe=6B003CC1"
+       "thumb": "https://scontent-sea5-2.cdninstagram.com/v/t51.71878-15/856541287_1485659560040769_1206582600954834217_n.jpg?stp=dst-jpg_e15_tt6&_nc_cat=111&_nc_map=urlgen_bucketless&ig_cache_key=NDAxMTU1OTMyNDI0MDAwMTE1Ng%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjY0MC5zZHIudmlkZW9fZmlyc3RfZnJhbWVfdGh1bWJuYWlsLkMzIn0%3D&_nc_ohc=BWoap83wtY4Q7kNvwGjVVlj&_nc_oc=Adrmp8ZAdrjlf6C4_LnVvvW5IZHJhH2yZUYGZRItpx1Jv9yAoygJ_0TOXnc7839FgRs&_nc_zt=23&_nc_ht=scontent-sea5-2.cdninstagram.com&_nc_gid=VVSPCxwKzUAICsBCZkO6ZQ&_nc_ss=7360f&_nc_ct=RQosPBUIFQolBAAAAA&oh=00_AQTD12Epr_O3qJSevAoTewVrHVqq4WgZxz5Syz6t3YQVxw&oe=6B003CC1"
       },
       {
        "shares": null,
@@ -783,16 +779,16 @@
        "views": null,
        "likes": 0,
        "comments": 0,
-       "thumb": "https://scontent-sjc6-1.cdninstagram.com/v/t51.82787-15/851059255_18133447729658586_8028663002118669386_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=103&_nc_map=urlgen_bucketless&ig_cache_key=NDAxMDg0Nzk4ODQ5MzE4MzM5NDE4MTMzNDQ3NzI2NjU4NTg2.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjExNzAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=Rb3yvcmBqNIQ7kNvwFqi4Qi&_nc_oc=Adom-5WoVPDn19oWAer5-UTY4-SPW3t3c8lyGYLlsyyQn9jKkmt0Q2JD5Uh1XMwVX9o&_nc_zt=23&_nc_ht=scontent-sjc6-1.cdninstagram.com&_nc_gid=mdB1RQSMFLK_jMdfx_r_lw&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQSm-x-s9D7yOmS7mAYFjwfONlKfYrPD9dkguVY9StFLNQ&oe=6B0035B1"
+       "thumb": "https://scontent-sea5-1.cdninstagram.com/v/t51.82787-15/851059255_18133447729658586_8028663002118669386_n.jpg?stp=dst-jpg_e35_p640x640_sh2.08_tt6&_nc_cat=103&_nc_map=urlgen_bucketless&ig_cache_key=NDAxMDg0Nzk4ODQ5MzE4MzM5NDE4MTMzNDQ3NzI2NjU4NTg2.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6IkNMSVBTLnhwaWRzLjExNzAuc2RyLnZpZGVvX2RlZmF1bHRfY292ZXJfZnJhbWUuQzMifQ%3D%3D&_nc_ohc=Rb3yvcmBqNIQ7kNvwHcQCK4&_nc_oc=AdpYRwdUDZ8SEUT0YFKJr3rmq6iqigtWK9pl514RBT_1UMg1qlpSitScMp-IFoqTNV0&_nc_zt=23&_nc_ht=scontent-sea5-1.cdninstagram.com&_nc_gid=VVSPCxwKzUAICsBCZkO6ZQ&_nc_ss=7360f&_nc_ct=RQosPBUIFQQlBAAAAA&oh=00_AQRak8T4SxJyzGhK1tw3jWEVErUGmaxfU3nSIE8VGADpCA&oe=6B0035B1"
       }
      ],
      "notes": [
       "public embed page: views/shares/saves need the Graph API token"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:26:22Z",
+     "fetched_at": "2026-11-16T02:41:27Z",
      "title": "شده دیگه",
-     "avatar_src": "https://scontent-sjc3-1.cdninstagram.com/v/t51.82787-19/848761464_18131557753658586_2797834758613838046_n.jpg?stp=dst-jpg_s150x150_tt6&_nc_cat=103&_nc_map=urlgen_bucketless&ig_cache_key=GHgSlzLanCFDjmpAAN4oa6-j59MmbmNDAQAB1501500j-ccb7-5&ccb=7-5&_nc_sid=669407&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLnd3dy4xMDgwLkMzIn0%3D&_nc_ohc=FzDSrIKv_lcQ7kNvwE5Y3Ue&_nc_oc=AdoUdI5MtpHJ5InMayxE_FkMf9Ju2Fp5ONui3Ar_CQcLJ1lutMwKn_tJQOsqRhAGs00&_nc_zt=24&_nc_ht=scontent-sjc3-1.cdninstagram.com&_nc_gid=mdB1RQSMFLK_jMdfx_r_lw&_nc_ss=7360f&_nc_ct=RQosPBUCFQIAAAA&oh=00_AQRPD-IIFXdcZ3VkjjDPbFafxxOWVI6OOheCddP1VNQRMw&oe=6B0021B2",
+     "avatar_src": "https://scontent-sea5-1.cdninstagram.com/v/t51.82787-19/848761464_18131557753658586_2797834758613838046_n.jpg?stp=dst-jpg_s150x150_tt6&_nc_cat=103&_nc_map=urlgen_bucketless&ig_cache_key=GHgSlzLanCFDjmpAAN4oa6-j59MmbmNDAQAB1501500j-ccb7-5&ccb=7-5&_nc_sid=669407&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLnd3dy4xMDgwLkMzIn0%3D&_nc_ohc=FzDSrIKv_lcQ7kNvwGz5o60&_nc_oc=Adrh685cFoT7089xjMk40qqLT0YZRuOjNHdpetkjtAJyTpGF_z7VQ4StbXBQiayOkVc&_nc_zt=24&_nc_ht=scontent-sea5-1.cdninstagram.com&_nc_gid=VVSPCxwKzUAICsBCZkO6ZQ&_nc_ss=7360f&_nc_ct=RQosPBUCFQIAAAA&oh=00_AQRrfBtbto21kTrtakFHgT6FB0Jq_5G_49g2sChLAvgJ6g&oe=6B0059F2",
      "avatar_hash": "1358dbc3",
      "last_post_at": "2026-11-13T13:30:55Z",
      "last_change_at": "2026-11-14T13:43:05Z"
@@ -818,7 +814,7 @@
       "no API key: comments unavailable"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:26:38Z",
+     "fetched_at": "2026-11-16T02:41:43Z",
      "title": "شده دیگه",
      "channel_id": "UCy_RFO09PBC9RhAqtgMf_Eg",
      "avatar_src": "https://yt3.googleusercontent.com/ytc/AIdro_lmT2fUR25crFAORC4PocxXmU8mnl0Ece1kOpIO-t2mavHDHYlQWqwkQAcDHjtPpRl5Zgs=s900-c-k-c0x00ffffff-no-rj",
@@ -844,7 +840,7 @@
       "Aparat public API gives views; likes/comments are not exposed"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:26:46Z",
+     "fetched_at": "2026-11-16T02:41:51Z",
      "title": "شده دیگه",
      "avatar_src": "https://www.aparat.com/public/public/aparat/img/global/avatar-is-channel.png",
      "avatar_hash": null,
@@ -869,9 +865,9 @@
       "TikTok profile page exposes totals only; per-video stats and dates are not available"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:26:49Z",
+     "fetched_at": "2026-11-16T02:41:54Z",
      "title": "Shode Dige",
-     "avatar_src": "https://p19-common-sign.tiktokcdn-us.com/tos-useast2a-avt-0068-euttp/fe65c9b20b6b166a26a945c355644dca~tplv-tiktokx-cropcenter:720:720.jpeg?dr=9640&refresh_token=b816077f&x-expires=1794963600&x-signature=IRV6YWKMwLC%2FlyGuyZhBqT5VdOk%3D&t=4d5b0474&ps=13740610&shp=a5d48078&shcp=81f88b70&idc=useast5",
+     "avatar_src": "https://p16-common-sign.tiktokcdn-us.com/tos-useast2a-avt-0068-euttp/fe65c9b20b6b166a26a945c355644dca~tplv-tiktokx-cropcenter:720:720.jpeg?dr=9640&refresh_token=feae446f&x-expires=1794967200&x-signature=kIHPPkhbReWjICVLu2nHDAOUywk%3D&t=4d5b0474&ps=13740610&shp=a5d48078&shcp=81f88b70&idc=useast5",
      "avatar_hash": null,
      "last_post_at": null,
      "last_change_at": null
@@ -901,9 +897,9 @@
       "public embed page: views/shares/saves need the Graph API token"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:26:54Z",
+     "fetched_at": "2026-11-16T02:42:00Z",
      "title": "Pre Time",
-     "avatar_src": "https://scontent-sjc6-1.cdninstagram.com/v/t51.82787-19/911554048_17941731849148162_6198695175747799583_n.jpg?stp=dst-jpg_s150x150_tt6&_nc_cat=111&_nc_map=urlgen_bucketless&ig_cache_key=GAA2VTYCF4b56L0-AB8KYJVrMAZWbmNDAQAB1501500j-ccb7-5&ccb=7-5&_nc_sid=669407&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLnd3dy4xMDgwLkMzIn0%3D&_nc_ohc=_FOGjmQ0HxAQ7kNvwERmBAm&_nc_oc=Adp5awep17eie9em9wBkTPKSKTMjbsFHUEvVMEWlaiI79VaSf0lRje9pnMuk9R_2ES0&_nc_zt=24&_nc_ht=scontent-sjc6-1.cdninstagram.com&_nc_gid=qr3F_lFy-LI8wzCON6VIlg&_nc_ss=7360f&_nc_ct=RQosPBUCFQIAAAA&oh=00_AQQwSn_QsPlQSFPwNgfkh23BqfaNJsKQJqliIu9imHFDBQ&oe=6B003320",
+     "avatar_src": "https://scontent-sea5-1.cdninstagram.com/v/t51.82787-19/911554048_17941731849148162_6198695175747799583_n.jpg?stp=dst-jpg_s150x150_tt6&_nc_cat=111&_nc_map=urlgen_bucketless&ig_cache_key=GAA2VTYCF4b56L0-AB8KYJVrMAZWbmNDAQAB1501500j-ccb7-5&ccb=7-5&_nc_sid=669407&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLnd3dy4xMDgwLkMzIn0%3D&_nc_ohc=_FOGjmQ0HxAQ7kNvwHfZ9ux&_nc_oc=AdryO5FO51-1yu9LR_xnxcAg01uNc_qT_CLkM7GDU8-_evC0npt6RUUnLrBlkIWKQFo&_nc_zt=24&_nc_ht=scontent-sea5-1.cdninstagram.com&_nc_gid=1Bc6dZYOviI-7HZJrVSwUQ&_nc_ss=7360f&_nc_ct=RQosPBUCFQIAAAA&oh=00_AQR_ugcHm_dDdkY9E2NDCcPbyl6VKbQQgdxWHdnsY7akcQ&oe=6B003320",
      "avatar_hash": "382daa6d",
      "last_post_at": null,
      "last_change_at": null
@@ -929,7 +925,7 @@
       "no API key: comments unavailable"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:27:10Z",
+     "fetched_at": "2026-11-16T02:42:15Z",
      "title": "PreTime",
      "channel_id": "UCgByc7LjKGswrjkXavPJoxA",
      "avatar_src": "https://yt3.googleusercontent.com/XDUF32HbOvs12RehSieShY9wnV-ehd_uJMJDy3EUv3tR0j5n04kH4vajGesmoGlwtUaXyo9S=s900-c-k-c0x00ffffff-no-rj",
@@ -955,7 +951,7 @@
       "Aparat public API gives views; likes/comments are not exposed"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:27:19Z",
+     "fetched_at": "2026-11-16T02:42:24Z",
      "title": "اساطیر ایران",
      "avatar_src": "https://www.aparat.com/public/public/aparat/img/global/avatar-is-channel.png",
      "avatar_hash": null,
@@ -980,9 +976,9 @@
       "TikTok profile page exposes totals only; per-video stats and dates are not available"
      ],
      "error": null,
-     "fetched_at": "2026-11-16T01:27:22Z",
+     "fetched_at": "2026-11-16T02:42:27Z",
      "title": "Pre Time TV",
-     "avatar_src": "https://p19-common-sign.tiktokcdn-us.com/tos-useast2a-avt-0068-euttp/806dba1c0cdc5f20298bffd9cdf13d49~tplv-tiktokx-cropcenter:720:720.jpeg?dr=9640&refresh_token=f7e21f10&x-expires=1794963600&x-signature=Z3hfg0i4HaSvGwHJAoaFflr7rOY%3D&t=4d5b0474&ps=13740610&shp=a5d48078&shcp=81f88b70&idc=useast5",
+     "avatar_src": "https://p19-common-sign.tiktokcdn-us.com/tos-useast2a-avt-0068-euttp/806dba1c0cdc5f20298bffd9cdf13d49~tplv-tiktokx-cropcenter:720:720.jpeg?dr=9640&refresh_token=9ab53156&x-expires=1794967200&x-signature=C%2FvDGjKBbHb2sGqqo1QZoP7nsvQ%3D&t=4d5b0474&ps=13740610&shp=a5d48078&shcp=81f88b70&idc=useast5",
      "avatar_hash": "33cf2dd9",
      "last_post_at": null,
      "last_change_at": null
