@@ -1,0 +1,14 @@
+{
+ "v": 1,
+ "kid": "cf5f61aaccbaa3d5",
+ "alg": "ECDH-P256+HKDF-SHA256+A256GCM",
+ "info": "sp-inbox-v1",
+ "jwk": {
+  "kty": "EC",
+  "crv": "P-256",
+  "x": "9YV5xDuLbyXkQ-LkGdQL48slSpKbYqbN8GeYM0eFNEU",
+  "y": "Ixfw-GUoqExoPzH7IXIcwohVjA68T-9_06T_cf2xshs"
+ },
+ "created_at": "2026-11-16T10:09:56.644Z",
+ "about": "public key for gallery-ingest.yml: inbox items are encrypted to it; only the unlocked panel can read them"
+}
