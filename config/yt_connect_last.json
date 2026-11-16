@@ -1,11 +1,11 @@
 {
- "req": "cmwispw8rzbujj1",
- "page": "titan-station",
+ "req": "cmwj3rcy9j3bxry",
+ "page": "fancatstic-four",
  "ok": true,
- "channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g",
- "title": "Titan Station",
- "handle": "@titan.station",
- "expected_channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g",
+ "channel_id": "UCIQ32GL3mxkGKJoxToCrMDg",
+ "title": "FanCATstic Four",
+ "handle": "@fancatsticfour",
+ "expected_channel_id": "UCIQ32GL3mxkGKJoxToCrMDg",
  "mismatch": false,
  "scopes": [
   "https://www.googleapis.com/auth/youtube.force-ssl",
@@ -13,5 +13,5 @@
   "https://www.googleapis.com/auth/youtube.upload",
   "https://www.googleapis.com/auth/yt-analytics.readonly"
  ],
- "at": "2026-11-16T05:01:33Z"
+ "at": "2026-11-16T10:10:29Z"
 }

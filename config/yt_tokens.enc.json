@@ -1,5 +1,24 @@
 {
  "channels": {
+  "UCIQ32GL3mxkGKJoxToCrMDg": {
+   "channel_id": "UCIQ32GL3mxkGKJoxToCrMDg",
+   "connected_at": "2026-11-16T10:10:29Z",
+   "ct": "TanBNEFLekb+iK4riuTYjH7w/Pbh3H2F/78aMchRsbZmFc4CXGWiAcYL5ULOHhtERb7MQmMhcXspUR5E2K8YgUTXV3Yrft7YQjRmuNOkbl4rbFdggynD/AIeSKKGtoT0AS0hDWKrIvnPqOpqZh5lkC7/pK190FU=",
+   "expected_channel_id": "UCIQ32GL3mxkGKJoxToCrMDg",
+   "handle": "@fancatsticfour",
+   "iv": "sQzhLPIHaBQltq8l",
+   "mismatch": false,
+   "page": "fancatstic-four",
+   "scopes": [
+    "https://www.googleapis.com/auth/youtube.force-ssl",
+    "https://www.googleapis.com/auth/youtube.readonly",
+    "https://www.googleapis.com/auth/youtube.upload",
+    "https://www.googleapis.com/auth/yt-analytics.readonly"
+   ],
+   "status": "ok",
+   "thumb": "https://yt3.ggpht.com/6ozF407IGrKm5dA_AR3ZdAyhj6EE9twKjVoNmHiiB_RGq7lZ1QDOetJK23BOb1C8RYui8-HBLRk=s88-c-k-c0x00ffffff-no-rj",
+   "title": "FanCATstic Four"
+  },
   "UCJu9uDiwC2XOug0s7kkzZ3g": {
    "channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g",
    "connected_at": "2026-11-16T05:01:33Z",
@@ -39,6 +58,6 @@
    "title": "Raw Instinct"
   }
  },
- "updated_at": "2026-11-16T05:01:33Z",
+ "updated_at": "2026-11-16T10:10:29Z",
  "v": 1
 }
