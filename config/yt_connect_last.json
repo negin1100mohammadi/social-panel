@@ -1,11 +1,11 @@
 {
- "req": "cmwj3tvr88l5660",
- "page": "pretime-tv",
+ "req": "cmwj3xblt6clx6e",
+ "page": "hamrah-seller",
  "ok": true,
- "channel_id": "UCgByc7LjKGswrjkXavPJoxA",
- "title": "PreTime",
- "handle": "@pretimetv",
- "expected_channel_id": "UCgByc7LjKGswrjkXavPJoxA",
+ "channel_id": "UC8qU5BbC-KmKVXgsKklGikw",
+ "title": "Hamrah Seller",
+ "handle": "@hamrahseller",
+ "expected_channel_id": null,
  "mismatch": false,
  "scopes": [
   "https://www.googleapis.com/auth/youtube.force-ssl",
@@ -13,5 +13,5 @@
   "https://www.googleapis.com/auth/youtube.upload",
   "https://www.googleapis.com/auth/yt-analytics.readonly"
  ],
- "at": "2026-11-16T10:12:27Z"
+ "at": "2026-11-16T10:15:05Z"
 }

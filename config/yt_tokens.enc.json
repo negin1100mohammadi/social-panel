@@ -1,5 +1,24 @@
 {
  "channels": {
+  "UC8qU5BbC-KmKVXgsKklGikw": {
+   "channel_id": "UC8qU5BbC-KmKVXgsKklGikw",
+   "connected_at": "2026-11-16T10:15:05Z",
+   "ct": "8M/Psj/XNi8/4k7Qrv41a4zSkPwOlo0yS4wLs+x+AKCUS+tjHUpZc0YrnojWhrkDVOcvh2pocuQdyzKGVIQVVSR0cNT0Z2fD68r2z0ov/QJAOJqzBHJJUtmA0PQ0AV2PanO3PT7D/S4+krvddF+PZc94Hy/T2Y0REI7lF1ltxa3qOKJXwBPLSON8y31FTMw=",
+   "expected_channel_id": null,
+   "handle": "@hamrahseller",
+   "iv": "BDNJZTAVAqMB2kI0",
+   "mismatch": false,
+   "page": "hamrah-seller",
+   "scopes": [
+    "https://www.googleapis.com/auth/youtube.force-ssl",
+    "https://www.googleapis.com/auth/youtube.readonly",
+    "https://www.googleapis.com/auth/youtube.upload",
+    "https://www.googleapis.com/auth/yt-analytics.readonly"
+   ],
+   "status": "ok",
+   "thumb": "https://yt3.ggpht.com/ytc/AIdro_npcUR6XsdtEyWk5O0DUPbiBwaX_JeUikuODvjwubz_UpOPbxUG2HLiUrAGCHsdKbjT0g=s88-c-k-c0x00ffffff-no-rj",
+   "title": "Hamrah Seller"
+  },
   "UCIQ32GL3mxkGKJoxToCrMDg": {
    "channel_id": "UCIQ32GL3mxkGKJoxToCrMDg",
    "connected_at": "2026-11-16T10:10:29Z",
@@ -96,6 +115,6 @@
    "title": "شده دیگه"
   }
  },
- "updated_at": "2026-11-16T10:12:27Z",
+ "updated_at": "2026-11-16T10:15:05Z",
  "v": 1
 }
