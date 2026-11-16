@@ -246,7 +246,8 @@ print(json.dumps([[ [x["kind"], x["files"], x["rule"]] for x in g.classify_uploa
       const ls = await page.evaluate(() => JSON.parse(localStorage.getItem("sp_dk") || "null"));
       ok(ls && ls.kid === ring.kid, "data key cached on the unlocked device");
       // add an idea with line breaks
-      await page.click('a.dombox[data-page="' + P1 + '"]'); await page.waitForSelector("#bnew");
+      await page.click('a.dombox[data-page="' + P1 + '"]'); await page.waitForFunction(() => /\/hark$/.test(location.hash)); // v9: a domain opens on «پیشنهاد هارک»
+      await hashTo(page, "#/brain/" + P1 + "/idea", "#bnew");
       ok(/در این وضعیت|هنوز/.test(await page.textContent("#blist")), "brain: empty state");
       await page.click("#bnew"); await page.waitForSelector("#bform");
       const BODY = "خط اول ایده\nخط دوم\n\nخط چهارم با فاصله";

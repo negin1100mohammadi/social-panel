@@ -12,6 +12,7 @@ on:
       - "config/**"        # encrypted token sync file; read from the GitHub API, not from Pages
       - "vault/**"         # encrypted brain/gallery/publish data (contents API only)
       - "inbox/**"         # encrypted gallery inbox (gallery-ingest.yml)
+      - "hark/**"          # encrypted Hark <-> panel channel (hark/requests, hark/out)
 
 permissions:
   contents: write

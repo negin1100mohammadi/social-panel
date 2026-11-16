@@ -912,3 +912,49 @@ html.modal-open, html.modal-open body { overflow: hidden; }
   .chm .pln { display: inline; }
   .cd { min-height: 64px; }
 }
+
+/* ======================= v9: Hark channel — «پیشنهاد هارک / پیشنهاد ما / غربال‌گری / اسکریپت نهایی» ======================= */
+.v9intro { font-size: 13px; color: var(--muted); line-height: 1.85; margin: 0 2px 10px; }
+.atag { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+.atag.a-amirhossein { background: var(--indigo-bg); color: var(--indigo); }
+.atag.a-hark { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; }
+.ih .atag { flex: none; }
+.hitem { border-inline-start: 4px solid var(--accent-2); }
+.why { font-size: 12.5px; color: var(--muted); line-height: 1.8; margin: 6px 0 0; }
+.ghost.danger { color: var(--bad); }
+.schip.v9-queued { --sc: var(--warn); --sb: var(--warn-bg); }
+.schip.v9-ready { --sc: var(--accent); --sb: var(--accent-soft); }
+.schip.v9-approved { --sc: var(--good); --sb: var(--good-bg); }
+.sdots.v9-queued { --sc: var(--warn); } .sdots.v9-ready { --sc: var(--accent); } .sdots.v9-approved { --sc: var(--good); }
+details.orig { margin: 6px 0; font-size: 13px; }
+details.orig summary { cursor: pointer; color: var(--accent); font-weight: 700; min-height: 32px; display: flex; align-items: center; }
+.scr { margin: 8px 0 2px; border: 1px solid var(--line); border-radius: 14px; background: var(--soft); padding: 4px 12px; }
+.scr-sec { padding: 8px 0; border-bottom: 1px dashed var(--line); min-width: 0; }
+.scr-sec:last-child { border-bottom: 0; }
+.scr-sec > b { display: block; font-size: 12px; color: var(--accent); margin-bottom: 3px; }
+.scr-sec p { margin: 0; font-size: 14px; line-height: 1.85; white-space: pre-wrap; overflow-wrap: anywhere; }
+.scr-sec.hook p { font-weight: 700; }
+.scr-sec ol { margin: 0; padding-inline-start: 20px; font-size: 14px; line-height: 1.85; overflow-wrap: anywhere; }
+.scr-sec .bt { display: inline-block; font-size: 11px; color: var(--muted); background: var(--card); border-radius: 6px; padding: 0 6px; direction: ltr; unicode-bidi: isolate; }
+.htags, .plens { display: flex; flex-wrap: wrap; gap: 6px; }
+.htags span { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; font-size: 12.5px; color: var(--accent); overflow-wrap: anywhere; max-width: 100%; }
+.plens span { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 3px 9px; font-size: 12.5px; }
+.plens i { font-style: normal; color: var(--muted); font-size: 11.5px; }
+.fitem { border-inline-start: 4px solid var(--good); }
+.ptools { display: grid; gap: 6px; margin-top: 10px; grid-template-columns: minmax(0, 1fr); }
+.ptool { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); min-width: 0; }
+.ptool .tbadge { width: 30px; height: 30px; border-radius: 9px; color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 13px; flex: none; }
+.ptool .pn { display: flex; flex-direction: column; flex: 1 1 120px; min-width: 0; line-height: 1.35; }
+.ptool .pn b { font-size: 14px; text-align: right; }
+.ptool .pn small { font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ptool .pn small a { color: var(--accent); }
+.ptool .go.sm, .ptool .ghost.sm { height: auto; min-height: 36px; padding: 5px 12px; flex: none; }
+.jchip { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; white-space: nowrap; flex: none; text-decoration: none; }
+.jchip.j-queued { background: var(--warn-bg); color: var(--warn); }
+.jchip.j-done { background: var(--good-bg); color: var(--good); }
+.jchip.j-error { background: var(--bad-bg); color: var(--bad); }
+.jerr { flex-basis: 100%; font-size: 12.5px; color: var(--bad); line-height: 1.7; overflow-wrap: anywhere; }
+details.tlinks { margin-bottom: 12px; }
+details.tlinks summary { cursor: pointer; font-weight: 700; font-size: 14.5px; color: var(--accent); min-height: 36px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+details.tlinks .help { margin-top: 8px; }
+.form label.tl-l { text-align: left; }

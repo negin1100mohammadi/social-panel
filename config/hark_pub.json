@@ -1,0 +1,14 @@
+{
+ "v": 1,
+ "kid": "4c481428559ddc62",
+ "alg": "ECDH-P256+HKDF-SHA256+A256GCM",
+ "info": "sp-hark-req-v1",
+ "jwk": {
+  "kty": "EC",
+  "crv": "P-256",
+  "x": "y206qasX3CF7M5IvV7QtmzNCDS54SvjLwvWAGELzY6c",
+  "y": "I7CwxGGu-sfzd_5I5-KGzFU9dYe7_Zu9jnFlCTKvz74"
+ },
+ "created_at": "2026-11-16T15:48:21+03:30",
+ "about": "Hark's public key: the panel encrypts screening requests and production jobs (hark/requests/<id>.json) to it; only Hark's sandbox holds the private key"
+}

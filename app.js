@@ -21,7 +21,7 @@
   var MEDIA_BRANCH = "media-upload";
   var MAX_UPLOAD = 70 * 1024 * 1024; // GitHub blob API limit is 100 MB after base64
 
-  var SP_VERSION = "v8";
+  var SP_VERSION = "v9";
   window.SP_VERSION = SP_VERSION;
   var state = { config: null, latest: null, history: null, postsHist: null, error: null, busy: false, progress: "", syncAvailable: false, encCreated: null, chOrder: null };
   var app = document.getElementById("app");
@@ -1901,6 +1901,10 @@
     mergeInbox: function () { return mergeInbox(); }, kid: function () { return DS.kid; }, forget: function () { forgetDataKey(); DS.ring = undefined; },
     inboxDecrypt: function (o) { return inboxDecrypt(o); }
   };
+  window.__spV9 = {
+    mergeHarkOut: function (p) { return mergeHarkOut(p); }, scriptText: function (s, t) { return scriptText(s, t); }, applyHarkOut: function (d, m, p) { return applyHarkOut(d, m, p, "2026-01-01T00:00:00Z"); },
+    harkSeal: function (pub, id, payload) { return harkSeal(pub, id, payload); }, harkOpen: function (env, aad) { return harkOpen(env, aad); }, tools: function () { return PROD_TOOLS; }
+  };
 
   // ============================================================= v8: shared view helpers
   var ICON_BRAIN = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 4a3 3 0 0 0-3 3v.3A3 3 0 0 0 4.5 12a3 3 0 0 0 2 4.7V17a3 3 0 0 0 3 3h.5V4z"/><path d="M14.5 4a3 3 0 0 1 3 3v.3a3 3 0 0 1 2 4.7 3 3 0 0 1-2 4.7V17a3 3 0 0 1-3 3H14V4z"/><path d="M10 9H8.5M14 9h1.5M10 14H8M14 14h2"/></svg>';
@@ -2011,20 +2015,21 @@
   var FORMATS = ["پست", "اسلاید", "ریل", "استوری", "ویدئو", "شورت", "لایو"];
   function brainHomeView() {
     app.innerHTML = shell("مغز متفکر", "#/", "صفحه‌ی اصلی") +
-      '<div class="v8head brainhead"><span class="vi">' + ICON_BRAIN + '</span><div><h1>مغز متفکر</h1><p>ایده، سناریو و اسکریپت هر پیج</p></div></div>' +
+      '<div class="v8head brainhead"><span class="vi">' + ICON_BRAIN + '</span><div><h1>مغز متفکر</h1><p>پیشنهاد هارک، ایده، غربال‌گری و اسکریپت نهایی هر پیج</p></div></div>' +
       '<div id="dgate"></div><div id="v8body"></div>';
     bindShell();
     withData(function () {
       var body = document.getElementById("v8body"); body.innerHTML = '<div class="muted-note pad">در حال بارگذاری…</div>';
       var my = viewSeq;
-      Promise.all(state.config.pages.map(function (cp) { return dsRead("brain-" + cp.id); })).then(function (res) {
+      Promise.all(state.config.pages.map(function (cp) { return mergeHarkOut(cp.id).catch(function () { return 0; }).then(function () { return dsRead("brain-" + cp.id); }); })).then(function (res) {
         if (!live(my) || !document.getElementById("v8body")) return;
         body.innerHTML = '<div class="domlist" id="brain-domains">' + state.config.pages.map(function (cp, i) {
-          var items = (res[i] && res[i].items) || [], c = { idea: 0, scenario: 0, script: 0 };
+          var doc = bdoc(res[i]), items = doc.items, c = { idea: 0, scenario: 0, script: 0 };
+          var rdy = doc.screen.filter(function (s) { return s.state === "ready"; }).length;
           items.forEach(function (it) { c[it.type] = (c[it.type] || 0) + 1; });
-          return '<a class="dombox brain" href="#/brain/' + esc(cp.id) + '/idea" data-page="' + esc(cp.id) + '">' + logoHTML(cp, pageData(cp), "dlogo") +
+          return '<a class="dombox brain" href="#/brain/' + esc(cp.id) + '/hark" data-page="' + esc(cp.id) + '">' + logoHTML(cp, pageData(cp), "dlogo") +
             '<span class="dn"><b>' + esc(cp.name) + "</b><span>" + esc(cp.topic_fa || "") + "</span></span>" +
-            '<span class="dc">' + fa(c.idea) + " ایده · " + fa(c.scenario) + " سناریو · " + fa(c.script) + " اسکریپت</span></a>";
+            '<span class="dc">' + fa(doc.hark.length) + " پیشنهاد هارک · " + fa(c.idea) + " ایده · " + fa(doc.screen.length) + " غربال‌گری" + (rdy ? " (" + fa(rdy) + " آماده)" : "") + " · " + fa(doc.final.length) + " نهایی</span></a>";
         }).join("") + "</div>" + '<p class="footnote privacy">' + esc(PRIVACY_NOTE) + "</p>";
       }).catch(function (e) { errBox("v8body", e); });
     });
@@ -2038,15 +2043,18 @@
     if (parent) links += '<a class="lchip" href="#/brain/' + esc(pid) + "/" + parent.type + "?focus=" + esc(parent.id) + '">↖ از ' + BTYPE_FA[parent.type] + ": " + esc(parent.title) + "</a>";
     else if (it.parent_id) links += '<span class="lchip">↖ ' + esc(BTYPE_FA[it.type === "script" ? "scenario" : "idea"]) + " مبدأ پیدا نشد</span>";
     kids.forEach(function (k) { links += '<a class="lchip" href="#/brain/' + esc(pid) + "/" + k.type + "?focus=" + esc(k.id) + '">↘ ' + BTYPE_FA[k.type] + ": " + esc(k.title) + "</a>"; });
+    var scr = it.screen_id && ctx.doc && findBy(ctx.doc.screen, "id", it.screen_id);
+    if (scr) links += '<a class="lchip" href="#/brain/' + esc(pid) + "/screen?focus=" + esc(scr.id) + '">⇢ در غربال‌گری · ' + esc(SCREEN_ST[scr.state] || "") + "</a>";
     gals.forEach(function (g) { links += '<a class="lchip gal" href="#/gallery/' + esc(pid) + "/" + g.kind + "?focus=" + esc(g.id) + '">▣ گالری (' + KIND_FA[g.kind] + "): " + esc(g.title || g.id) + " · " + esc(stLabel("gallery", ctx.sync.gal[g.id] || g.status)) + "</a>"; });
     var nets = (it.networks || []).map(function (pl) { return PNAME[pl] ? '<span class="ntag">' + picon(pl) + PNAME[pl] + "</span>" : ""; }).join("");
     var body = it.body || "", long = body.length > 320 || (body.match(/\n/g) || []).length > 6;
     return '<article class="bitem" id="b-' + esc(it.id) + '" data-id="' + esc(it.id) + '" data-status="' + esc(eff) + '">' +
       '<div class="ih"><b class="it">' + esc(it.title || "(بدون عنوان)") + "</b>" + stChip("brain", eff) + "</div>" + stDots("brain", eff) +
-      '<div class="im">' + nets + (it.format ? '<span class="ntag">' + esc(it.format) + "</span>" : "") + '<span class="when">' + esc(fmtShort(it.updated_at || it.created_at)) + "</span></div>" +
+      '<div class="im">' + (it.type === "idea" ? authorTag(it.author) : "") + nets + (it.format ? '<span class="ntag">' + esc(it.format) + "</span>" : "") + '<span class="when">' + esc(fmtShort(it.updated_at || it.created_at)) + "</span></div>" +
       (body ? '<div class="ibody' + (long ? " clamp" : "") + '">' + esc(body) + "</div>" + (long ? '<button class="linkbtn" data-act="more">نمایش کامل</button>' : "") : "") +
       (links ? '<div class="ilinks">' + links + "</div>" : "") +
-      '<div class="iact"><button class="ghost sm" data-act="edit">ویرایش</button>' +
+      '<div class="iact">' + (it.type === "idea" ? (scr ? '<button class="go sm" disabled>فرستاده شد ✓</button>' : '<button class="go sm" data-act="screen">بفرست برای غربال‌گری</button>') : "") +
+      '<button class="ghost sm" data-act="edit">ویرایش</button>' +
       (BNEXT[it.type] ? '<button class="ghost sm" data-act="promote">ارتقا به ' + BTYPE_FA[BNEXT[it.type]] + " ←</button>" : "") +
       '<a class="ghost sm" href="#/gallery/' + esc(pid) + "?brain=" + esc(it.id) + '">ساخت در گالری</a></div></article>';
   }
@@ -2055,6 +2063,9 @@
     var nets = PLATFORMS.map(function (pl) { return '<label class="chk"><input type="checkbox" name="bf-net" value="' + pl + '"' + ((it.networks || []).indexOf(pl) >= 0 ? " checked" : "") + ">" + picon(pl) + PNAME[pl] + "</label>"; }).join("");
     return '<form class="card form bform" id="bform" data-id="' + esc(it.id || "") + '" onsubmit="return false">' +
       "<h2>" + (it.id ? "ویرایش " : BTYPE_FA[type] + " جدید") + (it.id ? BTYPE_FA[it.type] : "") + "</h2>" +
+      ((it.type || type) === "idea" ? '<label>نویسنده</label><div class="nets" role="radiogroup" id="bf-author">' + ["negin", "amirhossein"].concat(it.author === "hark" ? ["hark"] : []).map(function (a) {
+        var cur = it.id ? (it.author || "") : (lsGet(AUTHOR_LS, "negin") || "negin");
+        return '<label class="chk"><input type="radio" name="bf-author" value="' + a + '"' + (cur === a ? " checked" : "") + ">" + AUTHORS[a] + "</label>"; }).join("") + "</div>" : "") +
       '<label for="bf-title">عنوان</label><input id="bf-title" type="text" maxlength="200" required value="' + esc(it.title || "") + '">' +
       '<label for="bf-body">متن</label><textarea id="bf-body" rows="9" placeholder="متن کامل… (خط‌ها همان‌طور که می‌نویسی می‌مانند)">' + esc(it.body || "") + "</textarea>" +
       '<label>شبکه‌های هدف (اختیاری)</label><div class="nets">' + nets + "</div>" +
@@ -2064,19 +2075,19 @@
   }
   function brainWorkView(pid, tab) {
     var cp = cpById(pid); if (!cp) { location.hash = "#/brain"; return; }
-    tab = BNEXT[tab] || tab === "script" ? tab : "idea";
+    tab = V9TABS.some(function (t) { return t[0] === tab; }) ? tab : "hark";
     var q = hashQuery();
     app.innerHTML = shell("مغز متفکر · " + cp.name, "#/brain", "مغز متفکر") +
       '<div class="v8head brainhead sm">' + logoHTML(cp, pageData(cp), "dlogo") + "<div><h1>" + esc(cp.name) + "</h1><p>" + esc(cp.topic_fa || "") + "</p></div></div>" +
-      '<div class="tabs" role="tablist">' + BTYPES.map(function (t) { return '<a role="tab" class="tab' + (t[0] === tab ? " on" : "") + '" href="#/brain/' + esc(pid) + "/" + t[0] + '" data-tab="' + t[0] + '">' + t[1] + ' <em id="cnt-' + t[0] + '"></em></a>'; }).join("") + "</div>" +
+      '<div class="tabs" role="tablist">' + V9TABS.map(function (t) { return '<a role="tab" class="tab' + (t[0] === tab ? " on" : "") + '" href="#/brain/' + esc(pid) + "/" + t[0] + '" data-tab="' + t[0] + '">' + t[1] + ' <em id="cnt-' + t[0] + '"></em></a>'; }).join("") + "</div>" +
       '<div id="dgate"></div><div id="v8body"></div>';
     bindShell();
     withData(function () {
       var body = document.getElementById("v8body"); body.innerHTML = '<div class="muted-note pad">در حال بارگذاری…</div>';
       var my = viewSeq;
-      Promise.all([dsRead("brain-" + pid), dsRead("gallery-" + pid).catch(function () { return null; }), dsRead("publish").catch(function () { return null; }), loadQueue().catch(function () { return []; }), publishRunning()]).then(function (r) {
+      mergeHarkOut(pid).catch(function () { return 0; }).then(function () { return Promise.all([dsRead("brain-" + pid), dsRead("gallery-" + pid).catch(function () { return null; }), dsRead("publish").catch(function () { return null; }), loadQueue().catch(function () { return []; }), publishRunning()]); }).then(function (r) {
         if (!live(my) || !document.getElementById("v8body")) return;
-        var ctx = { items: (r[0] && r[0].items) || [], gallery: (r[1] && r[1].items) || [], records: (r[2] && r[2].items) || {}, jobs: jobsMap(r[3]), running: r[4] };
+        var ctx = { doc: bdoc(r[0]), items: (r[0] && r[0].items) || [], gallery: (r[1] && r[1].items) || [], records: (r[2] && r[2].items) || {}, jobs: jobsMap(r[3]), running: r[4] };
         draw(ctx);
       }).catch(function (e) { errBox("v8body", e); });
     });
@@ -2085,7 +2096,10 @@
       var openForm0 = document.getElementById("bform"); // a form being typed survives a redraw
       ctx.byId = {}; ctx.items.forEach(function (x) { ctx.byId[x.id] = x; });
       ctx.sync = syncStatuses({ brain: ctx.items, gallery: ctx.gallery, records: ctx.records, jobs: ctx.jobs }, Date.now(), ctx.running);
+      ctx.doc = bdoc(ctx.doc); ctx.doc.items = ctx.items;
       BTYPES.forEach(function (t) { var e = document.getElementById("cnt-" + t[0]); if (e) e.textContent = fa(ctx.items.filter(function (x) { return x.type === t[0]; }).length); });
+      [["hark", ctx.doc.hark], ["screen", ctx.doc.screen], ["final", ctx.doc.final]].forEach(function (p) { var e = document.getElementById("cnt-" + p[0]); if (e) e.textContent = fa(p[1].length); });
+      if (V9NEW[tab]) { drawV9(pid, cp, tab, ctx, function () { draw(ctx); }); return; }
       var list = ctx.items.filter(function (x) { return x.type === tab; }).sort(function (a, b) { return (tsOf(b.updated_at) || 0) - (tsOf(a.updated_at) || 0); });
       var f = v8ui.bf[pid + tab] || "all", counts = { all: list.length };
       list.forEach(function (x) { var s = ctx.sync.brain[x.id]; counts[s] = (counts[s] || 0) + 1; });
@@ -2105,13 +2119,18 @@
         if (act === "more") { var ib = card.querySelector(".ibody"); ib.classList.toggle("clamp"); b.textContent = ib.classList.contains("clamp") ? "نمایش کامل" : "بستن"; }
         else if (act === "edit") openForm(it);
         else if (act === "promote") promote(it, b);
+        else if (act === "screen") {
+          b.disabled = true;
+          sendToScreening(pid, cp, { kind: "idea", id: it.id, title: it.title, body: it.body, author: it.author || "", networks: it.networks, format: it.format }, ctx)
+            .then(function () { toast("برای غربال‌گری فرستاده شد ✓ (در صف هارک)"); draw(ctx); }, function (e2) { b.disabled = false; toast("✗ " + ghErrorFa(e2), 5000); });
+        }
       };
       var focus = hashQuery().focus;
       if (focus) { var el = document.getElementById("b-" + focus); if (el) { el.classList.add("focus"); el.scrollIntoView({ block: "center" }); } }
       function openForm(it) {
         var w = document.getElementById("bform-wrap"); w.innerHTML = brainFormHTML(it, tab);
         var fm = document.getElementById("bform"); fm.scrollIntoView({ block: "start", behavior: "smooth" });
-        setTimeout(function () { var t = document.getElementById("bf-title"); try { t.focus({ preventScroll: true }); } catch (e) {} }, 50);
+        setTimeout(function () { var t = document.getElementById("bf-title"); if (!t || fm.contains(document.activeElement)) return; try { t.focus({ preventScroll: true }); } catch (e) {} }, 50); // never steal focus from a field already being typed in
         document.getElementById("bf-cancel").onclick = function () { w.innerHTML = ""; };
         fm.onsubmit = function (ev) {
           if (ev) ev.preventDefault();
@@ -2120,6 +2139,7 @@
           if (!title) { m.textContent = "عنوان را بنویس."; return false; }
           var nets = Array.prototype.map.call(fm.querySelectorAll('input[name="bf-net"]:checked'), function (x) { return x.value; });
           var fields = { title: title, body: text, networks: nets, format: document.getElementById("bf-format").value, status: document.getElementById("bf-status").value };
+          var au = fm.querySelector('input[name="bf-author"]:checked'); if (au) { fields.author = au.value; if (au.value !== "hark") lsSet(AUTHOR_LS, au.value); }
           var now = new Date().toISOString(), id = it ? it.id : newId("b");
           document.getElementById("bf-save").disabled = true; m.textContent = "در حال ذخیره (رمزگذاری‌شده)…";
           dsUpdate("brain-" + pid, function (d) {
@@ -2128,7 +2148,7 @@
             else { var n = { id: id, page: pid, type: tab, parent_id: "", created_at: now, updated_at: now }; for (var k2 in fields) n[k2] = fields[k2]; d.items.push(n); }
             return d;
           }, "data: brain " + pid).then(function (d) {
-            ctx.items = d.items; toast("ذخیره شد ✓"); w.innerHTML = ""; draw(ctx);
+            ctx.doc = bdoc(d); ctx.items = d.items; toast("ذخیره شد ✓"); w.innerHTML = ""; draw(ctx);
           }, function (e) { document.getElementById("bf-save").disabled = false; m.textContent = "✗ " + ghErrorFa(e); });
           return false;
         };
@@ -2147,6 +2167,360 @@
         }, function (e) { btn.disabled = false; toast("✗ " + ghErrorFa(e), 5000); });
       }
     }
+  }
+
+
+  // ============================================================= v9: Hark channel + «پیشنهاد هارک / پیشنهاد ما / غربال‌گری / اسکریپت نهایی»
+  // Panel -> Hark : hark/requests/<id>.json   ECIES to config/hark_pub.json  (HKDF info "sp-hark-req-v1", AAD "sp-hark-req-v1|<id>")
+  // Hark  -> panel: hark/out/<page>/<id>.json ECIES to config/inbox_pub.json (HKDF info "sp-hark-out-v1", AAD "sp-hark-out-v1|<page>/<id>")
+  // ECIES = ephemeral ECDH P-256 + HKDF-SHA256 (no salt) + AES-256-GCM, the same scheme as inbox/ (gallery-ingest.yml).
+  // Outbox files are merged into the encrypted brain store (vault/brain-<page>.enc.json) after unlock, then deleted.
+  // Brain store keys added in v9 (v8 keys untouched): hark[], hark_gone{}, screen[], final[], tool_links{}, hark_seen{}.
+  var HARK_PUB_PATH = "config/hark_pub.json", HARK_REQ_DIR = "hark/requests", HARK_OUT_DIR = "hark/out";
+  var HREQ = "sp-hark-req-v1", HOUT = "sp-hark-out-v1", ECIES_ALG = "ECDH-P256+HKDF-SHA256+A256GCM";
+  var PROD_TOOLS = [["claude", "Claude"], ["gemini", "Gemini"], ["aistudio", "Google AI Studio"], ["chatgpt", "ChatGPT"], ["hark", "Hark"], ["flow", "Flow"], ["muse", "Muse"]];
+  var PROD_NAME = {}; PROD_TOOLS.forEach(function (t) { PROD_NAME[t[0]] = t[1]; });
+  var AUTHORS = { negin: "نگین", amirhossein: "امیرحسین", hark: "هارک" };
+  var AUTHOR_LS = "sp_author";
+  var SCREEN_ST = { queued: "در صف هارک", ready: "اسکریپت آماده", approved: "تأیید شد" };
+  var JOB_ST = { queued: "در صف ساخت", done: "ساخته شد", error: "خطا" };
+  var V9TABS = [["hark", "پیشنهاد هارک"], ["idea", "پیشنهاد ما"], ["screen", "غربال‌گری"], ["final", "اسکریپت نهایی"], ["scenario", "سناریوها"], ["script", "اسکریپت‌ها"]];
+  var V9NEW = { hark: 1, screen: 1, final: 1 };
+  var SCREEN_BRIEF = "این ایده را به یک اسکریپت حرفه‌ای و وایرال برای این پیج تبدیل کن، مطابق الگوریتم پلتفرم‌ها و ترندهای همین حالا: " +
+    "هوک قوی در ۱ تا ۳ ثانیه‌ی اول، بیت‌های نگه‌داشت مخاطب (retention) در طول ویدئو، CTA روشن، کپشن و هشتگ‌ها، " +
+    "و مدت مناسب هر پلتفرم (Instagram Reels / YouTube Shorts / TikTok).";
+  var harkPubCache = null;
+  function harkPub() {
+    if (harkPubCache) return Promise.resolve(harkPubCache);
+    return fetchRepoJSON(HARK_PUB_PATH).then(function (p) {
+      if (!p || !p.jwk || !p.jwk.x || p.jwk.d) throw new Error("کلید عمومی هارک (config/hark_pub.json) پیدا نشد");
+      harkPubCache = p; return p;
+    });
+  }
+  function hkdfAes(bits, info, uses) {
+    return crypto.subtle.importKey("raw", bits, "HKDF", false, ["deriveKey"]).then(function (h) {
+      return crypto.subtle.deriveKey({ name: "HKDF", hash: "SHA-256", salt: new Uint8Array(0), info: TE.encode(info) }, h, { name: "AES-GCM", length: 256 }, false, uses);
+    });
+  }
+  // encrypt a request for Hark (only the private key in Hark's sandbox opens it)
+  function harkSeal(pub, id, payload) {
+    var EC = { name: "ECDH", namedCurve: "P-256" };
+    return crypto.subtle.generateKey(EC, true, ["deriveBits"]).then(function (eph) {
+      return crypto.subtle.importKey("jwk", { kty: "EC", crv: "P-256", x: pub.jwk.x, y: pub.jwk.y }, EC, false, [])
+        .then(function (pk) { return crypto.subtle.deriveBits({ name: "ECDH", public: pk }, eph.privateKey, 256); })
+        .then(function (bits) { return hkdfAes(bits, HREQ, ["encrypt"]); })
+        .then(function (k) { return Promise.all([aesEnc(k, payload, HREQ + "|" + id), crypto.subtle.exportKey("jwk", eph.publicKey)]); })
+        .then(function (r) {
+          return { v: 1, id: id, kid: pub.kid, alg: ECIES_ALG, info: HREQ, epk: { kty: "EC", crv: "P-256", x: r[1].x, y: r[1].y }, iv: r[0].iv, ct: r[0].ct, created_at: new Date().toISOString() };
+        });
+    });
+  }
+  // open a Hark -> panel envelope with the inbox private key (AAD binds it to its path)
+  function harkOpen(env, aad) {
+    var EC = { name: "ECDH", namedCurve: "P-256" };
+    return crypto.subtle.importKey("jwk", { kty: "EC", crv: "P-256", x: env.epk.x, y: env.epk.y }, EC, false, [])
+      .then(function (epk) { return crypto.subtle.deriveBits({ name: "ECDH", public: epk }, DS.priv, 256); })
+      .then(function (bits) { return hkdfAes(bits, HOUT, ["decrypt"]); })
+      .then(function (k) { return aesDec(k, env.iv, env.ct, aad); });
+  }
+  function sendHarkRequest(payload) {
+    return harkPub().then(function (pub) { return harkSeal(pub, payload.id, payload); })
+      .then(function (env) { return putJSONFile(HARK_REQ_DIR + "/" + payload.id + ".json", env, "hark: request (" + payload.type + ")"); });
+  }
+  function bdoc(d) {
+    d = d || { items: [] };
+    d.items = d.items || []; d.hark = d.hark || []; d.hark_gone = d.hark_gone || {}; d.screen = d.screen || []; d.final = d.final || [];
+    d.tool_links = d.tool_links || {}; d.hark_seen = d.hark_seen || {};
+    return d;
+  }
+  function findBy(list, k, v) { for (var i = 0; i < (list || []).length; i++) if (list[i][k] === v) return list[i]; return null; }
+  // apply one decrypted outbox message to the brain doc (idempotent)
+  function applyHarkOut(d, m, pid, now) {
+    d = bdoc(d);
+    if (!m || !m.id || d.hark_seen[m.id]) return d;
+    d.hark_seen[m.id] = now;
+    var seen = Object.keys(d.hark_seen); if (seen.length > 400) seen.sort(function (a, b) { return String(d.hark_seen[a]).localeCompare(String(d.hark_seen[b])); }).slice(0, seen.length - 400).forEach(function (k) { delete d.hark_seen[k]; });
+    if (m.type === "ideas") {
+      (m.ideas || []).forEach(function (x) {
+        if (!x || !String(x.title || "").trim()) return;
+        var id = String(x.id || newId("h"));
+        if (d.hark_gone[id] || findBy(d.hark, "id", id)) return;
+        d.hark.push({ id: id, page: pid, title: String(x.title).trim(), body: String(x.body || ""), why: String(x.why || ""),
+          networks: (x.networks || []).filter(function (pl) { return !!PNAME[pl]; }), format: String(x.format || ""), created_at: m.created_at || now, screen_id: "" });
+      });
+    } else if (m.type === "script") {
+      var s = (m.screen_id && findBy(d.screen, "id", m.screen_id)) || (m.request_id && findBy(d.screen, "request_id", m.request_id));
+      if (!s) { s = { id: m.screen_id || newId("s"), page: pid, title: (m.script && m.script.title) || "اسکریپت هارک", body: "", author: "", source: null, request_id: m.request_id || "", state: "queued", requested_at: m.created_at || now }; d.screen.push(s); }
+      s.script = m.script || {}; s.ready_at = m.created_at || now;
+      if (s.state !== "approved") s.state = "ready";
+    } else if (m.type === "job_result") {
+      var f = findBy(d.final, "id", m.final_id);
+      if (f && m.tool) {
+        f.jobs = f.jobs || {};
+        var j = f.jobs[m.tool];
+        if (!j || j.id === m.job_id || j.state !== "queued") // a newer queued job for this tool is not overwritten by an old result
+          f.jobs[m.tool] = { id: m.job_id, state: m.state === "error" ? "error" : "done", requested_at: j && j.requested_at || "", done_at: m.created_at || now,
+            reason: m.reason || "", gallery_id: m.gallery_id || "", gallery_kind: KIND_FA[m.gallery_kind] ? m.gallery_kind : "", output_url: /^https:\/\//.test(m.output_url || "") ? m.output_url : "", note: m.note || "" };
+      }
+    }
+    return d;
+  }
+  // read hark/out/<page>/, decrypt, merge into vault/brain-<page>.enc.json, delete the merged files. Resolves the number merged.
+  var harkBusy = {};
+  function mergeHarkOut(pid) {
+    if (harkBusy[pid]) return harkBusy[pid];
+    var dir = HARK_OUT_DIR + "/" + pid;
+    var p = gh("/contents/" + dir + "?ref=" + GH_BRANCH + "&t=" + Date.now()).catch(function (e) { if (e.status === 404) return []; throw e; }).then(function (files) {
+      files = (Array.isArray(files) ? files : []).filter(function (f) { return /\.json$/.test(f.name); });
+      if (!files.length) return 0;
+      return Promise.all(files.map(function (f) {
+        var id = f.name.replace(/\.json$/, "");
+        return readRepoFile(dir + "/" + f.name).then(function (r) {
+          if (!r.obj || !r.obj.epk || (r.obj.kid && r.obj.kid !== DS.kid)) return null;
+          return harkOpen(r.obj, HOUT + "|" + pid + "/" + id).then(function (m) { m.id = id; return { name: f.name, sha: r.sha, msg: m }; });
+        }).catch(function () { return null; }); // unreadable/tampered: left in place, never merged
+      })).then(function (rows) {
+        rows = rows.filter(Boolean);
+        if (!rows.length) return 0;
+        rows.sort(function (a, b) { return String(a.msg.created_at || "").localeCompare(String(b.msg.created_at || "")); });
+        return dsUpdate("brain-" + pid, function (d) {
+          var now = new Date().toISOString(); rows.forEach(function (x) { d = applyHarkOut(d, x.msg, pid, now); }); return d;
+        }, "data: brain " + pid + " (hark)").then(function () {
+          return Promise.all(rows.map(function (x) {
+            return gh("/contents/" + dir + "/" + x.name, { method: "DELETE", body: { message: "hark: merged " + x.name, sha: x.sha, branch: GH_BRANCH } }).catch(function () {});
+          }));
+        }).then(function () { return rows.length; });
+      });
+    });
+    harkBusy[pid] = p.then(function (n) { harkBusy[pid] = null; return n; }, function (e) { harkBusy[pid] = null; throw e; });
+    return harkBusy[pid];
+  }
+  function copyText(t) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t).catch(function () { return legacy(); });
+    return Promise.resolve(legacy());
+    function legacy() {
+      var ta = document.createElement("textarea"); ta.value = t; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.top = "-1000px";
+      document.body.appendChild(ta); ta.select(); try { ta.setSelectionRange(0, t.length); } catch (e) {}
+      var ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta);
+      if (!ok) throw new Error("copy failed");
+    }
+  }
+  var PLAT_LEN = [["reels", "Instagram Reels"], ["shorts", "YouTube Shorts"], ["tiktok", "TikTok"]];
+  function beatsOf(sc) {
+    return (sc.beats || []).map(function (b) {
+      if (b && typeof b === "object") return { t: String(b.t || b.time || ""), text: String(b.text || b.line || b.beat || "") };
+      return { t: "", text: String(b) };
+    });
+  }
+  function tagsOf(sc) {
+    var h = sc.hashtags || []; if (typeof h === "string") h = h.split(/\s+/);
+    return h.filter(Boolean).map(function (x) { x = String(x).trim(); return x.charAt(0) === "#" ? x : "#" + x; });
+  }
+  function lenOf(v) { if (!v) return ""; if (typeof v === "object") return [v.length || v.duration || "", v.note || ""].filter(Boolean).join(" — "); return String(v); }
+  // the full, paste-ready text of a screened script (what goes to the production tools and «کپی متن»)
+  function scriptText(sc, title) {
+    sc = sc || {};
+    var out = [], bt = beatsOf(sc), tags = tagsOf(sc), lens = sc.platforms || sc.lengths || {};
+    out.push(sc.title || title || "");
+    if (sc.hook) out.push("", "هوک (۰ تا ۳ ثانیه‌ی اول):", sc.hook);
+    if (bt.length) { out.push("", "بیت‌های نگه‌داشت:"); bt.forEach(function (b, i) { out.push((i + 1) + ". " + (b.t ? "[" + b.t + "] " : "") + b.text); }); }
+    if (sc.cta) out.push("", "CTA:", sc.cta);
+    if (sc.text) out.push("", "متن کامل اسکریپت:", sc.text);
+    if (sc.caption) out.push("", "کپشن:", sc.caption);
+    if (tags.length) out.push("", "هشتگ‌ها:", tags.join(" "));
+    var ls = PLAT_LEN.filter(function (p) { return lens[p[0]]; }).map(function (p) { return p[1] + ": " + lenOf(lens[p[0]]); });
+    if (ls.length) out.push("", "مدت هر پلتفرم:", ls.join("\n"));
+    if (sc.trend || sc.notes) out.push("", "ترند / نکته:", sc.trend || sc.notes);
+    return out.join("\n").trim();
+  }
+  function scriptHTML(sc) {
+    sc = sc || {};
+    var bt = beatsOf(sc), tags = tagsOf(sc), lens = sc.platforms || sc.lengths || {}, h = "";
+    if (sc.hook) h += '<div class="scr-sec hook"><b>هوک · ۰ تا ۳ ثانیه</b><p>' + esc(sc.hook) + "</p></div>";
+    if (bt.length) h += '<div class="scr-sec"><b>بیت‌های نگه‌داشت</b><ol>' + bt.map(function (b) { return "<li>" + (b.t ? '<span class="bt">' + esc(b.t) + "</span> " : "") + esc(b.text) + "</li>"; }).join("") + "</ol></div>";
+    if (sc.cta) h += '<div class="scr-sec"><b>CTA</b><p>' + esc(sc.cta) + "</p></div>";
+    if (sc.text) h += '<div class="scr-sec"><b>متن کامل</b><div class="ibody clamp">' + esc(sc.text) + '</div><button class="linkbtn" data-act="more">نمایش کامل</button></div>';
+    if (sc.caption) h += '<div class="scr-sec"><b>کپشن</b><p>' + esc(sc.caption) + "</p></div>";
+    if (tags.length) h += '<div class="scr-sec"><b>هشتگ‌ها</b><div class="htags">' + tags.map(function (t) { return '<span dir="auto">' + esc(t) + "</span>"; }).join("") + "</div></div>";
+    var ls = PLAT_LEN.filter(function (p) { return lens[p[0]]; });
+    if (ls.length) h += '<div class="scr-sec"><b>مدت هر پلتفرم</b><div class="plens">' + ls.map(function (p) { return '<span><i dir="ltr">' + esc(p[1]) + "</i> " + esc(lenOf(lens[p[0]])) + "</span>"; }).join("") + "</div></div>";
+    if (sc.trend || sc.notes) h += '<div class="scr-sec"><b>ترند / نکته</b><p>' + esc(sc.trend || sc.notes) + "</p></div>";
+    return '<div class="scr">' + (h || '<p class="muted-note">اسکریپت خالی است.</p>') + "</div>";
+  }
+  function authorTag(a) { return AUTHORS[a] ? '<span class="atag a-' + esc(a) + '">' + esc(AUTHORS[a]) + "</span>" : ""; }
+  function v9Body(text) {
+    var long = text.length > 320 || (text.match(/\n/g) || []).length > 6;
+    return text ? '<div class="ibody' + (long ? " clamp" : "") + '">' + esc(text) + "</div>" + (long ? '<button class="linkbtn" data-act="more">نمایش کامل</button>' : "") : "";
+  }
+  function harkItemHTML(it, doc) {
+    var s = it.screen_id && findBy(doc.screen, "id", it.screen_id);
+    var nets = (it.networks || []).map(function (pl) { return PNAME[pl] ? '<span class="ntag">' + picon(pl) + PNAME[pl] + "</span>" : ""; }).join("");
+    return '<article class="bitem hitem" id="b-' + esc(it.id) + '" data-id="' + esc(it.id) + '">' +
+      '<div class="ih"><b class="it">' + esc(it.title) + '</b><span class="atag a-hark">هارک</span></div>' +
+      '<div class="im">' + nets + (it.format ? '<span class="ntag">' + esc(it.format) + "</span>" : "") + '<span class="when">' + esc(fmtShort(it.created_at)) + "</span></div>" +
+      v9Body(it.body || "") + (it.why ? '<p class="why">چرا: ' + esc(it.why) + "</p>" : "") +
+      (s ? '<div class="ilinks"><a class="lchip" href="#/brain/' + esc(it.page) + "/screen?focus=" + esc(s.id) + '">⇢ در غربال‌گری · ' + esc(SCREEN_ST[s.state] || "") + "</a></div>" : "") +
+      '<div class="iact">' + (s ? '<button class="go sm" disabled>فرستاده شد ✓</button>' : '<button class="go sm" data-act="screen">بفرست برای غربال‌گری</button>') +
+      '<button class="ghost sm" data-act="move">انتقال به ایده‌های من</button><button class="ghost sm danger" data-act="del">حذف</button></div></article>';
+  }
+  function screenItemHTML(s) {
+    var st = s.state || "queued";
+    var src = s.source && s.source.kind === "hark" ? '<span class="atag a-hark">پیشنهاد هارک</span>' : authorTag(s.author);
+    return '<article class="bitem sitem" id="b-' + esc(s.id) + '" data-id="' + esc(s.id) + '" data-state="' + esc(st) + '">' +
+      '<div class="ih"><b class="it">' + esc((s.script && s.script.title) || s.title || "(بدون عنوان)") + '</b><span class="schip v9-' + esc(st) + '">' + esc(SCREEN_ST[st] || st) + "</span></div>" +
+      '<div class="sdots v9-' + esc(st) + '"><i class="on"></i><i class="' + (st !== "queued" ? "on" : "") + '"></i><i class="' + (st === "approved" ? "on" : "") + '"></i></div>' +
+      '<div class="im">' + src + '<span class="when">فرستاده: ' + esc(fmtShort(s.requested_at)) + (s.ready_at ? " · آماده: " + esc(fmtShort(s.ready_at)) : "") + "</span></div>" +
+      (s.body ? '<details class="orig"><summary>ایده‌ی اصلی</summary>' + v9Body(s.body) + "</details>" : "") +
+      (st === "queued" ? '<p class="muted-note">هارک این ایده را به یک اسکریپت وایرال تبدیل می‌کند: هوک ۱ تا ۳ ثانیه‌ی اول، بیت‌های نگه‌داشت، CTA، کپشن و هشتگ، و مدت مناسب Reels / Shorts / TikTok.</p>' : scriptHTML(s.script)) +
+      (s.final_id ? '<div class="ilinks"><a class="lchip pub" href="#/brain/' + esc(s.page) + "/final?focus=" + esc(s.final_id) + '">✓ در اسکریپت نهایی</a></div>' : "") +
+      '<div class="iact"><button class="go sm" data-act="approve"' + (st === "ready" ? "" : " disabled") + ">تأیید و انتقال به اسکریپت نهایی</button></div></article>";
+  }
+  function jobChipHTML(j, pid) {
+    if (!j) return "";
+    if (j.state === "done") {
+      var href = j.gallery_id ? "#/gallery/" + esc(pid) + (j.gallery_kind ? "/" + esc(j.gallery_kind) : "") + "?focus=" + esc(j.gallery_id) : j.output_url ? esc(j.output_url) : "";
+      return href ? '<a class="jchip j-done" href="' + href + '"' + (j.gallery_id ? "" : ' target="_blank" rel="noopener"') + ">ساخته شد ↗</a>" : '<span class="jchip j-done">ساخته شد</span>';
+    }
+    return '<span class="jchip j-' + esc(j.state) + '">' + esc(JOB_ST[j.state] || j.state) + "</span>";
+  }
+  function finalItemHTML(f, links) {
+    var jobs = f.jobs || {};
+    var rows = PROD_TOOLS.map(function (t) {
+      var j = jobs[t[0]], url = links[t[0]] || "", q = j && j.state === "queued";
+      return '<div class="ptool" data-tool="' + t[0] + '"><span class="tbadge" style="background:' + (TOOL_COLORS[t[0]] || "#64748b") + '">' + esc(t[1].replace(/^Google\s+/, "").charAt(0)) + "</span>" +
+        '<span class="pn"><b dir="ltr">' + esc(t[1]) + "</b><small>" + (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener" dir="ltr">' + esc(hostOf(url)) + "</a>" : "لینک پروژه تنظیم نشده") + "</small></span>" +
+        jobChipHTML(j, f.page) +
+        '<button class="' + (j ? "ghost" : "go") + ' sm" data-act="send" data-tool="' + t[0] + '"' + (q ? " disabled" : "") + ">" + (q ? "در صف…" : j ? "ارسال دوباره" : "ارسال") + "</button>" +
+        (j && j.state === "error" ? '<div class="jerr">✗ ' + esc(j.reason || "خطای نامشخص") + "</div>" : "") + "</div>";
+    }).join("");
+    return '<article class="bitem fitem" id="b-' + esc(f.id) + '" data-id="' + esc(f.id) + '">' +
+      '<div class="ih"><b class="it">' + esc(f.title || "(بدون عنوان)") + '</b><span class="schip v9-approved">آماده‌ی ساخت</span></div>' +
+      '<div class="im"><span class="when">' + esc(fmtShort(f.created_at)) + "</span></div>" + v9Body(f.text || "") +
+      '<div class="iact"><button class="ghost sm" data-act="copy">کپی متن</button><button class="go sm" data-act="sendall">ارسال به همه</button></div>' +
+      '<div class="ptools" aria-label="ابزارهای ساخت">' + rows + "</div></article>";
+  }
+  function toolLinksHTML(cp, links) {
+    var any = PROD_TOOLS.some(function (t) { return links[t[0]]; });
+    return '<details class="card form tlinks" id="tlinks"' + (any ? "" : " open") + "><summary>لینک پروژه‌ی هر ابزار برای " + '<b dir="ltr">' + esc(cp.name) + "</b></summary>" +
+      '<p class="help">پوشه/پروژه‌ای که پرامپت‌ها و بریف محتوای این پیج در آن است. هارک همین لینک را باز می‌کند، اسکریپت را می‌چسباند و خروجی را به گالری می‌آورد. اگر لینک نباشد، هارک دنبال پروژه‌ای به اسم <b dir="ltr">' + esc(cp.name) + "</b> می‌گردد.</p>" +
+      PROD_TOOLS.map(function (t) { return '<label for="tl-' + t[0] + '" dir="ltr" class="tl-l">' + esc(t[1]) + '</label><input id="tl-' + t[0] + '" data-tool="' + t[0] + '" type="text" dir="ltr" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="https://…" value="' + esc(links[t[0]] || "") + '">'; }).join("") +
+      '<div class="row-btns"><button class="go" type="button" id="tl-save">ذخیره‌ی لینک‌ها</button></div><div class="msg" id="tl-msg"></div></details>';
+  }
+  // draws the three v9 tabs into #v8body; ctx = brainWorkView's ctx (ctx.doc = the whole brain doc)
+  function drawV9(pid, cp, tab, ctx, redraw) {
+    var body = document.getElementById("v8body"); if (!body) return;
+    var d = ctx.doc, html = "";
+    if (tab === "hark") {
+      var hl = d.hark.slice().sort(function (a, b) { return String(b.created_at).localeCompare(String(a.created_at)); });
+      html = '<p class="v9intro">ایده‌هایی که هارک برای این پیج نوشته. هر کدام را بفرست برای غربال‌گری، به ایده‌های خودت ببر، یا حذف کن.</p>' +
+        '<div class="ilist" id="blist">' + (hl.length ? hl.map(function (x) { return harkItemHTML(x, d); }).join("") : '<div class="empty">هنوز هارک پیشنهادی برای این پیج نفرستاده.</div>') + "</div>";
+    } else if (tab === "screen") {
+      var sl = d.screen.slice().sort(function (a, b) { return String(b.requested_at).localeCompare(String(a.requested_at)); });
+      html = '<p class="v9intro">ایده‌هایی که برای غربال‌گری فرستادی. هارک هر کدام را به یک اسکریپت حرفه‌ای و وایرال تبدیل می‌کند؛ بعد از تأیید به «اسکریپت نهایی» می‌رود.</p>' +
+        '<div class="ilist" id="blist">' + (sl.length ? sl.map(screenItemHTML).join("") : '<div class="empty">هنوز چیزی برای غربال‌گری نفرستادی.</div>') + "</div>";
+    } else {
+      var fl = d.final.slice().sort(function (a, b) { return String(b.created_at).localeCompare(String(a.created_at)); });
+      html = toolLinksHTML(cp, d.tool_links) +
+        '<div class="ilist" id="blist">' + (fl.length ? fl.map(function (x) { return finalItemHTML(x, d.tool_links); }).join("") : '<div class="empty">هنوز اسکریپتی تأیید نشده.</div>') + "</div>";
+    }
+    body.innerHTML = html + '<p class="footnote privacy">' + esc(PRIVACY_NOTE) + " درخواست‌ها به هارک و پاسخ‌های هارک هم رمزگذاری‌شده‌اند (فقط هارک و پنل بازشان می‌کنند).</p>";
+    var save = function (fn, msg) { return dsUpdate("brain-" + pid, function (x) { return fn(bdoc(x)); }, msg || "data: brain " + pid).then(function (nd) { ctx.doc = bdoc(nd); ctx.items = ctx.doc.items; return nd; }); };
+    var ts = document.getElementById("tl-save");
+    if (ts) ts.onclick = function () {
+      var m = document.getElementById("tl-msg"), next = {}, bad = "";
+      Array.prototype.forEach.call(document.querySelectorAll("#tlinks input[data-tool]"), function (inp) {
+        var v = inp.value.trim(); if (!v) return;
+        if (!/^https?:\/\//i.test(v)) v = "https://" + v;
+        if (!/^https?:\/\/[^\s/]+\.[^\s]+/i.test(v)) bad = PROD_NAME[inp.getAttribute("data-tool")];
+        next[inp.getAttribute("data-tool")] = v;
+      });
+      if (bad) { m.textContent = "✗ لینک " + bad + " شبیه یک آدرس نیست."; return; }
+      ts.disabled = true; m.textContent = "در حال ذخیره (رمزگذاری‌شده)…";
+      save(function (x) { x.tool_links = next; return x; }).then(function () { toast("لینک‌ها ذخیره شد ✓"); redraw(); }, function (e) { ts.disabled = false; m.textContent = "✗ " + ghErrorFa(e); });
+    };
+    document.getElementById("blist").onclick = function (e) {
+      var b = e.target.closest("[data-act]"); if (!b || b.disabled) return;
+      var card = b.closest(".bitem"), id = card && card.getAttribute("data-id"), act = b.getAttribute("data-act");
+      if (act === "more") { var ib = b.parentNode.querySelector(".ibody"); ib.classList.toggle("clamp"); b.textContent = ib.classList.contains("clamp") ? "نمایش کامل" : "بستن"; return; }
+      if (tab === "hark") {
+        var h = findBy(d.hark, "id", id); if (!h) return;
+        if (act === "screen") { b.disabled = true; sendToScreening(pid, cp, { kind: "hark", id: h.id, title: h.title, body: h.body, author: "hark", networks: h.networks, format: h.format }, ctx).then(function () { toast("برای غربال‌گری فرستاده شد ✓ (در صف هارک)"); redraw(); }, function (e2) { b.disabled = false; toast("✗ " + ghErrorFa(e2), 5000); }); }
+        else if (act === "del") {
+          if (!confirm("این پیشنهاد هارک حذف شود؟")) return;
+          b.disabled = true;
+          save(function (x) { x.hark = x.hark.filter(function (y) { return y.id !== id; }); x.hark_gone[id] = new Date().toISOString(); return x; }).then(function () { toast("حذف شد"); redraw(); }, function (e2) { b.disabled = false; toast("✗ " + ghErrorFa(e2), 5000); });
+        } else if (act === "move") {
+          b.disabled = true; var nid = newId("b"), now = new Date().toISOString();
+          save(function (x) {
+            var cur = findBy(x.hark, "id", id) || h;
+            x.items.push({ id: nid, page: pid, type: "idea", parent_id: "", title: cur.title, body: cur.body || "", networks: (cur.networks || []).slice(), format: cur.format || "", status: "idea",
+              author: "hark", from_hark: cur.id, screen_id: cur.screen_id || "", created_at: now, updated_at: now });
+            x.hark = x.hark.filter(function (y) { return y.id !== id; }); x.hark_gone[id] = now;
+            x.screen.forEach(function (s) { if (s.source && s.source.kind === "hark" && s.source.id === id) s.source = { kind: "idea", id: nid, from_hark: id }; });
+            return x;
+          }).then(function () { toast("به «پیشنهاد ما» منتقل شد ✓"); location.hash = "#/brain/" + pid + "/idea?focus=" + nid; }, function (e2) { b.disabled = false; toast("✗ " + ghErrorFa(e2), 5000); });
+        }
+      } else if (tab === "screen" && act === "approve") {
+        var s = findBy(d.screen, "id", id); if (!s || s.state !== "ready") return;
+        b.disabled = true; var fid = newId("f"), now2 = new Date().toISOString();
+        save(function (x) {
+          var cur = findBy(x.screen, "id", id); if (!cur) throw new Error("این آیتم دیگر در غربال‌گری نیست");
+          if (cur.final_id) { fid = cur.final_id; return x; }
+          cur.state = "approved"; cur.final_id = fid; cur.approved_at = now2;
+          x.final.push({ id: fid, page: pid, screen_id: cur.id, title: (cur.script && cur.script.title) || cur.title, text: scriptText(cur.script, cur.title), script: cur.script || {}, created_at: now2, jobs: {} });
+          return x;
+        }).then(function () { toast("به «اسکریپت نهایی» منتقل شد ✓"); location.hash = "#/brain/" + pid + "/final?focus=" + fid; }, function (e2) { b.disabled = false; toast("✗ " + ghErrorFa(e2), 5000); });
+      } else if (tab === "final") {
+        var f = findBy(d.final, "id", id); if (!f) return;
+        if (act === "copy") copyText(f.text || "").then(function () { toast("متن کپی شد ✓"); }, function () { toast("کپی ممکن نشد؛ متن را دستی انتخاب کن", 4000); });
+        else if (act === "send") { b.disabled = true; produce(pid, cp, f, [b.getAttribute("data-tool")], save).then(function (r) { reportProduce(r); redraw(); }, function (e2) { b.disabled = false; toast("✗ " + ghErrorFa(e2), 5000); }); }
+        else if (act === "sendall") {
+          var tools = PROD_TOOLS.map(function (t) { return t[0]; }).filter(function (t) { return !(f.jobs && f.jobs[t] && f.jobs[t].state === "queued"); });
+          if (!tools.length) { toast("همه‌ی ابزارها همین حالا در صف ساخت‌اند"); return; }
+          var nol = tools.filter(function (t) { return !d.tool_links[t]; });
+          if (!confirm("ارسال برای " + fa(tools.length) + " ابزار: " + tools.map(function (t) { return PROD_NAME[t]; }).join("، ") + (nol.length ? "\nبدون لینک پروژه (هارک دنبال پروژه‌ای به اسم این پیج می‌گردد): " + nol.map(function (t) { return PROD_NAME[t]; }).join("، ") : "") + "\nادامه بدهم؟")) return;
+          b.disabled = true; produce(pid, cp, f, tools, save).then(function (r) { reportProduce(r); redraw(); }, function (e2) { b.disabled = false; toast("✗ " + ghErrorFa(e2), 5000); });
+        }
+      }
+    };
+    var focus = hashQuery().focus;
+    if (focus) { var el = document.getElementById("b-" + focus); if (el) { el.classList.add("focus"); el.scrollIntoView({ block: "center" }); } }
+  }
+  function reportProduce(r) {
+    if (r.failed.length) toast("✗ ارسال برای " + r.failed.join("، ") + " ممکن نشد" + (r.sent.length ? " · فرستاده شد: " + r.sent.join("، ") : ""), 6000);
+    else toast("در صف ساخت هارک ✓ " + r.sent.join("، "));
+  }
+  // a «screen» request: encrypted to Hark first, then the item is recorded in the brain store
+  function sendToScreening(pid, cp, src, ctx) {
+    var sid = newId("s"), rid = newId("r"), now = new Date().toISOString();
+    var payload = { type: "screen", id: rid, page: pid, page_name: cp.name, topic: cp.topic_fa || "", screen_id: sid, source: src.kind, source_id: src.id,
+      title: src.title || "", body: src.body || "", author: AUTHORS[src.author] || "", networks: src.networks || [], format: src.format || "", brief: SCREEN_BRIEF, created_at: now };
+    return sendHarkRequest(payload).then(function () {
+      return dsUpdate("brain-" + pid, function (x) {
+        x = bdoc(x);
+        x.screen.push({ id: sid, page: pid, title: src.title || "", body: src.body || "", author: src.author || "", source: { kind: src.kind, id: src.id }, request_id: rid, state: "queued", requested_at: now, script: null });
+        var o = findBy(src.kind === "hark" ? x.hark : x.items, "id", src.id); if (o) o.screen_id = sid;
+        return x;
+      }, "data: brain " + pid);
+    }).then(function (nd) { if (ctx) { ctx.doc = bdoc(nd); ctx.items = ctx.doc.items; } return nd; });
+  }
+  // production jobs: one encrypted request per tool (job id = request id), then the jobs are marked «در صف ساخت»
+  function produce(pid, cp, f, tools, save) {
+    var links = {}, sent = [], failed = [], ok = {};
+    return dsRead("brain-" + pid).then(function (cur) {
+      links = bdoc(cur).tool_links;
+      return Promise.all(tools.map(function (t) {
+        var jid = newId("j"), now = new Date().toISOString();
+        var payload = { type: "produce", id: jid, page: pid, page_name: cp.name, topic: cp.topic_fa || "", final_id: f.id, tool: t, tool_name: PROD_NAME[t],
+          project_url: links[t] || "", project_name: cp.name, title: f.title || "", script_text: f.text || "", script: f.script || {},
+          gallery: { workflow: "gallery-ingest.yml", domain: pid, brain_id: f.id, req: jid }, created_at: now };
+        return sendHarkRequest(payload).then(function () { ok[t] = { id: jid, state: "queued", requested_at: now }; sent.push(PROD_NAME[t]); }, function () { failed.push(PROD_NAME[t]); });
+      }));
+    }).then(function () {
+      if (!sent.length) { var e = new Error("ارسال به هارک ممکن نشد"); throw e; }
+      return save(function (x) { var cf = findBy(x.final, "id", f.id); if (cf) { cf.jobs = cf.jobs || {}; for (var t in ok) cf.jobs[t] = ok[t]; } return x; });
+    }).then(function () { return { sent: sent, failed: failed }; });
   }
 
   // ============================================================= v8: «گالری محتوا» (#/gallery)
@@ -2215,7 +2589,8 @@
       '<div class="gbody"><div class="ih"><b class="it">' + esc(it.title || "(بدون عنوان)") + "</b>" + stChip("gallery", eff) + "</div>" + stDots("gallery", eff) +
       '<div class="im"><span>' + esc([dims, m0.dur ? secs(m0.dur) : "", mb(size)].filter(Boolean).join(" · ")) + '</span><span class="when">' + esc(fmtShort(it.created_at)) + "</span></div>" +
       '<div class="grule">قانون: ' + esc(it.rule || "—") + (it.override ? " · <b>دستی تغییر کرد</b>" : "") + "</div>" +
-      (b ? '<a class="lchip" href="#/brain/' + esc(pid) + "/" + b.type + "?focus=" + esc(b.id) + '">✦ مغز متفکر (' + BTYPE_FA[b.type] + "): " + esc(b.title) + "</a>" : it.brain_id ? '<span class="lchip">✦ آیتم مغز متفکر پیدا نشد</span>' : "") +
+      (b ? '<a class="lchip" href="#/brain/' + esc(pid) + "/" + b.type + "?focus=" + esc(b.id) + '">✦ مغز متفکر (' + BTYPE_FA[b.type] + "): " + esc(b.title) + "</a>" :
+        /^f\d/.test(it.brain_id || "") ? '<a class="lchip" href="#/brain/' + esc(pid) + "/final?focus=" + esc(it.brain_id) + '">✦ مغز متفکر (اسکریپت نهایی)</a>' : it.brain_id ? '<span class="lchip">✦ آیتم مغز متفکر پیدا نشد</span>' : "") +
       recs.map(function (id) { var j = ctx.jobs[id]; return '<a class="lchip pub" href="#/publish?job=' + esc(id) + '">⇪ انتشار ' + esc(j ? fmtShort(j.publish_at) : id) + " · " + esc(stLabel("publish", ctx.sync.pub[id])) + "</a>"; }).join("") +
       (moving ? '<div class="muted-note">فایل در حال انتقال به انبار (Release)…</div>' : "") +
       '<div class="iact"><a class="go sm" href="#/publish?g=' + esc(it.id) + "&page=" + esc(pid) + '">انتشار / زمان‌بندی از گالری</a>' +
