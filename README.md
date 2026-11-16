@@ -104,6 +104,24 @@ All handles live in `config.json` (`pages[].accounts`). Page order on the Home s
 
 The vault button only links to `https://vault.vaultwarden.com/`. Never commit passwords, tokens or vault content to this repo — use GitHub Secrets.
 
+## v8 (2026-11-16) — مغز متفکر، گالری محتوا، انتشار جدید
+
+### فارسی
+- صفحه‌ی اصلی: بعد از «کانال‌ها» → «مغز متفکر» (نیلی تیره) → «گالری محتوا» (فیروزه‌ای-یاسی) → «انتشار محتوا» → «ابزارها».
+- «مغز متفکر» (`#/brain`): ۵ پیج؛ هر پیج سه زبانه‌ی ایده‌ها / سناریوها / اسکریپت‌ها. هر آیتم: عنوان، متن بلند (خط‌ها حفظ می‌شود)، شبکه‌ها و فرمت (اختیاری)، وضعیت. ارتقا ایده → سناریو → اسکریپت با پیوند دوطرفه.
+- «گالری محتوا» (`#/gallery`): ۵ پیج؛ زیرمنوهای اسلاید / ریل / استوری / ویدئو. بارگذاری چندفایلی (کشیدن و رها کردن، هر فایل تا ۷۰ مگابایت) با دسته‌بندی خودکار در مرورگر؛ قانون نمایش داده می‌شود و قابل تغییر است. فایل‌ها روی شاخه‌ی `media-upload` زیر `gallery/` گذاشته می‌شوند و `publish.py` آن‌ها را به Release «gallery» منتقل می‌کند.
+- انتشار (`#/publish`): آپلود دستی یا انتخاب از گالری؛ جدول ۲۰ کانال با تیک گروهی برای هر پیج و هر شبکه و «همه»؛ همین حالا یا زمان‌بندی؛ صف با فیلتر وضعیت و تقویم ماه/هفته. کانالی که برای انتشار خودکار وصل نیست «نیاز به اتصال / انتشار دستی» می‌گیرد و در صف یادآوری می‌ماند تا «دستی منتشر کردم ✓» زده شود.
+- وضعیت‌ها با برچسب رنگی و نوار نقطه‌ای؛ هیچ آیتمی پنهان یا بایگانی نمی‌شود (فیلتر پیش‌فرض: همه). وضعیت از صف → گالری → مغز متفکر بالا می‌رود.
+- حریم خصوصی: متن‌ها و اطلاعات گالری/انتشار رمزگذاری‌شده در `vault/*.enc.json` (AES-256-GCM با کلید داده‌ای که با رمز پنل در `config/data_key.enc.json` پیچیده شده). صف انتشار (`queue/*.json`) برای GitHub Action خوانا و حداقلی است. فایل‌های رسانه در Release عمومی‌اند.
+- صندوق ورودی برای ابزارهای بیرونی: `gallery-ingest.yml` (پایین را ببینید).
+
+### English
+- Data key: random 256-bit DK + ECDH P-256 inbox key pair, wrapped with the panel password (PBKDF2-SHA256 310k → AES-GCM, AAD `sp-keyring-v1|<kid>`) in `config/data_key.enc.json`; created by the first unlocked panel. Public inbox key: `config/inbox_pub.json`.
+- Encrypted files: `vault/brain-<page>.enc.json`, `vault/gallery-<page>.enc.json`, `vault/publish.enc.json` = `{v, kid, alg, iv, ct, updated_at}`, AES-256-GCM(DK), AAD `sp-data-v1|<path>`. Written with the contents API, re-read + re-applied on a 409/422 sha conflict.
+- Queue entries stay plain and minimal (media URL, targets incl. `manual`, time, title, caption) so `publish.py` needs no extra secret; no `DATA_KEY` secret is used. `publish.py` also writes `config/publish_caps.json` (booleans only: which channel can publish automatically).
+- Gallery inbox: `POST /repos/negin1100mohammadi/social-panel/actions/workflows/gallery-ingest.yml/dispatches` with `{"ref":"main","inputs":{"url":"<direct file link>","domain":"<page id>","kind":"auto|slide|reel|story|video","story":"false","title":"","brain_id":"","req":"<id>","dry_run":"false"}}`. The run downloads (≤ 70 MB), probes (Pillow/ffprobe), classifies (`scripts/gallery_classify.py`, same rules as the panel), uploads to the `gallery` release and commits `inbox/<id>.enc.json` encrypted to the inbox public key (ECDH P-256 ephemeral + HKDF-SHA256 `sp-inbox-v1` + AES-256-GCM). The panel merges inbox items into the gallery when the gallery is opened. Needs the data key to exist (open the brain/gallery once).
+- Tests: `python3 tests/make_media.py /tmp/spmedia && python3 tests/make_fixture.py /tmp/fx $(date +%s000) && node tests/v8.test.js /tmp/fx /tmp/spmedia`; `python3 tests/test_v8_python.py /tmp/spmedia`.
+
 ## v7 (2026-11-15) — اتصال رسمی یوتیوب
 
 ### فارسی

@@ -275,7 +275,7 @@ const until = async (fn, ms = 15000) => { const t = Date.now(); while (Date.now(
       ok(r2 && r2.s === "mismatch" && /کانال دیگری/.test(r2.t), `${vp} settings: mismatch row`);
       ok(r3 && r3.s === "none" && /متصل نیست/.test(r3.t), `${vp} settings: unconnected row`);
       ok(await page.evaluate(() => /حساب‌های متصل/.test(document.getElementById("yt-accounts").textContent) && document.documentElement.scrollWidth - innerWidth <= 1), `${vp} settings: title, no overflow`);
-      ok(await page.evaluate(() => /v7/.test(document.getElementById("app-version").textContent)), `${vp}: version v7`);
+      ok(await page.evaluate(() => /v(7|8|9|\d\d)/.test(document.getElementById("app-version").textContent)), `${vp}: version ≥ v7`);
       await ctx.close();
     }
 
@@ -349,8 +349,8 @@ const until = async (fn, ms = 15000) => { const t = Date.now(); while (Date.now(
 
     // ============================================================ 5. static checks
     const sw = fs.readFileSync(path.join(FX, "sw.js"), "utf8");
-    ok(/const VERSION = "v7"/.test(sw) && /oauth\.html"\)\) return;/.test(sw), "sw.js v7 and never handles oauth.html");
-    ok(/app\.js\?v=7/.test(fs.readFileSync(path.join(FX, "index.html"), "utf8")), "index.html loads app.js?v=7");
+    ok(/const VERSION = "v\d+"/.test(sw) && /oauth\.html"\)\) return;/.test(sw), "sw.js versioned and never handles oauth.html");
+    ok(/app\.js\?v=\d+/.test(fs.readFileSync(path.join(FX, "index.html"), "utf8")), "index.html loads a versioned app.js");
     const oh = fs.readFileSync(path.join(FX, "oauth.html"), "utf8");
     ok(/history\.replaceState/.test(oh) && !/console\.log/.test(oh), "oauth.html clears the URL and never logs");
   } catch (e) { fails.push("CRASH " + (e && e.stack || e)); }

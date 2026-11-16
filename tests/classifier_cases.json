@@ -1,0 +1,19 @@
+[
+ {"name": "several images -> slide", "files": [{"type":"image","w":1080,"h":1350},{"type":"image","w":1080,"h":1080},{"type":"image","w":1920,"h":1080}], "want": [["slide",[0,1,2]]]},
+ {"name": "single 4:5 image -> slide", "files": [{"type":"image","w":1080,"h":1350}], "want": [["slide",[0]]]},
+ {"name": "single 1:1 image -> slide", "files": [{"type":"image","w":1080,"h":1080}], "want": [["slide",[0]]]},
+ {"name": "single 9:16 image -> story", "files": [{"type":"image","w":1080,"h":1920}], "want": [["story",[0]]]},
+ {"name": "single landscape image -> slide (default)", "files": [{"type":"image","w":1920,"h":1080}], "want": [["slide",[0]]]},
+ {"name": "9:16 video 30s -> reel", "files": [{"type":"video","w":1080,"h":1920,"dur":30}], "want": [["reel",[0]]]},
+ {"name": "9:16 video exactly 90s -> reel", "files": [{"type":"video","w":720,"h":1280,"dur":90}], "want": [["reel",[0]]]},
+ {"name": "9:16 video 91s -> video", "files": [{"type":"video","w":720,"h":1280,"dur":91}], "want": [["video",[0]]]},
+ {"name": "9:16 video 12s -> story suggested", "files": [{"type":"video","w":1080,"h":1920,"dur":12}], "want": [["story",[0]]], "suggest": [true]},
+ {"name": "9:16 video 15s -> story suggested", "files": [{"type":"video","w":1080,"h":1920,"dur":15}], "want": [["story",[0]]], "suggest": [true]},
+ {"name": "9:16 video 16s -> reel", "files": [{"type":"video","w":1080,"h":1920,"dur":16}], "want": [["reel",[0]]]},
+ {"name": "marked story 45s -> story", "story": true, "files": [{"type":"video","w":1080,"h":1920,"dur":45}], "want": [["story",[0]]]},
+ {"name": "marked story 61s -> reel", "story": true, "files": [{"type":"video","w":1080,"h":1920,"dur":61}], "want": [["reel",[0]]]},
+ {"name": "horizontal short video -> video", "files": [{"type":"video","w":1920,"h":1080,"dur":10}], "want": [["video",[0]]]},
+ {"name": "4:5 vertical video 30s -> reel", "files": [{"type":"video","w":1080,"h":1350,"dur":30}], "want": [["reel",[0]]]},
+ {"name": "unknown video dims -> video", "files": [{"type":"video","w":0,"h":0,"dur":0}], "want": [["video",[0]]]},
+ {"name": "mixed: 2 images + 2 videos", "files": [{"type":"image","w":1080,"h":1350},{"type":"video","w":1080,"h":1920,"dur":20},{"type":"image","w":1080,"h":1350},{"type":"video","w":1920,"h":1080,"dur":300}], "want": [["slide",[0,2]],["reel",[1]],["video",[3]]]}
+]

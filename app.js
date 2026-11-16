@@ -21,7 +21,7 @@
   var MEDIA_BRANCH = "media-upload";
   var MAX_UPLOAD = 70 * 1024 * 1024; // GitHub blob API limit is 100 MB after base64
 
-  var SP_VERSION = "v7";
+  var SP_VERSION = "v8";
   window.SP_VERSION = SP_VERSION;
   var state = { config: null, latest: null, history: null, postsHist: null, error: null, busy: false, progress: "", syncAvailable: false, encCreated: null, chOrder: null };
   var app = document.getElementById("app");
@@ -288,7 +288,7 @@
     if (pg) pg.parentNode.replaceChild(tmp.firstChild, pg);
     bindTopbar();
   }
-  function onFormPage() { return /^#\/(publish|settings)/.test(location.hash); }
+  function onFormPage() { return /^#\/(publish|settings|brain|gallery)/.test(location.hash); }
   function rerenderSafe() { if (onFormPage() && document.getElementById("topbar") && authed()) redrawTopbar(); else render(); }
   function setProgress(msg) {
     state.progress = msg;
@@ -362,6 +362,14 @@
       '<div class="vs">' + fa(state.config.pages.length) + " کانال</div></span>" +
       (total ? '<span class="bell on">' + ICON_BELL + '<i>' + esc(compact(total)) + "</i></span>" : "") +
       '<span class="arrow">←</span></a>';
+    html += '<a class="brainbox" href="#/brain" id="brainbox">' +
+      '<span class="vi">' + ICON_BRAIN + '</span><span><div class="vt">مغز متفکر</div>' +
+      '<div class="vs">ایده، سناریو و اسکریپت هر پیج</div></span>' +
+      '<span class="arrow">←</span></a>';
+    html += '<a class="galbox" href="#/gallery" id="galbox">' +
+      '<span class="vi">' + ICON_GALLERY + '</span><span><div class="vt">گالری محتوا</div>' +
+      '<div class="vs">اسلاید، ریل، استوری و ویدئوی آماده</div></span>' +
+      '<span class="arrow">←</span></a>';
     html += '<a class="pubbox" href="#/publish" id="pubbox">' +
       '<span class="vi">' + ICON_SEND + '</span><span><div class="vt">انتشار محتوا</div>' +
       '<div class="vs">' + esc(ts.has ? "آپلود ویدیو یا عکس، انتشار و زمان‌بندی" : ts.locked ? "برای فعال‌سازی اتصال، رمز پنل را یک بار وارد کن" : "اول توکن گیت‌هاب را در تنظیمات بگذار") + "</div></span>" +
@@ -375,7 +383,7 @@
     html += '<button class="logout" id="logout">خروج از پنل</button>';
     app.innerHTML = html;
     bindTopbar();
-    document.getElementById("logout").onclick = function () { try { localStorage.removeItem(AUTH_KEY); } catch (e) {} setSessPw("", ""); closeUnlock(); render(); };
+    document.getElementById("logout").onclick = function () { try { localStorage.removeItem(AUTH_KEY); } catch (e) {} setSessPw("", ""); forgetDataKey(); closeUnlock(); render(); };
   }
 
   // -------------------------------------------------------------- channels (tree)
@@ -1517,84 +1525,6 @@
     return o.year + "-" + o.month + "-" + o.day + "T" + o.hour + ":" + o.minute;
   }
 
-  function publishView(preId, prePl) {
-    var ts = tokenState();
-    var html = topbar("انتشار محتوا");
-    html += '<button class="back" id="back">→ صفحه‌ی اصلی</button>';
-    if (!ts.has) {
-      if (ts.locked) html += '<section class="card lilac-note form" id="pub-unlock"><div class="vi">' + ICON_LOCK + "</div><h2>اتصال هنوز روی این دستگاه فعال نشده</h2>" +
-        "<p>برای فعال‌سازی اتصال، رمز پنل را یک بار وارد کن. توکنی که روی دستگاه دیگر همگام شده باز می‌شود و از این به بعد روی این دستگاه می‌ماند.</p>" + unlockFormHTML("punlock") + "</section>";
-      else html += '<section class="card lilac-note" id="pub-notoken"><div class="vi">' + ICON_SEND + "</div><h2>اول توکن گیت‌هاب را اضافه کن</h2>" +
-        "<p>انتشار از داخل این پنل با یک توکن گیت‌هاب انجام می‌شود (فایل در صف انتشار گذاشته می‌شود و GitHub Action آن را منتشر می‌کند). توکن فقط در مرورگر همین گوشی می‌ماند.</p>" +
-        '<a class="go" href="#/settings">رفتن به تنظیمات</a></section>';
-      app.innerHTML = html; bindTopbar();
-      document.getElementById("back").onclick = function () { location.hash = "#/"; };
-      bindUnlockForm("punlock", function () { setTimeout(function () { publishView(preId, prePl); toast("اتصال فعال شد ✓"); }, 400); });
-      return;
-    }
-    var sel = preId ? preId + "|" + (prePl || "*") : "all";
-    var opts = '<option value="all"' + (sel === "all" ? " selected" : "") + ">همه‌ی کانال‌ها (همه‌ی شبکه‌ها)</option>";
-    state.config.pages.forEach(function (cp) {
-      opts += '<optgroup label="' + esc(cp.name) + '"><option value="' + esc(cp.id) + '|*"' + (sel === cp.id + "|*" ? " selected" : "") + ">" + esc(cp.name) + " · همه‌ی شبکه‌ها</option>";
-      PLATFORMS.forEach(function (pl) { if ((cp.accounts || {})[pl]) { var v = cp.id + "|" + pl; opts += '<option value="' + esc(v) + '"' + (sel === v ? " selected" : "") + ">" + esc(cp.name) + " · " + PNAME[pl] + "</option>"; } });
-      opts += "</optgroup>";
-    });
-    html += '<section class="card form pubform" id="pubform">' +
-      '<label for="pf">فایل (ویدیو یا عکس)</label><input id="pf" type="file" accept="video/*,image/*">' +
-      '<div class="fileinfo" id="fileinfo"></div>' +
-      '<label for="pt">عنوان</label><input id="pt" type="text" maxlength="100" placeholder="عنوان (برای یوتیوب و آپارات)">' +
-      '<label for="pc">کپشن / توضیحات</label><textarea id="pc" rows="4" maxlength="2200" placeholder="متن پست…"></textarea>' +
-      '<label for="ps">مقصد</label><select id="ps">' + opts + "</select>" +
-      '<div class="pub-btns"><button class="go" id="btnOne">انتشار در این کانال</button><button class="go alt" id="btnAll">انتشار در همه کانال‌ها</button><button class="ghost" id="btnSched">زمان‌بندی</button></div>' +
-      '<div class="sched" id="schedbox" hidden><label for="pd">زمان انتشار (به وقت تهران)</label><input id="pd" type="datetime-local" min="' + nowTehranInput(5) + '" value="' + nowTehranInput(60) + '">' +
-      '<button class="go" id="btnSchedOk">ثبت زمان‌بندی برای مقصد انتخاب‌شده</button></div>' +
-      '<div class="msg" id="pubmsg"></div></section>';
-    html += '<div class="jobs-h"><h3>صف انتشار</h3><button class="ghost sm" id="reloadjobs">به‌روزرسانی فهرست</button></div><div id="jobs" class="jobs"><div class="muted-note">در حال بارگذاری…</div></div>';
-    html += '<p class="footnote">فایل در گیت‌هاب ذخیره و در صف گذاشته می‌شود؛ GitHub Action حداکثر هر ۱۵ دقیقه صف را بررسی و منتشر می‌کند. برای هر شبکه، تا وقتی کلید دسترسی‌اش در Secrets مخزن نباشد، وضعیت «نیاز به راه‌اندازی» نشان داده می‌شود.</p>';
-    app.innerHTML = html;
-    bindTopbar();
-    document.getElementById("back").onclick = function () { location.hash = "#/"; };
-    var fileIn = document.getElementById("pf"), msg = document.getElementById("pubmsg");
-    fileIn.onchange = function () {
-      var f = fileIn.files[0], fi = document.getElementById("fileinfo");
-      if (!f) { fi.textContent = ""; return; }
-      fi.textContent = f.name + " · " + fa(Math.round(f.size / 1024 / 1024 * 10) / 10) + " مگابایت" + (f.size > MAX_UPLOAD ? " — بزرگ‌تر از حد مجاز ۷۰ مگابایت" : "");
-      fi.className = "fileinfo" + (f.size > MAX_UPLOAD ? " bad" : "");
-    };
-    function go(targets, when) {
-      var f = fileIn.files[0];
-      var title = document.getElementById("pt").value.trim(), caption = document.getElementById("pc").value.trim();
-      if (!f) { msg.textContent = "اول یک فایل انتخاب کن."; return; }
-      if (!/^(video|image)\//.test(f.type)) { msg.textContent = "فقط ویدیو یا عکس پذیرفته می‌شود."; return; }
-      if (f.size > MAX_UPLOAD) { msg.textContent = "حجم فایل بیشتر از ۷۰ مگابایت است."; return; }
-      if (!targets.length) { msg.textContent = "مقصدی انتخاب نشده."; return; }
-      var whenTxt = when ? "در " + fmtDateTime(when) : "همین حالا";
-      if (!window.confirm("این محتوا " + whenTxt + " در " + fa(targets.length) + " مقصد منتشر شود؟\n\n" + targets.map(targetName).join("\n"))) return;
-      setPubBusy(true);
-      submitJob(f, title, caption, targets, when, function (t) { msg.textContent = t; }).then(function (job) {
-        msg.textContent = "✓ در صف انتشار قرار گرفت (" + job.id + ").";
-        fileIn.value = ""; document.getElementById("fileinfo").textContent = "";
-        document.getElementById("schedbox").hidden = true;
-        setPubBusy(false); loadJobs();
-      }).catch(function (e) { msg.textContent = "✗ " + ghErrorFa(e); setPubBusy(false); });
-    }
-    document.getElementById("btnOne").onclick = function () {
-      var s = document.getElementById("ps").value;
-      if (s === "all") { msg.textContent = "برای «انتشار در این کانال» از فهرست مقصد یک کانال انتخاب کن، یا «انتشار در همه کانال‌ها» را بزن."; return; }
-      go(targetsFor(s), null);
-    };
-    document.getElementById("btnAll").onclick = function () { go(allTargets(), null); };
-    document.getElementById("btnSched").onclick = function () { var b = document.getElementById("schedbox"); b.hidden = !b.hidden; };
-    document.getElementById("btnSchedOk").onclick = function () {
-      var v = document.getElementById("pd").value;
-      if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) { msg.textContent = "تاریخ و ساعت را کامل انتخاب کن."; return; }
-      var iso = v + ":00+03:30"; // Iran has no daylight saving: always UTC+03:30
-      if (tsOf(iso) < Date.now() + 60000) { msg.textContent = "زمان انتخاب‌شده گذشته است."; return; }
-      go(targetsFor(document.getElementById("ps").value), iso);
-    };
-    document.getElementById("reloadjobs").onclick = loadJobs;
-    loadJobs();
-  }
   function setPubBusy(b) {
     Array.prototype.forEach.call(document.querySelectorAll("#pubform button, #pubform input, #pubform select, #pubform textarea"), function (el) { el.disabled = b; });
   }
@@ -1659,54 +1589,1122 @@
       var job = {
         id: id, created_at: nowIso, publish_at: when || nowIso,
         targets: targets, title: title || caption.split("\n")[0].slice(0, 90) || file.name, caption: caption,
-        media: { branch: MEDIA_BRANCH, path: path, blob_sha: sha, name: file.name, type: file.type, size: file.size },
+        media: { branch: MEDIA_BRANCH, path: path, blob_sha: sha, name: id + "." + ext, type: file.type, size: file.size },
         asset_url: null, status: "pending", results: {}
       };
       say("در حال افزودن به صف انتشار…");
       return gh("/contents/queue/" + id + ".json", { method: "PUT", body: { message: "queue: " + id + (when ? " (scheduled)" : ""), content: b64utf8(JSON.stringify(job, null, 1) + "\n"), branch: GH_BRANCH } }).then(function () { return job; });
     });
   }
-  function loadJobs() {
-    var box = document.getElementById("jobs"); if (!box) return;
-    gh("/contents/queue?ref=" + GH_BRANCH).catch(function (e) { if (e.status === 404) return []; throw e; }).then(function (files) {
-      files = (files || []).filter(function (f) { return /\.json$/.test(f.name); }).sort(function (a, b) { return a.name < b.name ? 1 : -1; }).slice(0, 25);
-      return Promise.all(files.map(function (f) {
-        return gh("/contents/queue/" + f.name + "?ref=" + GH_BRANCH, { headers: { Accept: "application/vnd.github.raw+json" } }).then(function (j) {
-          if (typeof j === "string") j = JSON.parse(j);
-          j._sha = f.sha; j._name = f.name; return j;
-        }).catch(function () { return null; });
-      }));
-    }).then(function (jobs) {
-      jobs = jobs.filter(Boolean);
-      if (!document.getElementById("jobs")) return;
-      if (!jobs.length) { box.innerHTML = '<div class="muted-note">هنوز چیزی در صف نیست.</div>'; return; }
-      box.innerHTML = jobs.map(function (j) {
-        var st = j.status === "pending" && tsOf(j.publish_at) > Date.now() + 60000 ? "scheduled" : j.status;
-        var res = j.results || {};
-        return '<div class="job" data-id="' + esc(j.id) + '"><div class="jh">' + stPill(st) + '<b class="jt">' + esc(j.title || "(بدون عنوان)") + "</b></div>" +
-          '<div class="jm">' + esc((st === "scheduled" ? "زمان انتشار: " : "ثبت: ") + fmtDateTime(st === "scheduled" ? j.publish_at : j.created_at)) + (j.media ? " · " + esc(j.media.name || "") : "") + "</div>" +
-          '<ul class="jtargets">' + (j.targets || []).map(function (t) {
-            var r = res[t.page + "/" + t.platform] || {};
-            var tst = r.status || (j.status === "cancelled" ? "cancelled" : "pending");
-            return "<li>" + picon(t.platform) + '<span class="tn">' + esc(targetName(t)) + "</span>" + stPill(tst) +
-              (r.reason ? '<div class="tr">' + esc(r.reason) + "</div>" : "") + (r.url ? '<a class="tr" href="' + esc(r.url) + '" target="_blank" rel="noopener">مشاهده ↗</a>' : "") + "</li>";
-          }).join("") + "</ul>" +
-          (j.status === "pending" ? '<button class="ghost danger sm cancel" data-name="' + esc(j._name) + '" data-sha="' + esc(j._sha) + '">لغو این انتشار</button>' : "") + "</div>";
-      }).join("");
-      Array.prototype.forEach.call(box.querySelectorAll(".cancel"), function (b) {
-        b.onclick = function () {
-          if (!window.confirm("این انتشار لغو شود؟")) return;
-          b.disabled = true;
-          var name = b.getAttribute("data-name");
-          var job = jobs.filter(function (j) { return j._name === name; })[0];
-          var copy = {}; for (var k in job) if (k.charAt(0) !== "_") copy[k] = job[k];
-          copy.status = "cancelled"; copy.cancelled_at = new Date().toISOString();
-          gh("/contents/queue/" + name, { method: "PUT", body: { message: "queue: cancel " + job.id, content: b64utf8(JSON.stringify(copy, null, 1) + "\n"), sha: b.getAttribute("data-sha"), branch: GH_BRANCH } })
-            .then(function () { toast("انتشار لغو شد"); loadJobs(); })
-            .catch(function (e) { toast("لغو ممکن نشد: " + ghErrorFa(e), 5000); b.disabled = false; });
-        };
+  // ============================================================= v8: encrypted data store
+  // Brain texts, gallery metadata and publish links live ENCRYPTED in the (public) repo under vault/*.enc.json.
+  // A random 256-bit data key (DK) + an inbox ECDH P-256 key pair are wrapped with the panel password
+  // (PBKDF2-SHA256 310k -> AES-GCM, exactly like config/token.enc.json) in config/data_key.enc.json.
+  // Each data file = AES-256-GCM(DK, JSON), AAD = "sp-data-v1|<path>". Writes go through the contents API with
+  // the device's GitHub token, re-read + retried on a sha conflict. External tools (gallery-ingest.yml) encrypt
+  // their inbox items to the public key in config/inbox_pub.json (ECIES: ECDH P-256 + HKDF-SHA256 + AES-GCM);
+  // only an unlocked panel can open them, and it merges them into the gallery.
+  var KEYRING_PATH = "config/data_key.enc.json", INBOX_PUB_PATH = "config/inbox_pub.json", INBOX_DIR = "inbox";
+  var DK_LS = "sp_dk", QCACHE_LS = "sp_qcache";
+  var GALLERY_TAG = "gallery";
+  var DS = { dk: null, kid: null, priv: null, pubJwk: null, ring: undefined, files: {} };
+  var TE = new TextEncoder(), TD = new TextDecoder();
+  function rnd(n) { return crypto.getRandomValues(new Uint8Array(n)); }
+  function utf8b64dec(s) { return TD.decode(b64u8(String(s || "").replace(/\s/g, ""))); }
+  function needErr(kind, msg) { var e = new Error(msg || kind); e.need = kind; return e; }
+  function importDK(raw) { return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]); }
+  function importPriv(jwk) { return crypto.subtle.importKey("jwk", { kty: "EC", crv: "P-256", x: jwk.x, y: jwk.y, d: jwk.d }, { name: "ECDH", namedCurve: "P-256" }, false, ["deriveBits"]); }
+  function aesEnc(key, obj, aad) {
+    var iv = rnd(12);
+    return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv, additionalData: TE.encode(aad) }, key, TE.encode(JSON.stringify(obj)))
+      .then(function (ct) { return { iv: u8b64(iv), ct: u8b64(new Uint8Array(ct)) }; });
+  }
+  function aesDec(key, iv, ct, aad) {
+    return crypto.subtle.decrypt({ name: "AES-GCM", iv: b64u8(iv), additionalData: TE.encode(aad) }, key, b64u8(ct))
+      .then(function (pt) { return JSON.parse(TD.decode(pt)); });
+  }
+  function wrapRing(pw, kid, payload) {
+    var salt = rnd(16), iv = rnd(12);
+    return deriveKey(pw, salt).then(function (k) {
+      return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv, additionalData: TE.encode("sp-keyring-v1|" + kid) }, k, TE.encode(JSON.stringify(payload)));
+    }).then(function (ct) {
+      return { v: 1, kid: kid, kdf: "PBKDF2-SHA256", iter: KDF_ITER, alg: "AES-256-GCM", salt: u8b64(salt), iv: u8b64(iv), ct: u8b64(new Uint8Array(ct)),
+        created_at: new Date().toISOString(), about: "social-panel data key, wrapped with the panel password (vault/*.enc.json are encrypted with it)" };
+    });
+  }
+  function unwrapRing(ring, pw) {
+    return deriveKey(pw, b64u8(ring.salt)).then(function (k) {
+      return crypto.subtle.decrypt({ name: "AES-GCM", iv: b64u8(ring.iv), additionalData: TE.encode("sp-keyring-v1|" + ring.kid) }, k, b64u8(ring.ct));
+    }).then(function (pt) { return JSON.parse(TD.decode(pt)); });
+  }
+  function pubOf(jwk) { return { kty: "EC", crv: "P-256", x: jwk.x, y: jwk.y }; }
+  function adoptKeys(kid, payload) {
+    return Promise.all([importDK(b64u8(payload.dk)), importPriv(payload.inbox_priv)]).then(function (k) {
+      DS.dk = k[0]; DS.priv = k[1]; DS.kid = kid; DS.pubJwk = pubOf(payload.inbox_priv);
+      lsSet(DK_LS, { kid: kid, dk: payload.dk, inbox_priv: payload.inbox_priv }); // same trust level as the GitHub token on this device
+    });
+  }
+  function forgetDataKey() { DS.dk = null; DS.priv = null; DS.kid = null; DS.files = {}; try { localStorage.removeItem(DK_LS); } catch (e) {} }
+  // plain (non-secret) JSON file write with sha retry
+  function putJSONFile(path, obj, msg) {
+    var tries = 0;
+    function attempt() {
+      return gh("/contents/" + path + "?ref=" + GH_BRANCH + "&t=" + Date.now()).then(function (f) { return f && f.sha; }, function (e) { if (e.status === 404) return null; throw e; })
+        .then(function (sha) {
+          var body = { message: msg, content: b64utf8(JSON.stringify(obj, null, 1) + "\n"), branch: GH_BRANCH }; if (sha) body.sha = sha;
+          return gh("/contents/" + path, { method: "PUT", body: body });
+        }).catch(function (e) { if ((e.status === 409 || e.status === 422) && tries++ < 4) return sleep(700 * tries).then(attempt); throw e; });
+    }
+    return attempt();
+  }
+  function readRing(force) {
+    if (DS.ring !== undefined && !force) return Promise.resolve(DS.ring);
+    return fetchRepoJSON(KEYRING_PATH).then(function (r) { DS.ring = r && r.kid ? r : null; return DS.ring; });
+  }
+  function writeInboxPub() {
+    return putJSONFile(INBOX_PUB_PATH, { v: 1, kid: DS.kid, alg: "ECDH-P256+HKDF-SHA256+A256GCM", info: "sp-inbox-v1", jwk: DS.pubJwk, created_at: new Date().toISOString(),
+      about: "public key for gallery-ingest.yml: inbox items are encrypted to it; only the unlocked panel can read them" }, "data: inbox public key");
+  }
+  function createRing(pw) {
+    var kid = randHex(8), dk = rnd(32);
+    return crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]).then(function (kp) {
+      return crypto.subtle.exportKey("jwk", kp.privateKey);
+    }).then(function (jwk) {
+      var payload = { dk: u8b64(dk), inbox_priv: { kty: "EC", crv: "P-256", x: jwk.x, y: jwk.y, d: jwk.d } };
+      return wrapRing(pw, kid, payload).then(function (ring) {
+        // create only (no sha): if another device created one meanwhile, GitHub refuses (422) and we use theirs
+        return gh("/contents/" + KEYRING_PATH, { method: "PUT", body: { message: "data: create encrypted data key", content: b64utf8(JSON.stringify(ring, null, 1) + "\n"), branch: GH_BRANCH } })
+          .then(function () { DS.ring = ring; return adoptKeys(kid, payload); })
+          .then(function () { return writeInboxPub().catch(function () {}); }, function (e) {
+            if (e.status === 422 || e.status === 409) return readRing(true).then(function (r) { if (!r) throw e; return unwrapRing(r, pw).then(function (p) { return adoptKeys(r.kid, p); }); });
+            throw e;
+          });
       });
-    }).catch(function (e) { if (document.getElementById("jobs")) box.innerHTML = '<div class="muted-note">' + esc("خواندن صف ممکن نشد: " + ghErrorFa(e)) + "</div>"; });
+    });
+  }
+  // is this typed password the panel password? (it must open the synced token copy)
+  function verifyTypedPw(pw) {
+    return fetchEnc().then(function (obj) {
+      if (!obj) return false;
+      return decryptToken(obj, pw).then(function () { return true; }, function () { return false; });
+    });
+  }
+  // resolves when the data key is in memory; rejects with e.need = token | pw | badpw | net
+  function ensureData(typedPw) {
+    if (!getToken()) return Promise.reject(needErr("token"));
+    return readRing(DS.ring === undefined).catch(function () { throw needErr("net", "خواندن کلید رمزگذاری از گیت‌هاب ممکن نشد"); }).then(function (ring) {
+      if (DS.dk && ring && ring.kid === DS.kid) return true;
+      var c = lsGet(DK_LS, null);
+      if (ring && c && c.kid === ring.kid && c.dk && c.inbox_priv && !typedPw) return adoptKeys(c.kid, c).then(function () { return true; });
+      var pw = typedPw || sessPw();
+      if (!pw) throw needErr("pw");
+      if (!ring) {
+        var check = typedPw ? verifyTypedPw(pw) : Promise.resolve(true); // a login password was already checked against the panel hash
+        return check.then(function (good) { if (!good) throw needErr("badpw", "این رمز درست نیست (همان رمز ورود به پنل)."); return createRing(pw); }).then(function () { return true; });
+      }
+      return unwrapRing(ring, pw).then(function (p) { return adoptKeys(ring.kid, p).then(function () { return true; }); },
+        function () { if (typedPw) throw needErr("badpw", "این رمز درست نیست (همان رمز ورود به پنل)."); throw needErr("pw"); });
+    });
+  }
+  function vaultPath(name) { return "vault/" + name + ".enc.json"; }
+  function readRepoFile(path) {
+    return gh("/contents/" + path + "?ref=" + GH_BRANCH + "&t=" + Date.now()).then(function (meta) {
+      var c = meta && meta.content ? Promise.resolve(meta.content) : gh("/git/blobs/" + meta.sha).then(function (b) { return b.content; }); // > 1 MB: blob API
+      return c.then(function (b64) { return { obj: JSON.parse(utf8b64dec(b64)), sha: meta.sha }; });
+    }, function (e) { if (e.status === 404) return { obj: null, sha: null }; throw e; });
+  }
+  function dsRead(name) {
+    var path = vaultPath(name);
+    return readRepoFile(path).then(function (f) {
+      if (!f.obj) { DS.files[name] = { data: null, sha: null }; return null; }
+      if (f.obj.kid && f.obj.kid !== DS.kid) throw new Error("این فایل با کلید دیگری رمزگذاری شده (" + path + ")");
+      return aesDec(DS.dk, f.obj.iv, f.obj.ct, "sp-data-v1|" + path).then(function (data) { DS.files[name] = { data: data, sha: f.sha }; return data; });
+    });
+  }
+  function dsCached(name) { return DS.files[name] ? DS.files[name].data : undefined; }
+  // read-modify-write; mutate(currentOrNull) returns the new object. Conflicts (another device wrote first) re-read and re-apply.
+  function dsUpdate(name, mutate, msg) {
+    var path = vaultPath(name), tries = 0;
+    function attempt() {
+      return dsRead(name).then(function (cur) {
+        var next = mutate(cur ? JSON.parse(JSON.stringify(cur)) : null);
+        next.v = 1; next.updated_at = new Date().toISOString();
+        return aesEnc(DS.dk, next, "sp-data-v1|" + path).then(function (enc) {
+          var file = { v: 1, kid: DS.kid, alg: "AES-256-GCM", iv: enc.iv, ct: enc.ct, updated_at: next.updated_at };
+          var body = { message: msg || "data: " + name, content: b64utf8(JSON.stringify(file) + "\n"), branch: GH_BRANCH };
+          var sha = DS.files[name] && DS.files[name].sha; if (sha) body.sha = sha;
+          return gh("/contents/" + path, { method: "PUT", body: body }).then(function (r) {
+            DS.files[name] = { data: next, sha: r && r.content && r.content.sha }; return next;
+          });
+        });
+      }).catch(function (e) {
+        if ((e.status === 409 || e.status === 422) && tries++ < 5) return sleep(600 + tries * 700).then(attempt);
+        throw e;
+      });
+    }
+    return attempt();
+  }
+  // ---- ECIES inbox (gallery-ingest.yml -> inbox/<id>.enc.json)
+  function inboxDecrypt(obj) {
+    return crypto.subtle.importKey("jwk", { kty: "EC", crv: "P-256", x: obj.epk.x, y: obj.epk.y }, { name: "ECDH", namedCurve: "P-256" }, false, [])
+      .then(function (epk) { return crypto.subtle.deriveBits({ name: "ECDH", public: epk }, DS.priv, 256); })
+      .then(function (bits) { return crypto.subtle.importKey("raw", bits, "HKDF", false, ["deriveKey"]); })
+      .then(function (h) { return crypto.subtle.deriveKey({ name: "HKDF", hash: "SHA-256", salt: new Uint8Array(0), info: TE.encode("sp-inbox-v1") }, h, { name: "AES-GCM", length: 256 }, false, ["decrypt"]); })
+      .then(function (k) { return aesDec(k, obj.iv, obj.ct, "sp-inbox-v1|" + obj.id); });
+  }
+  // move every inbox item into its domain's gallery, then delete the inbox file. Resolves the number merged.
+  var inboxBusy = null;
+  function mergeInbox() {
+    if (inboxBusy) return inboxBusy;
+    inboxBusy = gh("/contents/" + INBOX_DIR + "?ref=" + GH_BRANCH + "&t=" + Date.now()).catch(function (e) { if (e.status === 404) return []; throw e; }).then(function (files) {
+      files = (files || []).filter(function (f) { return /\.enc\.json$/.test(f.name); });
+      if (!files.length) return 0;
+      return Promise.all(files.map(function (f) {
+        return readRepoFile(INBOX_DIR + "/" + f.name).then(function (r) {
+          if (!r.obj || (r.obj.kid && r.obj.kid !== DS.kid)) return null;
+          return inboxDecrypt(r.obj).then(function (item) { return { file: f, sha: r.sha, item: item }; });
+        }).catch(function () { return null; });
+      })).then(function (rows) {
+        rows = rows.filter(function (x) { return x && x.item && cpById(x.item.page); });
+        var byPage = {}; rows.forEach(function (x) { (byPage[x.item.page] = byPage[x.item.page] || []).push(x); });
+        return Object.keys(byPage).reduce(function (p, pid) {
+          return p.then(function () {
+            return dsUpdate("gallery-" + pid, function (d) {
+              d = d || { items: [] }; var have = {}; d.items.forEach(function (it) { have[it.id] = 1; });
+              byPage[pid].forEach(function (x) { if (!have[x.item.id]) d.items.push(normGalleryItem(x.item, pid)); });
+              return d;
+            }, "data: gallery " + pid + " (inbox)");
+          }).then(function () {
+            return Promise.all(byPage[pid].map(function (x) {
+              return gh("/contents/" + INBOX_DIR + "/" + x.file.name, { method: "DELETE", body: { message: "inbox: merged " + x.file.name, sha: x.sha, branch: GH_BRANCH } }).catch(function () {});
+            }));
+          });
+        }, Promise.resolve()).then(function () { return rows.length; });
+      });
+    }).then(function (n) { inboxBusy = null; return n; }, function (e) { inboxBusy = null; throw e; });
+    return inboxBusy;
+  }
+  function normGalleryItem(it, pid) {
+    return { id: it.id, page: pid, kind: KIND_FA[it.kind] ? it.kind : "video", kind_auto: it.kind_auto || it.kind, rule: it.rule || "", override: !!it.override,
+      title: it.title || "", caption: it.caption || "", media: it.media || [], thumb: it.thumb || "", status: it.status || "uploaded", brain_id: it.brain_id || "",
+      source: it.source || null, created_at: it.created_at || new Date().toISOString(), updated_at: it.updated_at || it.created_at || new Date().toISOString() };
+  }
+
+  // ============================================================= v8: statuses (shared by brain / gallery / publish)
+  var ST = {
+    brain: [["idea", "ایده"], ["writing", "در حال نوشتن"], ["scenario_ready", "سناریو آماده"], ["script_ready", "اسکریپت آماده"], ["made", "ساخته شد"], ["published", "منتشر شد"]],
+    gallery: [["uploaded", "بارگذاری شد"], ["ready", "آماده انتشار"], ["scheduled", "زمان‌بندی شد"], ["published", "منتشر شد"]],
+    publish: [["queued", "در صف"], ["scheduled", "زمان‌بندی شد"], ["publishing", "در حال انتشار"], ["published", "منتشر شد"], ["error", "خطا"]]
+  };
+  function stIndex(area, key) { for (var i = 0; i < ST[area].length; i++) if (ST[area][i][0] === key) return i; return 0; }
+  function stLabel(area, key) { return ST[area][stIndex(area, key)][1]; }
+  function stChip(area, key, extra) {
+    return '<span class="schip s-' + area + "-" + esc(key) + '" data-status="' + esc(key) + '">' + esc(stLabel(area, key)) + (extra ? " · " + esc(extra) : "") + "</span>";
+  }
+  function stDots(area, key) {
+    var n = ST[area].length, i = stIndex(area, key), h = '<span class="sdots s-' + area + "-" + esc(key) + '" role="img" aria-label="مرحله‌ی ' + fa(i + 1) + " از " + fa(n) + '">';
+    if (area === "publish" && key === "error") { for (var k = 0; k < n - 1; k++) h += '<i class="on"></i>'; return h + '<i class="on x"></i></span>'; }
+    var steps = area === "publish" ? n - 1 : n; // the publish strip has 4 steps + error
+    for (var j = 0; j < steps; j++) h += "<i" + (j <= i ? ' class="on"' : "") + "></i>";
+    return h + "</span>";
+  }
+  function maxSt(area, a, b) { return stIndex(area, a) >= stIndex(area, b) ? a : b; }
+  // one target of a queue job: published | manual | error | pending
+  function targetState(job, t) {
+    var r = (job.results || {})[t.page + "/" + t.platform] || {};
+    if (r.status === "published") return "published";
+    if (r.status === "manual" || (!r.status && t.manual)) return "manual";
+    if (r.status === "failed" || r.status === "needs_setup" || r.status === "skipped" || r.status === "cancelled") return "error";
+    return "pending";
+  }
+  // publish status of a queue job (plain queue/<id>.json, written back by publish.py)
+  function pubStatusOf(job, now, running) {
+    if (!job) return "queued";
+    if (job.status === "cancelled") return "error";
+    var due = tsOf(job.publish_at) || 0, c = { published: 0, manual: 0, error: 0, pending: 0 };
+    (job.targets || []).forEach(function (t) { c[targetState(job, t)]++; });
+    if (c.pending) {
+      if (due > now + 60000) return "scheduled";
+      if (running || Object.keys(job.results || {}).length) return "publishing";
+      return "queued";
+    }
+    if (c.published) return "published"; // manual reminders stay visible per target
+    if (c.manual) return due > now + 60000 ? "scheduled" : "queued";
+    return "error";
+  }
+  // statuses flow downstream -> upstream through the link ids:
+  // queue job -> publish record (gallery_id, brain_id) -> gallery item (brain_id) -> brain item (parent_id chain)
+  function syncStatuses(ctx, now, running) {
+    var brain = ctx.brain || [], gallery = ctx.gallery || [], records = ctx.records || {}, jobs = ctx.jobs || {};
+    var out = { pub: {}, gal: {}, brain: {} };
+    Object.keys(records).forEach(function (id) { out.pub[id] = jobs[id] ? pubStatusOf(jobs[id], now, running) : "queued"; });
+    Object.keys(jobs).forEach(function (id) { if (!out.pub[id]) out.pub[id] = pubStatusOf(jobs[id], now, running); });
+    gallery.forEach(function (g) {
+      var s = ST.gallery.some(function (x) { return x[0] === g.status; }) ? g.status : "uploaded";
+      Object.keys(records).forEach(function (id) {
+        var r = records[id]; if (r.gallery_id !== g.id) return;
+        var ps = out.pub[id];
+        if (ps === "published") s = maxSt("gallery", s, "published");
+        else if (ps === "queued" || ps === "scheduled" || ps === "publishing") s = maxSt("gallery", s, "scheduled");
+      });
+      out.gal[g.id] = s;
+    });
+    var byId = {}; brain.forEach(function (b) { byId[b.id] = b; out.brain[b.id] = ST.brain.some(function (x) { return x[0] === b.status; }) ? b.status : "idea"; });
+    gallery.forEach(function (g) {
+      if (!g.brain_id || !byId[g.brain_id]) return;
+      out.brain[g.brain_id] = maxSt("brain", out.brain[g.brain_id], out.gal[g.id] === "published" ? "published" : "made");
+    });
+    Object.keys(records).forEach(function (id) { // a publish record can point at a brain item directly
+      var r = records[id]; if (r.brain_id && byId[r.brain_id] && out.pub[id] === "published") out.brain[r.brain_id] = maxSt("brain", out.brain[r.brain_id], "published");
+    });
+    // a scenario/script that got further lifts its idea/scenario (never lowers anything)
+    for (var pass = 0; pass < 3; pass++) brain.forEach(function (b) {
+      var p = b.parent_id && byId[b.parent_id]; if (p) out.brain[p.id] = maxSt("brain", out.brain[p.id], out.brain[b.id]);
+    });
+    return out;
+  }
+
+  // ============================================================= v8: auto-classification (browser side; scripts/gallery_classify.py mirrors it)
+  var KINDS = ["slide", "reel", "story", "video"];
+  var KIND_FA = { slide: "اسلاید", reel: "ریل", story: "استوری", video: "ویدئو" };
+  function nearRatio(w, h, a, b, tol) { if (!w || !h) return false; return Math.abs(w / h - a / b) <= (tol || 0.03); }
+  function classifyImage(f) {
+    if (!f.w || !f.h) return { kind: "slide", rule: "ابعاد عکس خوانده نشد → اسلاید (پیش‌فرض عکس)" };
+    if (nearRatio(f.w, f.h, 9, 16)) return { kind: "story", rule: "عکس تکی ۹:۱۶ → استوری" };
+    if (nearRatio(f.w, f.h, 4, 5)) return { kind: "slide", rule: "عکس ۴:۵ → اسلاید" };
+    if (nearRatio(f.w, f.h, 1, 1)) return { kind: "slide", rule: "عکس ۱:۱ → اسلاید" };
+    return { kind: "slide", rule: "عکس با نسبت دیگر → اسلاید (پیش‌فرض عکس)" };
+  }
+  function classifyVideo(f, story) {
+    var d = f.dur || 0;
+    if (!f.w || !f.h) return { kind: "video", rule: "ابعاد ویدئو خوانده نشد → ویدئو" };
+    if (story && d > 0 && d <= 60) return { kind: "story", rule: "ویدئوی تا ۶۰ ثانیه با علامت «استوری» → استوری" };
+    if (f.w > f.h) return { kind: "video", rule: "ویدئوی افقی → ویدئو" };
+    var v916 = nearRatio(f.w, f.h, 9, 16);
+    if (v916 && d > 0 && d <= 15) return { kind: "story", rule: "ویدئوی ۹:۱۶ تا ۱۵ ثانیه → پیشنهاد: استوری (یا ریل)", suggest: true };
+    if (d > 0 && d <= 90) return { kind: "reel", rule: v916 ? "ویدئوی عمودی ۹:۱۶ تا ۹۰ ثانیه → ریل" : "ویدئوی عمودی/مربعی تا ۹۰ ثانیه → ریل" };
+    return { kind: "video", rule: d > 90 ? "ویدئوی بلندتر از ۹۰ ثانیه → ویدئو" : "مدت ویدئو خوانده نشد → ویدئو" };
+  }
+  // files: [{type:"image"|"video", w, h, dur}] from one upload; returns [{files:[indexes], kind, rule, suggest}]
+  function classifyUpload(files, opts) {
+    opts = opts || {};
+    var out = [], imgs = [], i;
+    for (i = 0; i < files.length; i++) if (files[i].type === "image") imgs.push(i);
+    if (imgs.length > 1) out.push({ files: imgs, kind: "slide", rule: "چند عکس در یک بارگذاری (" + fa(imgs.length) + " عکس) → اسلاید" });
+    else if (imgs.length === 1) { var c = classifyImage(files[imgs[0]]); out.push({ files: imgs, kind: c.kind, rule: c.rule }); }
+    for (i = 0; i < files.length; i++) if (files[i].type === "video") { var v = classifyVideo(files[i], !!opts.story); out.push({ files: [i], kind: v.kind, rule: v.rule, suggest: !!v.suggest }); }
+    return out;
+  }
+  window.__spV8 = {
+    classifyUpload: classifyUpload, syncStatuses: syncStatuses, pubStatusOf: pubStatusOf, ST: ST,
+    ensureData: function (pw) { return ensureData(pw); }, dsRead: function (n) { return dsRead(n); }, dsUpdate: function (n, f) { return dsUpdate(n, f); },
+    mergeInbox: function () { return mergeInbox(); }, kid: function () { return DS.kid; }, forget: function () { forgetDataKey(); DS.ring = undefined; },
+    inboxDecrypt: function (o) { return inboxDecrypt(o); }
+  };
+
+  // ============================================================= v8: shared view helpers
+  var ICON_BRAIN = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 4a3 3 0 0 0-3 3v.3A3 3 0 0 0 4.5 12a3 3 0 0 0 2 4.7V17a3 3 0 0 0 3 3h.5V4z"/><path d="M14.5 4a3 3 0 0 1 3 3v.3a3 3 0 0 1 2 4.7 3 3 0 0 1-2 4.7V17a3 3 0 0 1-3 3H14V4z"/><path d="M10 9H8.5M14 9h1.5M10 14H8M14 14h2"/></svg>';
+  var ICON_GALLERY = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="14" height="14" rx="2.5"/><path d="M7 3h11a3 3 0 0 1 3 3v11"/><circle cx="8" cy="10" r="1.5"/><path d="M3 16l4-4 4 4 2-2 4 4"/></svg>';
+  var PRIVACY_NOTE = "متن‌ها و اطلاعات گالری و انتشار به‌صورت رمزگذاری‌شده (AES-256-GCM با کلیدی که فقط با رمز پنل باز می‌شود) در مخزن ذخیره می‌شوند. " +
+    "اما خود فایل‌های عکس و ویدئو در Release عمومی مخزن هستند: هر کس لینک دقیق فایل را داشته باشد، یا صفحه‌ی Releases مخزن را باز کند، می‌تواند آن‌ها را ببیند.";
+  function hashQuery() {
+    var h = location.hash || "", i = h.indexOf("?"), o = {};
+    if (i < 0) return o;
+    h.slice(i + 1).split("&").forEach(function (kv) { var p = kv.split("="); if (p[0]) o[decodeURIComponent(p[0])] = decodeURIComponent(p[1] || ""); });
+    return o;
+  }
+  function newId(prefix) {
+    var o = tehranParts(new Date());
+    return prefix + o.year.slice(2) + o.month + o.day + "-" + o.hour + o.minute + o.second + "-" + randHex(2);
+  }
+  function releaseURL(name) { return "https://github.com/" + GH_OWNER + "/" + GH_REPO + "/releases/download/" + GALLERY_TAG + "/" + encodeURIComponent(name); }
+  function mb(n) { return fa(Math.round((n || 0) / 1048576 * 10) / 10) + " مگابایت"; }
+  function secs(d) { if (!d) return ""; d = Math.round(d); return d < 60 ? fa(d) + " ثانیه" : fa(Math.floor(d / 60)) + ":" + ("0" + (d % 60)).slice(-2).replace(/\d/g, function (x) { return "۰۱۲۳۴۵۶۷۸۹"[x]; }); }
+  function shell(title, backTo, backLabel) {
+    return topbar(title) + '<button class="back" id="back" data-to="' + esc(backTo) + '">→ ' + esc(backLabel) + "</button>";
+  }
+  function bindShell() {
+    bindTopbar();
+    var b = document.getElementById("back"); if (b) b.onclick = function () { location.hash = b.getAttribute("data-to"); };
+  }
+  function filterSeg(area, cur, counts) {
+    return '<div class="sfilter" role="group" aria-label="فیلتر وضعیت" data-area="' + area + '"><button data-f="all" class="' + (cur === "all" ? "on" : "") + '">همه' + (counts ? " " + fa(counts.all || 0) : "") + "</button>" +
+      ST[area].map(function (s) { return '<button data-f="' + s[0] + '" class="s-' + area + "-" + s[0] + (cur === s[0] ? " on" : "") + '">' + esc(s[1]) + (counts ? " " + fa(counts[s[0]] || 0) : "") + "</button>"; }).join("") + "</div>";
+  }
+  var viewSeq = 0; // bumped by every render(): async results of a view that is no longer shown are dropped
+  function live(my) { return my === viewSeq; }
+  var v8ui = { bf: {}, gf: {}, pf: "all", cal: { mode: "month", anchor: null, day: null }, pview: "queue" };
+  // the encrypted area can open only with this device's GitHub token + the data key (panel password once)
+  function withData(onReady) {
+    var box = document.getElementById("dgate"); if (!box) return;
+    var my = viewSeq;
+    box.innerHTML = '<div class="muted-note pad">در حال باز کردن محتوای رمزگذاری‌شده…</div>';
+    ensureData().then(function () { if (!live(my)) return; box.innerHTML = ""; onReady(); }, function (e) { gate(e); });
+    function gate(e) {
+      if (!live(my) || !document.getElementById("dgate")) return;
+      if (e.need === "token") {
+        // the synced-token check may not have finished yet on a fresh visit: ask the repo before saying "no token"
+        if (!state.syncAvailable && !e.checked) {
+          fetchEnc().then(function (o) { state.syncAvailable = !!o; }, function () {}).then(function () { e.checked = true; gate(e); });
+          return;
+        }
+        var ts = tokenState();
+        if (ts.locked) {
+          box.innerHTML = '<section class="card lilac-note form" id="data-tokunlock"><div class="vi">' + ICON_LOCK + "</div><h2>اتصال هنوز روی این دستگاه فعال نشده</h2><p>رمز پنل را یک بار وارد کن؛ هم اتصال گیت‌هاب و هم محتوای رمزگذاری‌شده باز می‌شود.</p>" + unlockFormHTML("dunlock") + "</section>";
+          bindUnlockForm("dunlock", function () { setTimeout(function () { withData(onReady); }, 300); });
+        } else box.innerHTML = '<section class="card lilac-note" id="data-notoken"><div class="vi">' + ICON_LOCK + "</div><h2>اول توکن گیت‌هاب را اضافه کن</h2><p>این بخش با توکن گیت‌هاب ذخیره و خوانده می‌شود.</p><a class=\"go\" href=\"#/settings\">رفتن به تنظیمات</a></section>";
+        return;
+      }
+      if (e.need === "net") {
+        box.innerHTML = '<section class="card" id="data-neterr"><p>✗ ' + esc(e.message) + '</p><button class="ghost" id="dretry">دوباره</button></section>';
+        document.getElementById("dretry").onclick = function () { DS.ring = undefined; withData(onReady); };
+        return;
+      }
+      box.innerHTML = '<section class="card lilac-note form" id="data-unlock"><div class="vi">' + ICON_LOCK + "</div><h2>محتوای رمزگذاری‌شده</h2>" +
+        "<p>برای باز کردن مغز متفکر، گالری و اطلاعات انتشار روی این دستگاه، رمز پنل را یک بار وارد کن.</p>" +
+        '<form class="unlock-form" id="dpw-form" onsubmit="return false"><input type="text" name="username" autocomplete="username" hidden aria-hidden="true">' +
+        '<label for="dpw">رمز پنل</label><div class="pw"><input id="dpw" type="password" autocomplete="current-password" required></div>' +
+        '<button class="go" id="dpw-go" type="submit">باز کردن</button><div class="msg" id="dpw-msg">' + (e.need === "badpw" ? "✗ " + esc(e.message) : "") + "</div></form></section>";
+      var f = document.getElementById("dpw-form");
+      f.onsubmit = function (ev) {
+        if (ev) ev.preventDefault();
+        var pw = document.getElementById("dpw").value, m = document.getElementById("dpw-msg"), go = document.getElementById("dpw-go");
+        if (!pw) return false;
+        go.disabled = true; m.textContent = "در حال باز کردن…";
+        ensureData(pw).then(function () { setSessPw(sessUser(), pw); box.innerHTML = ""; onReady(); },
+          function (e2) { go.disabled = false; m.textContent = "✗ " + (e2.need === "badpw" ? e2.message : e2.need === "net" ? e2.message : (e2.message || "باز کردن ممکن نشد")); });
+        return false;
+      };
+    }
+  }
+  function errBox(id, e) { var b = document.getElementById(id); if (b) b.innerHTML = '<div class="card"><p>✗ ' + esc(ghErrorFa(e)) + "</p></div>"; }
+  var RUNNING = { at: 0, v: false };
+  function publishRunning() {
+    if (Date.now() - RUNNING.at < 30000) return Promise.resolve(RUNNING.v);
+    return gh("/actions/workflows/publish.yml/runs?status=in_progress&per_page=1").then(function (d) { RUNNING = { at: Date.now(), v: !!(d && d.total_count) }; return RUNNING.v; }, function () { return false; });
+  }
+  // queue/<id>.json files (plain: publish.py must read them). Cached by blob sha (a sha never changes content).
+  function loadQueue() {
+    return gh("/contents/queue?ref=" + GH_BRANCH + "&t=" + Date.now()).catch(function (e) { if (e.status === 404) return []; throw e; }).then(function (files) {
+      files = (files || []).filter(function (f) { return /\.json$/.test(f.name); });
+      var cache = lsGet(QCACHE_LS, {}), keep = {}, out = [];
+      return Promise.all(files.map(function (f) {
+        var hit = cache[f.sha];
+        var p = hit ? Promise.resolve(hit) : gh("/git/blobs/" + f.sha).then(function (b) { return JSON.parse(utf8b64dec(b.content)); });
+        return p.then(function (j) { keep[f.sha] = j; var c = {}; for (var k in j) c[k] = j[k]; c._sha = f.sha; c._name = f.name; out.push(c); }, function () {});
+      })).then(function () {
+        lsSet(QCACHE_LS, keep);
+        out.sort(function (a, b) { return (tsOf(b.publish_at) || 0) - (tsOf(a.publish_at) || 0); });
+        return out;
+      });
+    });
+  }
+  function jobsMap(list) { var m = {}; (list || []).forEach(function (j) { m[j.id] = j; }); return m; }
+  function loadReleaseAssets() {
+    return gh("/releases/tags/" + GALLERY_TAG).then(function (r) { var s = {}; (r.assets || []).forEach(function (a) { s[a.name] = 1; }); return s; }, function (e) { if (e.status === 404) return {}; return null; });
+  }
+
+  // ============================================================= v8: «مغز متفکر» (#/brain)
+  var BTYPES = [["idea", "ایده‌ها", "ایده"], ["scenario", "سناریوها", "سناریو"], ["script", "اسکریپت‌ها", "اسکریپت"]];
+  var BNEXT = { idea: "scenario", scenario: "script" };
+  var BTYPE_FA = { idea: "ایده", scenario: "سناریو", script: "اسکریپت" };
+  var FORMATS = ["پست", "اسلاید", "ریل", "استوری", "ویدئو", "شورت", "لایو"];
+  function brainHomeView() {
+    app.innerHTML = shell("مغز متفکر", "#/", "صفحه‌ی اصلی") +
+      '<div class="v8head brainhead"><span class="vi">' + ICON_BRAIN + '</span><div><h1>مغز متفکر</h1><p>ایده، سناریو و اسکریپت هر پیج</p></div></div>' +
+      '<div id="dgate"></div><div id="v8body"></div>';
+    bindShell();
+    withData(function () {
+      var body = document.getElementById("v8body"); body.innerHTML = '<div class="muted-note pad">در حال بارگذاری…</div>';
+      var my = viewSeq;
+      Promise.all(state.config.pages.map(function (cp) { return dsRead("brain-" + cp.id); })).then(function (res) {
+        if (!live(my) || !document.getElementById("v8body")) return;
+        body.innerHTML = '<div class="domlist" id="brain-domains">' + state.config.pages.map(function (cp, i) {
+          var items = (res[i] && res[i].items) || [], c = { idea: 0, scenario: 0, script: 0 };
+          items.forEach(function (it) { c[it.type] = (c[it.type] || 0) + 1; });
+          return '<a class="dombox brain" href="#/brain/' + esc(cp.id) + '/idea" data-page="' + esc(cp.id) + '">' + logoHTML(cp, pageData(cp), "dlogo") +
+            '<span class="dn"><b>' + esc(cp.name) + "</b><span>" + esc(cp.topic_fa || "") + "</span></span>" +
+            '<span class="dc">' + fa(c.idea) + " ایده · " + fa(c.scenario) + " سناریو · " + fa(c.script) + " اسکریپت</span></a>";
+        }).join("") + "</div>" + '<p class="footnote privacy">' + esc(PRIVACY_NOTE) + "</p>";
+      }).catch(function (e) { errBox("v8body", e); });
+    });
+  }
+  function brainItemHTML(it, ctx) {
+    var eff = ctx.sync.brain[it.id] || it.status, pid = it.page;
+    var parent = it.parent_id && ctx.byId[it.parent_id];
+    var kids = ctx.items.filter(function (x) { return x.parent_id === it.id; });
+    var gals = ctx.gallery.filter(function (g) { return g.brain_id === it.id; });
+    var links = "";
+    if (parent) links += '<a class="lchip" href="#/brain/' + esc(pid) + "/" + parent.type + "?focus=" + esc(parent.id) + '">↖ از ' + BTYPE_FA[parent.type] + ": " + esc(parent.title) + "</a>";
+    else if (it.parent_id) links += '<span class="lchip">↖ ' + esc(BTYPE_FA[it.type === "script" ? "scenario" : "idea"]) + " مبدأ پیدا نشد</span>";
+    kids.forEach(function (k) { links += '<a class="lchip" href="#/brain/' + esc(pid) + "/" + k.type + "?focus=" + esc(k.id) + '">↘ ' + BTYPE_FA[k.type] + ": " + esc(k.title) + "</a>"; });
+    gals.forEach(function (g) { links += '<a class="lchip gal" href="#/gallery/' + esc(pid) + "/" + g.kind + "?focus=" + esc(g.id) + '">▣ گالری (' + KIND_FA[g.kind] + "): " + esc(g.title || g.id) + " · " + esc(stLabel("gallery", ctx.sync.gal[g.id] || g.status)) + "</a>"; });
+    var nets = (it.networks || []).map(function (pl) { return PNAME[pl] ? '<span class="ntag">' + picon(pl) + PNAME[pl] + "</span>" : ""; }).join("");
+    var body = it.body || "", long = body.length > 320 || (body.match(/\n/g) || []).length > 6;
+    return '<article class="bitem" id="b-' + esc(it.id) + '" data-id="' + esc(it.id) + '" data-status="' + esc(eff) + '">' +
+      '<div class="ih"><b class="it">' + esc(it.title || "(بدون عنوان)") + "</b>" + stChip("brain", eff) + "</div>" + stDots("brain", eff) +
+      '<div class="im">' + nets + (it.format ? '<span class="ntag">' + esc(it.format) + "</span>" : "") + '<span class="when">' + esc(fmtShort(it.updated_at || it.created_at)) + "</span></div>" +
+      (body ? '<div class="ibody' + (long ? " clamp" : "") + '">' + esc(body) + "</div>" + (long ? '<button class="linkbtn" data-act="more">نمایش کامل</button>' : "") : "") +
+      (links ? '<div class="ilinks">' + links + "</div>" : "") +
+      '<div class="iact"><button class="ghost sm" data-act="edit">ویرایش</button>' +
+      (BNEXT[it.type] ? '<button class="ghost sm" data-act="promote">ارتقا به ' + BTYPE_FA[BNEXT[it.type]] + " ←</button>" : "") +
+      '<a class="ghost sm" href="#/gallery/' + esc(pid) + "?brain=" + esc(it.id) + '">ساخت در گالری</a></div></article>';
+  }
+  function brainFormHTML(it, type) {
+    it = it || {};
+    var nets = PLATFORMS.map(function (pl) { return '<label class="chk"><input type="checkbox" name="bf-net" value="' + pl + '"' + ((it.networks || []).indexOf(pl) >= 0 ? " checked" : "") + ">" + picon(pl) + PNAME[pl] + "</label>"; }).join("");
+    return '<form class="card form bform" id="bform" data-id="' + esc(it.id || "") + '" onsubmit="return false">' +
+      "<h2>" + (it.id ? "ویرایش " : BTYPE_FA[type] + " جدید") + (it.id ? BTYPE_FA[it.type] : "") + "</h2>" +
+      '<label for="bf-title">عنوان</label><input id="bf-title" type="text" maxlength="200" required value="' + esc(it.title || "") + '">' +
+      '<label for="bf-body">متن</label><textarea id="bf-body" rows="9" placeholder="متن کامل… (خط‌ها همان‌طور که می‌نویسی می‌مانند)">' + esc(it.body || "") + "</textarea>" +
+      '<label>شبکه‌های هدف (اختیاری)</label><div class="nets">' + nets + "</div>" +
+      '<label for="bf-format">فرمت (اختیاری)</label><select id="bf-format"><option value="">—</option>' + FORMATS.map(function (f) { return "<option" + (it.format === f ? " selected" : "") + ">" + f + "</option>"; }).join("") + "</select>" +
+      '<label for="bf-status">وضعیت</label><select id="bf-status">' + ST.brain.map(function (s) { return '<option value="' + s[0] + '"' + ((it.status || (type === "idea" ? "idea" : "writing")) === s[0] ? " selected" : "") + ">" + s[1] + "</option>"; }).join("") + "</select>" +
+      '<div class="row-btns"><button class="go" type="submit" id="bf-save">ذخیره</button><button class="ghost" type="button" id="bf-cancel">انصراف</button></div><div class="msg" id="bf-msg"></div></form>';
+  }
+  function brainWorkView(pid, tab) {
+    var cp = cpById(pid); if (!cp) { location.hash = "#/brain"; return; }
+    tab = BNEXT[tab] || tab === "script" ? tab : "idea";
+    var q = hashQuery();
+    app.innerHTML = shell("مغز متفکر · " + cp.name, "#/brain", "مغز متفکر") +
+      '<div class="v8head brainhead sm">' + logoHTML(cp, pageData(cp), "dlogo") + "<div><h1>" + esc(cp.name) + "</h1><p>" + esc(cp.topic_fa || "") + "</p></div></div>" +
+      '<div class="tabs" role="tablist">' + BTYPES.map(function (t) { return '<a role="tab" class="tab' + (t[0] === tab ? " on" : "") + '" href="#/brain/' + esc(pid) + "/" + t[0] + '" data-tab="' + t[0] + '">' + t[1] + ' <em id="cnt-' + t[0] + '"></em></a>'; }).join("") + "</div>" +
+      '<div id="dgate"></div><div id="v8body"></div>';
+    bindShell();
+    withData(function () {
+      var body = document.getElementById("v8body"); body.innerHTML = '<div class="muted-note pad">در حال بارگذاری…</div>';
+      var my = viewSeq;
+      Promise.all([dsRead("brain-" + pid), dsRead("gallery-" + pid).catch(function () { return null; }), dsRead("publish").catch(function () { return null; }), loadQueue().catch(function () { return []; }), publishRunning()]).then(function (r) {
+        if (!live(my) || !document.getElementById("v8body")) return;
+        var ctx = { items: (r[0] && r[0].items) || [], gallery: (r[1] && r[1].items) || [], records: (r[2] && r[2].items) || {}, jobs: jobsMap(r[3]), running: r[4] };
+        draw(ctx);
+      }).catch(function (e) { errBox("v8body", e); });
+    });
+    function draw(ctx) {
+      var body = document.getElementById("v8body"); if (!body) return;
+      var openForm0 = document.getElementById("bform"); // a form being typed survives a redraw
+      ctx.byId = {}; ctx.items.forEach(function (x) { ctx.byId[x.id] = x; });
+      ctx.sync = syncStatuses({ brain: ctx.items, gallery: ctx.gallery, records: ctx.records, jobs: ctx.jobs }, Date.now(), ctx.running);
+      BTYPES.forEach(function (t) { var e = document.getElementById("cnt-" + t[0]); if (e) e.textContent = fa(ctx.items.filter(function (x) { return x.type === t[0]; }).length); });
+      var list = ctx.items.filter(function (x) { return x.type === tab; }).sort(function (a, b) { return (tsOf(b.updated_at) || 0) - (tsOf(a.updated_at) || 0); });
+      var f = v8ui.bf[pid + tab] || "all", counts = { all: list.length };
+      list.forEach(function (x) { var s = ctx.sync.brain[x.id]; counts[s] = (counts[s] || 0) + 1; });
+      var shown = f === "all" ? list : list.filter(function (x) { return ctx.sync.brain[x.id] === f; });
+      body.innerHTML = '<div class="v8bar"><button class="go" id="bnew">+ ' + BTYPE_FA[tab] + " جدید</button></div>" + '<div id="bform-wrap"></div>' +
+        filterSeg("brain", f, counts) +
+        '<div class="ilist" id="blist">' + (shown.length ? shown.map(function (x) { return brainItemHTML(x, ctx); }).join("") :
+          '<div class="empty">' + (list.length ? "در این وضعیت چیزی نیست." : "هنوز " + BTYPE_FA[tab] + "ی ثبت نشده.") + "</div>") + "</div>" +
+        '<p class="footnote privacy">' + esc(PRIVACY_NOTE) + "</p>";
+      if (openForm0) document.getElementById("bform-wrap").appendChild(openForm0);
+      document.getElementById("bnew").onclick = function () { openForm(null); };
+      body.querySelector(".sfilter").onclick = function (e) { var b = e.target.closest("button[data-f]"); if (!b) return; v8ui.bf[pid + tab] = b.getAttribute("data-f"); draw(ctx); };
+      document.getElementById("blist").onclick = function (e) {
+        var b = e.target.closest("[data-act]"); if (!b) return;
+        var card = b.closest(".bitem"), it = ctx.byId[card.getAttribute("data-id")];
+        var act = b.getAttribute("data-act");
+        if (act === "more") { var ib = card.querySelector(".ibody"); ib.classList.toggle("clamp"); b.textContent = ib.classList.contains("clamp") ? "نمایش کامل" : "بستن"; }
+        else if (act === "edit") openForm(it);
+        else if (act === "promote") promote(it, b);
+      };
+      var focus = hashQuery().focus;
+      if (focus) { var el = document.getElementById("b-" + focus); if (el) { el.classList.add("focus"); el.scrollIntoView({ block: "center" }); } }
+      function openForm(it) {
+        var w = document.getElementById("bform-wrap"); w.innerHTML = brainFormHTML(it, tab);
+        var fm = document.getElementById("bform"); fm.scrollIntoView({ block: "start", behavior: "smooth" });
+        setTimeout(function () { var t = document.getElementById("bf-title"); try { t.focus({ preventScroll: true }); } catch (e) {} }, 50);
+        document.getElementById("bf-cancel").onclick = function () { w.innerHTML = ""; };
+        fm.onsubmit = function (ev) {
+          if (ev) ev.preventDefault();
+          var title = document.getElementById("bf-title").value.trim(), text = document.getElementById("bf-body").value.replace(/\r\n/g, "\n");
+          var m = document.getElementById("bf-msg");
+          if (!title) { m.textContent = "عنوان را بنویس."; return false; }
+          var nets = Array.prototype.map.call(fm.querySelectorAll('input[name="bf-net"]:checked'), function (x) { return x.value; });
+          var fields = { title: title, body: text, networks: nets, format: document.getElementById("bf-format").value, status: document.getElementById("bf-status").value };
+          var now = new Date().toISOString(), id = it ? it.id : newId("b");
+          document.getElementById("bf-save").disabled = true; m.textContent = "در حال ذخیره (رمزگذاری‌شده)…";
+          dsUpdate("brain-" + pid, function (d) {
+            d = d || { items: [] };
+            if (it) { var cur = d.items.filter(function (x) { return x.id === it.id; })[0]; if (!cur) { cur = JSON.parse(JSON.stringify(it)); d.items.push(cur); } for (var k in fields) cur[k] = fields[k]; cur.updated_at = now; }
+            else { var n = { id: id, page: pid, type: tab, parent_id: "", created_at: now, updated_at: now }; for (var k2 in fields) n[k2] = fields[k2]; d.items.push(n); }
+            return d;
+          }, "data: brain " + pid).then(function (d) {
+            ctx.items = d.items; toast("ذخیره شد ✓"); w.innerHTML = ""; draw(ctx);
+          }, function (e) { document.getElementById("bf-save").disabled = false; m.textContent = "✗ " + ghErrorFa(e); });
+          return false;
+        };
+      }
+      function promote(it, btn) {
+        var to = BNEXT[it.type]; if (!to) return;
+        btn.disabled = true;
+        var now = new Date().toISOString(), id = newId("b");
+        dsUpdate("brain-" + pid, function (d) {
+          d = d || { items: [] };
+          d.items.push({ id: id, page: pid, type: to, parent_id: it.id, title: it.title, body: it.body || "", networks: (it.networks || []).slice(), format: it.format || "", status: "writing", created_at: now, updated_at: now });
+          return d;
+        }, "data: brain " + pid).then(function () {
+          toast(BTYPE_FA[to] + " ساخته شد و به " + BTYPE_FA[it.type] + " وصل است ✓");
+          location.hash = "#/brain/" + pid + "/" + to + "?focus=" + id;
+        }, function (e) { btn.disabled = false; toast("✗ " + ghErrorFa(e), 5000); });
+      }
+    }
+  }
+
+  // ============================================================= v8: «گالری محتوا» (#/gallery)
+  function galleryHomeView() {
+    app.innerHTML = shell("گالری محتوا", "#/", "صفحه‌ی اصلی") +
+      '<div class="v8head galhead"><span class="vi">' + ICON_GALLERY + '</span><div><h1>گالری محتوا</h1><p>انبار داخلی محتوای آماده‌ی هر پیج</p></div></div>' +
+      '<div id="dgate"></div><div id="v8body"></div>';
+    bindShell();
+    withData(function () {
+      var body = document.getElementById("v8body"); body.innerHTML = '<div class="muted-note pad">در حال بارگذاری…</div>';
+      var my = viewSeq;
+      mergeInbox().catch(function () { return 0; }).then(function (n) {
+        if (n) toast(fa(n) + " آیتم تازه از صندوق ورودی به گالری اضافه شد");
+        return Promise.all(state.config.pages.map(function (cp) { return dsRead("gallery-" + cp.id); }));
+      }).then(function (res) {
+        if (!live(my) || !document.getElementById("v8body")) return;
+        body.innerHTML = '<div class="domlist" id="gal-domains">' + state.config.pages.map(function (cp, i) {
+          var items = (res[i] && res[i].items) || [], c = {};
+          items.forEach(function (it) { c[it.kind] = (c[it.kind] || 0) + 1; });
+          return '<a class="dombox gal" href="#/gallery/' + esc(cp.id) + '/slide" data-page="' + esc(cp.id) + '">' + logoHTML(cp, pageData(cp), "dlogo") +
+            '<span class="dn"><b>' + esc(cp.name) + "</b><span>" + esc(cp.topic_fa || "") + "</span></span>" +
+            '<span class="dc">' + KINDS.map(function (k) { return fa(c[k] || 0) + " " + KIND_FA[k]; }).join(" · ") + "</span></a>";
+        }).join("") + "</div>" + '<p class="footnote privacy">' + esc(PRIVACY_NOTE) + "</p>";
+      }).catch(function (e) { errBox("v8body", e); });
+    });
+  }
+  // read width/height/duration + a small thumbnail (stays inside the encrypted gallery file)
+  function thumbOf(src, w, h) {
+    try {
+      var s = Math.min(1, 240 / Math.max(w || 1, h || 1)), c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round((w || 240) * s)); c.height = Math.max(1, Math.round((h || 240) * s));
+      c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+      return c.toDataURL("image/jpeg", 0.6);
+    } catch (e) { return ""; }
+  }
+  function probeFile(f) {
+    var url = URL.createObjectURL(f), isImg = /^image\//.test(f.type), isVid = /^video\//.test(f.type);
+    var base = { file: f, name: f.name, size: f.size, mime: f.type, type: isImg ? "image" : isVid ? "video" : "other", w: 0, h: 0, dur: 0, thumb: "" };
+    return new Promise(function (res) {
+      var done = false; function fin() { if (done) return; done = true; URL.revokeObjectURL(url); res(base); }
+      setTimeout(fin, 12000);
+      if (isImg) {
+        var im = new Image();
+        im.onload = function () { base.w = im.naturalWidth; base.h = im.naturalHeight; base.thumb = thumbOf(im, base.w, base.h); fin(); };
+        im.onerror = fin; im.src = url;
+      } else if (isVid) {
+        var v = document.createElement("video"); v.muted = true; v.playsInline = true; v.preload = "metadata";
+        v.onloadedmetadata = function () {
+          base.w = v.videoWidth; base.h = v.videoHeight; base.dur = isFinite(v.duration) ? v.duration : 0;
+          try { v.currentTime = Math.min(1, (base.dur || 2) / 3); } catch (e) { fin(); }
+        };
+        v.onseeked = function () { base.thumb = thumbOf(v, base.w, base.h); fin(); };
+        v.onerror = fin; v.src = url;
+      } else fin();
+    });
+  }
+  function galleryItemHTML(it, ctx) {
+    var eff = ctx.sync.gal[it.id] || it.status, pid = it.page, b = it.brain_id && ctx.brainById[it.brain_id];
+    var recs = Object.keys(ctx.records).filter(function (id) { return ctx.records[id].gallery_id === it.id; });
+    var m0 = (it.media || [])[0] || {}, moving = ctx.assets && (it.media || []).some(function (m) { return !ctx.assets[m.name]; });
+    var dims = m0.w && m0.h ? "\u2066" + fa(m0.w) + "×" + fa(m0.h) + "\u2069" : "";
+    var size = (it.media || []).reduce(function (s, m) { return s + (m.size || 0); }, 0);
+    return '<article class="gitem" id="g-' + esc(it.id) + '" data-id="' + esc(it.id) + '" data-status="' + esc(eff) + '">' +
+      '<div class="gthumb">' + (it.thumb ? '<img alt="" src="' + esc(it.thumb) + '">' : '<span class="gph">' + ICON_GALLERY + "</span>") +
+      '<span class="gk">' + KIND_FA[it.kind] + ((it.media || []).length > 1 ? " · " + fa(it.media.length) + " فایل" : "") + "</span></div>" +
+      '<div class="gbody"><div class="ih"><b class="it">' + esc(it.title || "(بدون عنوان)") + "</b>" + stChip("gallery", eff) + "</div>" + stDots("gallery", eff) +
+      '<div class="im"><span>' + esc([dims, m0.dur ? secs(m0.dur) : "", mb(size)].filter(Boolean).join(" · ")) + '</span><span class="when">' + esc(fmtShort(it.created_at)) + "</span></div>" +
+      '<div class="grule">قانون: ' + esc(it.rule || "—") + (it.override ? " · <b>دستی تغییر کرد</b>" : "") + "</div>" +
+      (b ? '<a class="lchip" href="#/brain/' + esc(pid) + "/" + b.type + "?focus=" + esc(b.id) + '">✦ مغز متفکر (' + BTYPE_FA[b.type] + "): " + esc(b.title) + "</a>" : it.brain_id ? '<span class="lchip">✦ آیتم مغز متفکر پیدا نشد</span>' : "") +
+      recs.map(function (id) { var j = ctx.jobs[id]; return '<a class="lchip pub" href="#/publish?job=' + esc(id) + '">⇪ انتشار ' + esc(j ? fmtShort(j.publish_at) : id) + " · " + esc(stLabel("publish", ctx.sync.pub[id])) + "</a>"; }).join("") +
+      (moving ? '<div class="muted-note">فایل در حال انتقال به انبار (Release)…</div>' : "") +
+      '<div class="iact"><a class="go sm" href="#/publish?g=' + esc(it.id) + "&page=" + esc(pid) + '">انتشار / زمان‌بندی از گالری</a>' +
+      '<select class="ssel" data-act="status" aria-label="وضعیت">' + ST.gallery.slice(0, 2).map(function (s) { return '<option value="' + s[0] + '"' + (it.status === s[0] ? " selected" : "") + ">" + s[1] + "</option>"; }).join("") + "</select>" +
+      '<select class="ssel" data-act="kind" aria-label="نوع">' + KINDS.map(function (k) { return '<option value="' + k + '"' + (it.kind === k ? " selected" : "") + ">" + KIND_FA[k] + "</option>"; }).join("") + "</select>" +
+      (it.media || []).map(function (m, i) { return '<a class="flink" href="' + esc(m.url) + '" target="_blank" rel="noopener">فایل' + (it.media.length > 1 ? " " + fa(i + 1) : "") + " ↗</a>"; }).join("") +
+      "</div></div></article>";
+  }
+  function galleryWorkView(pid, kind) {
+    var cp = cpById(pid); if (!cp) { location.hash = "#/gallery"; return; }
+    if (!KIND_FA[kind]) kind = "slide";
+    var q = hashQuery();
+    app.innerHTML = shell("گالری · " + cp.name, "#/gallery", "گالری محتوا") +
+      '<div class="v8head galhead sm">' + logoHTML(cp, pageData(cp), "dlogo") + "<div><h1>" + esc(cp.name) + "</h1><p>" + esc(cp.topic_fa || "") + "</p></div></div>" +
+      '<div class="tabs" role="tablist">' + KINDS.map(function (k) { return '<a role="tab" class="tab' + (k === kind ? " on" : "") + '" href="#/gallery/' + esc(pid) + "/" + k + '" data-tab="' + k + '">' + KIND_FA[k] + ' <em id="cnt-' + k + '"></em></a>'; }).join("") + "</div>" +
+      '<div id="dgate"></div><div id="v8body"></div>';
+    bindShell();
+    var ctx = null, plan = [];
+    withData(function () {
+      var body = document.getElementById("v8body"); body.innerHTML = '<div class="muted-note pad">در حال بارگذاری…</div>';
+      var my = viewSeq;
+      mergeInbox().catch(function () { return 0; }).then(function () {
+        return Promise.all([dsRead("gallery-" + pid), dsRead("brain-" + pid).catch(function () { return null; }), dsRead("publish").catch(function () { return null; }), loadQueue().catch(function () { return []; }), loadReleaseAssets(), publishRunning()]);
+      }).then(function (r) {
+        if (!live(my)) return;
+        ctx = { items: (r[0] && r[0].items) || [], brain: (r[1] && r[1].items) || [], records: (r[2] && r[2].items) || {}, jobs: jobsMap(r[3]), assets: r[4], running: r[5] };
+        draw();
+      }).catch(function (e) { errBox("v8body", e); });
+    });
+    function draw() {
+      var body = document.getElementById("v8body"); if (!body) return;
+      ctx.brainById = {}; ctx.brain.forEach(function (b) { ctx.brainById[b.id] = b; });
+      ctx.sync = syncStatuses({ brain: ctx.brain, gallery: ctx.items, records: ctx.records, jobs: ctx.jobs }, Date.now(), ctx.running);
+      KINDS.forEach(function (k) { var e = document.getElementById("cnt-" + k); if (e) e.textContent = fa(ctx.items.filter(function (x) { return x.kind === k; }).length); });
+      var list = ctx.items.filter(function (x) { return x.kind === kind; }).sort(function (a, b) { return (tsOf(b.created_at) || 0) - (tsOf(a.created_at) || 0); });
+      var f = v8ui.gf[pid + kind] || "all", counts = { all: list.length };
+      list.forEach(function (x) { var s = ctx.sync.gal[x.id]; counts[s] = (counts[s] || 0) + 1; });
+      var shown = f === "all" ? list : list.filter(function (x) { return ctx.sync.gal[x.id] === f; });
+      var brainOpts = ctx.brain.slice().sort(function (a, b) { return ["script", "scenario", "idea"].indexOf(a.type) - ["script", "scenario", "idea"].indexOf(b.type); })
+        .map(function (b) { return '<option value="' + esc(b.id) + '"' + (q.brain === b.id ? " selected" : "") + ">" + BTYPE_FA[b.type] + ": " + esc(b.title) + "</option>"; }).join("");
+      body.innerHTML = '<section class="card form upl" id="upl">' +
+        '<h2>بارگذاری در گالری</h2>' +
+        '<div class="drop" id="drop" tabindex="0" role="button" aria-label="انتخاب یا رها کردن فایل">' + ICON_GALLERY +
+        '<span>فایل‌ها را اینجا رها کن یا بزن تا انتخاب کنی</span><small>چند فایل با هم · عکس و ویدئو · هر فایل تا ۷۰ مگابایت</small></div>' +
+        '<input id="gf" type="file" multiple accept="image/*,video/*" hidden>' +
+        '<label class="chk"><input type="checkbox" id="g-story"> برای استوری است (ویدئوی تا ۶۰ ثانیه → استوری)</label>' +
+        '<label for="g-brain">اتصال به مغز متفکر (اختیاری)</label><select id="g-brain"><option value="">— بدون اتصال —</option>' + brainOpts + "</select>" +
+        '<div id="g-plan" class="gplan"></div>' +
+        '<button class="go" id="g-up" disabled>بارگذاری در گالری</button><div class="msg" id="g-msg"></div></section>' +
+        filterSeg("gallery", f, counts) +
+        '<div class="glist" id="glist">' + (shown.length ? shown.map(function (x) { return galleryItemHTML(x, ctx); }).join("") :
+          '<div class="empty">' + (list.length ? "در این وضعیت چیزی نیست." : "هنوز " + KIND_FA[kind] + "ی در گالری نیست.") + "</div>") + "</div>" +
+        '<p class="footnote privacy">' + esc(PRIVACY_NOTE) + "</p>";
+      bindUpload();
+      body.querySelector(".sfilter").onclick = function (e) { var b = e.target.closest("button[data-f]"); if (!b) return; v8ui.gf[pid + kind] = b.getAttribute("data-f"); draw(); };
+      document.getElementById("glist").onchange = function (e) {
+        var s = e.target.closest("select[data-act]"); if (!s) return;
+        var id = s.closest(".gitem").getAttribute("data-id"), act = s.getAttribute("data-act"), val = s.value;
+        s.disabled = true;
+        dsUpdate("gallery-" + pid, function (d) {
+          d = d || { items: [] };
+          d.items.forEach(function (x) { if (x.id !== id) return; if (act === "status") x.status = val; else { x.kind = val; x.override = val !== x.kind_auto; } x.updated_at = new Date().toISOString(); });
+          return d;
+        }, "data: gallery " + pid).then(function (d) { ctx.items = d.items; toast(act === "kind" ? "به " + KIND_FA[val] + " منتقل شد ✓" : "وضعیت ذخیره شد ✓"); draw(); },
+          function (er) { s.disabled = false; toast("✗ " + ghErrorFa(er), 5000); });
+      };
+      if (q.focus) { var el = document.getElementById("g-" + q.focus); if (el) { el.classList.add("focus"); el.scrollIntoView({ block: "center" }); } }
+      if (q.brain) { var up = document.getElementById("upl"); up.classList.add("focus"); }
+    }
+    function bindUpload() {
+      var drop = document.getElementById("drop"), inp = document.getElementById("gf"), story = document.getElementById("g-story");
+      drop.onclick = function () { inp.click(); };
+      drop.onkeydown = function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); inp.click(); } };
+      drop.ondragover = function (e) { e.preventDefault(); drop.classList.add("over"); };
+      drop.ondragleave = function () { drop.classList.remove("over"); };
+      drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove("over"); take(e.dataTransfer.files); };
+      inp.onchange = function () { take(inp.files); };
+      story.onchange = function () { if (plan.metas) makePlan(plan.metas); };
+      document.getElementById("g-up").onclick = runUpload;
+    }
+    function take(fl) {
+      var files = Array.prototype.slice.call(fl || []), m = document.getElementById("g-msg");
+      var bad = files.filter(function (f) { return !/^(image|video)\//.test(f.type) || f.size > MAX_UPLOAD; });
+      files = files.filter(function (f) { return bad.indexOf(f) < 0; });
+      m.textContent = bad.length ? "✗ " + bad.map(function (f) { return f.name + (f.size > MAX_UPLOAD ? " (بیشتر از ۷۰ مگابایت)" : " (فقط عکس یا ویدئو)"); }).join("، ") + " کنار گذاشته شد." : "";
+      if (!files.length) return;
+      document.getElementById("g-plan").innerHTML = '<div class="muted-note">در حال خواندن فایل‌ها…</div>';
+      Promise.all(files.map(probeFile)).then(makePlan);
+    }
+    function makePlan(metas) {
+      var groups = classifyUpload(metas, { story: document.getElementById("g-story").checked });
+      plan = groups.map(function (g, i) {
+        var prev = plan[i] && plan[i].override ? plan[i] : null;
+        return { files: g.files, auto: g.kind, kind: prev ? prev.kind : g.kind, override: !!prev, rule: g.rule, suggest: g.suggest,
+          title: metas[g.files[0]].name.replace(/\.[^.]+$/, "") };
+      });
+      plan.metas = metas;
+      var box = document.getElementById("g-plan");
+      box.innerHTML = plan.map(function (p, i) {
+        var fs = p.files.map(function (j) { return metas[j]; });
+        return '<div class="gp" data-i="' + i + '"><div class="gpthumbs">' + fs.map(function (x) { return x.thumb ? '<img alt="" src="' + esc(x.thumb) + '">' : '<span class="gph">' + ICON_GALLERY + "</span>"; }).join("") + "</div>" +
+          '<div class="gpinfo"><div class="gpf">' + fs.map(function (x) { return esc(x.name) + " · " + mb(x.size) + (x.w ? " · \u2066" + fa(x.w) + "×" + fa(x.h) + "\u2069" : "") + (x.dur ? " · " + secs(x.dur) : ""); }).join("<br>") + "</div>" +
+          '<div class="grule">قانون خودکار: ' + esc(p.rule) + "</div>" +
+          '<div class="gprow"><select class="ssel" data-plan-kind="' + i + '" aria-label="نوع">' + KINDS.map(function (k) { return '<option value="' + k + '"' + (p.kind === k ? " selected" : "") + ">" + KIND_FA[k] + (k === p.auto ? " (پیشنهاد)" : "") + "</option>"; }).join("") + "</select>" +
+          '<input type="text" class="gptitle" data-plan-title="' + i + '" value="' + esc(p.title) + '" maxlength="120" aria-label="عنوان"></div></div></div>';
+      }).join("");
+      box.onchange = function (e) { var s = e.target.closest("[data-plan-kind]"); if (s) { var p = plan[+s.getAttribute("data-plan-kind")]; p.kind = s.value; p.override = p.kind !== p.auto; } };
+      box.oninput = function (e) { var t = e.target.closest("[data-plan-title]"); if (t) plan[+t.getAttribute("data-plan-title")].title = t.value; };
+      document.getElementById("g-up").disabled = !plan.length;
+    }
+    function runUpload() {
+      var m = document.getElementById("g-msg"), btn = document.getElementById("g-up"), brainId = document.getElementById("g-brain").value, metas = plan.metas;
+      if (!plan.length) return;
+      btn.disabled = true;
+      var done = 0, made = [];
+      plan.reduce(function (p, g, gi) {
+        return p.then(function () {
+          var gid = newId("g"), media = [];
+          return g.files.reduce(function (pp, j, k) {
+            return pp.then(function () {
+              var meta = metas[j], ext = (meta.name.match(/\.([A-Za-z0-9]{1,5})$/) || [, (meta.mime.split("/")[1] || "bin")])[1].toLowerCase();
+              var name = gid + "-" + (k + 1) + "." + ext, label = "(" + fa(gi + 1) + " از " + fa(plan.length) + ") " + meta.name;
+              m.textContent = "در حال آماده‌سازی " + label + "…";
+              return readBase64(meta.file).then(function (b64) {
+                return uploadBlob(b64, function (pc) { m.textContent = "در حال آپلود " + label + "… " + fa(pc) + "٪"; });
+              }).then(function (sha) {
+                m.textContent = "در حال ثبت " + label + "…";
+                return stageOnBranch("gallery/" + name, sha).then(function () {
+                  media.push({ name: name, url: releaseURL(name), type: meta.mime, size: meta.size, w: meta.w, h: meta.h, dur: Math.round(meta.dur * 10) / 10, blob_sha: sha });
+                });
+              });
+            });
+          }, Promise.resolve()).then(function () {
+            var now = new Date().toISOString();
+            var item = { id: gid, page: pid, kind: g.kind, kind_auto: g.auto, rule: g.rule, override: g.kind !== g.auto, title: (g.title || "").trim(), caption: "",
+              media: media, thumb: metas[g.files[0]].thumb || "", status: "uploaded", brain_id: brainId, source: { via: "panel" }, created_at: now, updated_at: now };
+            m.textContent = "در حال ذخیره‌ی اطلاعات (رمزگذاری‌شده)…";
+            return dsUpdate("gallery-" + pid, function (d) { d = d || { items: [] }; d.items.push(item); return d; }, "data: gallery " + pid).then(function (d) { ctx.items = d.items; done++; made.push(item); });
+          });
+        });
+      }, Promise.resolve()).then(function () {
+        // move the staged files into the "gallery" release now (otherwise the next scheduled run, ≤ 15 min)
+        return gh("/actions/workflows/publish.yml/dispatches", { method: "POST", body: { ref: GH_BRANCH } }).then(function () { return true; }, function () { return false; });
+      }).then(function (dispatched) {
+        plan = []; toast("✓ " + fa(done) + " آیتم به گالری اضافه شد" + (dispatched ? "" : " (انتقال فایل در اجرای بعدی)"), 4500);
+        var k = made.length === 1 ? made[0].kind : kind;
+        if (k !== kind) location.hash = "#/gallery/" + pid + "/" + k + "?focus=" + made[0].id; else draw();
+      }).catch(function (e) { btn.disabled = false; m.textContent = "✗ " + ghErrorFa(e) + (done ? " — " + fa(done) + " آیتم قبل از خطا ذخیره شد." : ""); });
+    }
+  }
+
+  // ============================================================= v8: publish (#/publish)
+  // channel readiness: YouTube from the connection store; others from config/publish_caps.json (written by publish.py:
+  // booleans only — whether the page's secrets exist). Aparat has no public upload API => always manual.
+  function capsOf(pid, pl) {
+    if (pl === "youtube") { var s = ytStatus(pid).st; return s === "ok" ? { ready: true } : { ready: false, reason: s === "unknown" ? "وضعیت اتصال یوتیوب خوانده نشد" : "یوتیوب این پیج هنوز متصل نیست" }; }
+    if (pl === "aparat") return { ready: false, reason: "آپارات API انتشار عمومی ندارد" };
+    var c = state.caps && state.caps.channels && state.caps.channels[pid + "/" + pl];
+    if (c && c.ready) return { ready: true };
+    return { ready: false, reason: (c && c.reason_fa) || (pl === "instagram" ? "کلید API اینستاگرام (Business) ثبت نشده" : "کلید API تیک‌تاک ثبت نشده") };
+  }
+  var MANUAL_LABEL = "نیاز به اتصال / انتشار دستی";
+  function chMatrixHTML(sel) {
+    var h = '<div class="chm-wrap"><table class="chm" id="chm"><thead><tr><th class="c0"><label class="chk"><input type="checkbox" data-g="all"> همه</label></th>' +
+      PLATFORMS.map(function (pl) { return '<th><label class="chk col" title="همه‌ی ' + PNAME[pl] + '"><input type="checkbox" data-g="pl:' + pl + '">' + picon(pl) + '<span class="pln">' + PNAME[pl] + "</span></label></th>"; }).join("") + "</tr></thead><tbody>";
+    state.config.pages.forEach(function (cp) {
+      h += '<tr><th class="c0"><label class="chk"><input type="checkbox" data-g="pg:' + esc(cp.id) + '"> ' + esc(cp.name) + "</label></th>";
+      PLATFORMS.forEach(function (pl) {
+        if (!(cp.accounts || {})[pl]) { h += "<td></td>"; return; }
+        var k = cp.id + "|" + pl, c = capsOf(cp.id, pl);
+        h += '<td><label class="cell' + (c.ready ? "" : " manual") + '" title="' + esc(cp.name + " · " + PNAME[pl] + (c.ready ? "" : " — " + MANUAL_LABEL + ": " + c.reason)) + '"><input type="checkbox" data-t="' + esc(k) + '"' + (sel[k] ? " checked" : "") + ">" +
+          (c.ready ? "" : '<span class="mtag">دستی</span>') + "</label></td>";
+      });
+      h += "</tr>";
+    });
+    return h + '</tbody></table></div><div class="legend"><span class="mtag">دستی</span> = ' + MANUAL_LABEL + " (این کانال هنوز برای انتشار خودکار وصل نیست)</div>";
+  }
+  function selectedTargets(sel) {
+    var out = [];
+    state.config.pages.forEach(function (cp) { PLATFORMS.forEach(function (pl) { if (sel[cp.id + "|" + pl] && (cp.accounts || {})[pl]) { var c = capsOf(cp.id, pl), t = { page: cp.id, platform: pl }; if (!c.ready) t.manual = true; out.push(t); } }); });
+    return out;
+  }
+  function syncMatrix(sel) {
+    var tb = document.getElementById("chm"); if (!tb) return;
+    Array.prototype.forEach.call(tb.querySelectorAll("input[data-t]"), function (i) { i.checked = !!sel[i.getAttribute("data-t")]; });
+    Array.prototype.forEach.call(tb.querySelectorAll("input[data-g]"), function (g) {
+      var key = g.getAttribute("data-g"), ks = groupKeys(key), n = ks.filter(function (k) { return sel[k]; }).length;
+      g.checked = ks.length > 0 && n === ks.length; g.indeterminate = n > 0 && n < ks.length;
+    });
+    var t = selectedTargets(sel), man = t.filter(function (x) { return x.manual; }), sum = document.getElementById("chm-sum");
+    if (sum) sum.innerHTML = t.length ? "<b>" + fa(t.length) + " مقصد انتخاب شد</b>" + (man.length ? '<div class="mline"><span class="schip manual">' + MANUAL_LABEL + "</span> " + man.map(function (x) { return esc(targetName(x)); }).join("، ") + "</div>" : "") : "هنوز مقصدی انتخاب نشده.";
+  }
+  function groupKeys(g) {
+    var ks = [];
+    state.config.pages.forEach(function (cp) { PLATFORMS.forEach(function (pl) {
+      if (!(cp.accounts || {})[pl]) return;
+      if (g === "all" || g === "pg:" + cp.id || g === "pl:" + pl) ks.push(cp.id + "|" + pl);
+    }); });
+    return ks;
+  }
+  function publishView(preId, prePl) {
+    var ts = tokenState();
+    var html = topbar("انتشار محتوا");
+    html += '<button class="back" id="back">→ صفحه‌ی اصلی</button>';
+    if (!ts.has) {
+      if (ts.locked) html += '<section class="card lilac-note form" id="pub-unlock"><div class="vi">' + ICON_LOCK + "</div><h2>اتصال هنوز روی این دستگاه فعال نشده</h2>" +
+        "<p>برای فعال‌سازی اتصال، رمز پنل را یک بار وارد کن. توکنی که روی دستگاه دیگر همگام شده باز می‌شود و از این به بعد روی این دستگاه می‌ماند.</p>" + unlockFormHTML("punlock") + "</section>";
+      else html += '<section class="card lilac-note" id="pub-notoken"><div class="vi">' + ICON_SEND + "</div><h2>اول توکن گیت‌هاب را اضافه کن</h2>" +
+        "<p>انتشار از داخل این پنل با یک توکن گیت‌هاب انجام می‌شود (فایل در صف انتشار گذاشته می‌شود و GitHub Action آن را منتشر می‌کند). توکن فقط در مرورگر همین گوشی می‌ماند.</p>" +
+        '<a class="go" href="#/settings">رفتن به تنظیمات</a></section>';
+      app.innerHTML = html; bindTopbar();
+      document.getElementById("back").onclick = function () { location.hash = "#/"; };
+      bindUnlockForm("punlock", function () { setTimeout(function () { publishView(preId, prePl); toast("اتصال فعال شد ✓"); }, 400); });
+      return;
+    }
+    var q = hashQuery(), sel = {}, src = q.g ? "gallery" : "upload", galPage = q.page && cpById(q.page) ? q.page : (preId && cpById(preId) ? preId : state.config.pages[0].id), galPick = q.g || "";
+    if (preId && cpById(preId)) groupKeys(prePl ? "x" : "pg:" + preId).forEach(function (k) { sel[k] = true; });
+    if (preId && prePl) sel[preId + "|" + prePl] = true;
+    if (q.g && q.page) groupKeys("pg:" + q.page).forEach(function (k) { sel[k] = true; });
+    var when = "now", galItems = null, galCtx = { brain: [] };
+    if (q.job) v8ui.pview = "queue";
+    html += '<section class="card form pubform" id="pubform">' +
+      '<div class="seg srcseg" role="group" aria-label="منبع محتوا"><button type="button" data-src="upload">آپلود فایل</button><button type="button" data-src="gallery">از گالری</button></div>' +
+      '<div id="src-upload"><label for="pf">فایل (ویدیو یا عکس)</label><input id="pf" type="file" accept="video/*,image/*"><div class="fileinfo" id="fileinfo"></div></div>' +
+      '<div id="src-gallery" hidden><label for="pg-page">پیج</label><select id="pg-page">' + state.config.pages.map(function (cp) { return '<option value="' + esc(cp.id) + '"' + (cp.id === galPage ? " selected" : "") + ">" + esc(cp.name) + "</option>"; }).join("") + "</select>" +
+      '<div id="pg-list" class="pglist"></div></div>' +
+      '<label for="pt">عنوان</label><input id="pt" type="text" maxlength="100" placeholder="عنوان (برای یوتیوب و آپارات)">' +
+      '<label for="pc">کپشن / توضیحات</label><textarea id="pc" rows="4" maxlength="2200" placeholder="متن پست…"></textarea>' +
+      "<label>مقصدها (یک، چند یا همه‌ی کانال‌ها)</label>" + '<div id="chm-box">' + chMatrixHTML(sel) + "</div>" + '<div class="chsum" id="chm-sum"></div>' +
+      '<label>زمان انتشار</label><div class="seg whenseg" role="group"><button type="button" data-when="now" class="on">همین حالا</button><button type="button" data-when="sched">زمان‌بندی</button></div>' +
+      '<div class="sched" id="schedbox" hidden><label for="pd">زمان انتشار (به وقت تهران)</label><input id="pd" type="datetime-local" min="' + nowTehranInput(5) + '" value="' + nowTehranInput(60) + '"></div>' +
+      '<div class="pub-btns"><button class="go" id="pub-go" type="button">ثبت انتشار</button></div>' +
+      '<div class="msg" id="pubmsg"></div></section>';
+    html += '<div class="jobs-h"><div class="seg viewseg" role="tablist"><button data-v="queue">صف انتشار</button><button data-v="cal">تقویم</button></div><button class="ghost sm" id="reloadjobs">به‌روزرسانی</button></div>' +
+      '<div id="pview"><div class="muted-note pad">در حال بارگذاری…</div></div>';
+    html += '<p class="footnote">فایل در گیت‌هاب ذخیره و در صف گذاشته می‌شود؛ GitHub Action حداکثر هر ۱۵ دقیقه صف را بررسی و منتشر می‌کند. کانال‌هایی که برای انتشار خودکار وصل نیستند «' + MANUAL_LABEL + "» نشان داده می‌شوند و در صف یادآوری می‌مانند تا خودت منتشر و تیک بزنی.</p>" +
+      '<p class="footnote privacy">برای اینکه GitHub Action بتواند منتشر کند، صف انتشار (لینک فایل، مقصدها، زمان، عنوان و کپشن) خوانا در مخزن عمومی است. ' + esc(PRIVACY_NOTE) + "</p>";
+    app.innerHTML = html;
+    bindTopbar();
+    document.getElementById("back").onclick = function () { location.hash = "#/"; };
+    var fileIn = document.getElementById("pf"), msg = document.getElementById("pubmsg");
+    fileIn.onchange = function () {
+      var f = fileIn.files[0], fi = document.getElementById("fileinfo");
+      if (!f) { fi.textContent = ""; return; }
+      fi.textContent = f.name + " · " + fa(Math.round(f.size / 1024 / 1024 * 10) / 10) + " مگابایت" + (f.size > MAX_UPLOAD ? " — بزرگ‌تر از حد مجاز ۷۰ مگابایت" : "");
+      fi.className = "fileinfo" + (f.size > MAX_UPLOAD ? " bad" : "");
+    };
+    function setSrc(s) {
+      src = s;
+      Array.prototype.forEach.call(document.querySelectorAll(".srcseg button"), function (b) { var on = b.getAttribute("data-src") === s; b.className = on ? "on" : ""; b.setAttribute("aria-pressed", on); });
+      document.getElementById("src-upload").hidden = s !== "upload"; document.getElementById("src-gallery").hidden = s !== "gallery";
+      if (s === "gallery") loadGal();
+    }
+    document.querySelector(".srcseg").onclick = function (e) { var b = e.target.closest("button[data-src]"); if (b) setSrc(b.getAttribute("data-src")); };
+    function loadGal() {
+      var box = document.getElementById("pg-list"); box.innerHTML = '<div class="muted-note">در حال بارگذاری گالری…</div>';
+      ensureData().then(function () {
+        return Promise.all([dsRead("gallery-" + galPage), dsRead("brain-" + galPage).catch(function () { return null; })]);
+      }).then(function (r) {
+        galItems = ((r[0] && r[0].items) || []).slice().sort(function (a, b) { return (tsOf(b.created_at) || 0) - (tsOf(a.created_at) || 0); });
+        galCtx.brain = (r[1] && r[1].items) || [];
+        if (!document.getElementById("pg-list")) return;
+        box.innerHTML = galItems.length ? galItems.map(function (it) {
+          return '<label class="pgi' + (it.id === galPick ? " on" : "") + '" data-id="' + esc(it.id) + '"><input type="radio" name="pgpick" value="' + esc(it.id) + '"' + (it.id === galPick ? " checked" : "") + ">" +
+            (it.thumb ? '<img alt="" src="' + esc(it.thumb) + '">' : '<span class="gph">' + ICON_GALLERY + "</span>") +
+            '<span class="pgt"><b>' + esc(it.title || it.id) + "</b><span>" + KIND_FA[it.kind] + ((it.media || []).length > 1 ? " · " + fa(it.media.length) + " فایل" : "") + " · " + esc(fmtShort(it.created_at)) + "</span></span></label>";
+        }).join("") : '<div class="empty">گالری این پیج خالی است. <a href="#/gallery/' + esc(galPage) + '">رفتن به گالری</a></div>';
+        if (galPick) pick(galPick, true);
+      }, function (e) {
+        if (!document.getElementById("pg-list")) return;
+        box.innerHTML = '<div class="muted-note">برای انتخاب از گالری، محتوای رمزگذاری‌شده باید باز باشد. <a href="#/gallery/' + esc(galPage) + '">باز کردن گالری</a>' + (e && e.need === "net" ? " (" + esc(e.message) + ")" : "") + "</div>";
+      });
+    }
+    function pick(id, initial) {
+      galPick = id;
+      Array.prototype.forEach.call(document.querySelectorAll(".pgi"), function (l) { l.classList.toggle("on", l.getAttribute("data-id") === id); });
+      var it = (galItems || []).filter(function (x) { return x.id === id; })[0]; if (!it) return;
+      var t = document.getElementById("pt"), c = document.getElementById("pc");
+      if (!t.value || !initial) t.value = it.title || "";
+      if (it.caption && (!c.value || !initial)) c.value = it.caption;
+      if ((it.media || []).length > 1) msg.textContent = "این اسلاید " + fa(it.media.length) + " فایل دارد؛ انتشار خودکار فعلاً فقط فایل اول را می‌فرستد و بقیه را باید دستی اضافه کنی.";
+    }
+    document.getElementById("pg-page").onchange = function () { galPage = this.value; galPick = ""; loadGal(); };
+    document.getElementById("pg-list").onchange = function (e) { var r = e.target.closest("input[name=pgpick]"); if (r) pick(r.value); };
+    var chm = document.getElementById("chm-box");
+    chm.onchange = function (e) {
+      var i = e.target; if (!i || i.type !== "checkbox") return;
+      if (i.hasAttribute("data-t")) { if (i.checked) sel[i.getAttribute("data-t")] = true; else delete sel[i.getAttribute("data-t")]; }
+      else if (i.hasAttribute("data-g")) groupKeys(i.getAttribute("data-g")).forEach(function (k) { if (i.checked) sel[k] = true; else delete sel[k]; });
+      syncMatrix(sel);
+    };
+    function redrawMatrix() { if (!document.getElementById("chm-box")) return; chm.innerHTML = chMatrixHTML(sel); syncMatrix(sel); }
+    syncMatrix(sel);
+    document.querySelector(".whenseg").onclick = function (e) {
+      var b = e.target.closest("button[data-when]"); if (!b) return; when = b.getAttribute("data-when");
+      Array.prototype.forEach.call(document.querySelectorAll(".whenseg button"), function (x) { x.className = x === b ? "on" : ""; });
+      document.getElementById("schedbox").hidden = when !== "sched";
+    };
+    document.getElementById("pub-go").onclick = function () {
+      var targets = selectedTargets(sel), title = document.getElementById("pt").value.trim(), caption = document.getElementById("pc").value.trim(), at = null;
+      if (when === "sched") {
+        var v = document.getElementById("pd").value;
+        if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) { msg.textContent = "تاریخ و ساعت را کامل انتخاب کن."; return; }
+        at = v + ":00+03:30"; // Iran has no daylight saving: always UTC+03:30
+        if (tsOf(at) < Date.now() + 60000) { msg.textContent = "زمان انتخاب‌شده گذشته است."; return; }
+      }
+      if (!targets.length) { msg.textContent = "حداقل یک مقصد انتخاب کن."; return; }
+      var f = fileIn.files[0], it = null;
+      if (src === "upload") {
+        if (!f) { msg.textContent = "اول یک فایل انتخاب کن."; return; }
+        if (!/^(video|image)\//.test(f.type)) { msg.textContent = "فقط ویدیو یا عکس پذیرفته می‌شود."; return; }
+        if (f.size > MAX_UPLOAD) { msg.textContent = "حجم فایل بیشتر از ۷۰ مگابایت است."; return; }
+      } else {
+        it = (galItems || []).filter(function (x) { return x.id === galPick; })[0];
+        if (!it) { msg.textContent = "یک آیتم از گالری انتخاب کن."; return; }
+      }
+      var man = targets.filter(function (t) { return t.manual; });
+      var whenTxt = at ? "در " + fmtDateTime(at) : "همین حالا";
+      if (!window.confirm("این محتوا " + whenTxt + " در " + fa(targets.length) + " مقصد ثبت شود؟\n\n" + targets.map(function (t) { return targetName(t) + (t.manual ? " — " + MANUAL_LABEL : ""); }).join("\n"))) return;
+      setPubBusy(true);
+      var job = src === "upload" ? submitJob(f, title, caption, targets, at, function (t) { msg.textContent = t; }) : submitGalleryJob(it, title, caption, targets, at);
+      job.then(function (j) {
+        msg.textContent = "✓ ثبت شد (" + j.id + ")" + (man.length ? " — " + fa(man.length) + " مقصد " + MANUAL_LABEL + " در صف یادآوری می‌ماند." : ".");
+        // link record (encrypted): queue job -> gallery item -> brain item, so statuses flow back
+        var rec = { id: j.id, src: src, gallery_id: it ? it.id : "", page: it ? it.page : "", brain_id: it ? it.brain_id || "" : "", created_at: new Date().toISOString() };
+        var save = ensureData().then(function () { return dsUpdate("publish", function (d) { d = d || { items: {} }; d.items[j.id] = rec; return d; }, "data: publish links"); })
+          .catch(function () { if (src === "gallery") msg.textContent += " (پیوند به گالری ذخیره نشد؛ وضعیت گالری خودکار به‌روز نمی‌شود)"; });
+        return save.then(function () {
+          fileIn.value = ""; document.getElementById("fileinfo").textContent = "";
+          setPubBusy(false); RUNNING.at = 0; loadPView();
+        });
+      }).catch(function (e) { msg.textContent = "✗ " + ghErrorFa(e); setPubBusy(false); });
+    };
+    document.querySelector(".viewseg").onclick = function (e) { var b = e.target.closest("button[data-v]"); if (!b) return; v8ui.pview = b.getAttribute("data-v"); loadPView(true); };
+    document.getElementById("reloadjobs").onclick = function () { RUNNING.at = 0; loadPView(); };
+    setSrc(src);
+    var pctx = { jobs: [], records: {}, gallery: {} }, myView = viewSeq;
+    function loadPView(cached) {
+      Array.prototype.forEach.call(document.querySelectorAll(".viewseg button"), function (b) { b.className = b.getAttribute("data-v") === v8ui.pview ? "on" : ""; });
+      if (cached && pctx.loaded) return drawPView(pctx);
+      var recs = DS.dk || lsGet(DK_LS, null) ? ensureData().then(function () { return dsRead("publish"); }).catch(function () { return null; }) : Promise.resolve(null);
+      Promise.all([loadQueue(), recs, publishRunning()]).then(function (r) {
+        if (!live(myView)) return;
+        pctx = { jobs: r[0], records: (r[1] && r[1].items) || {}, running: r[2], loaded: true };
+        drawPView(pctx);
+      }).catch(function (e) { var b = document.getElementById("pview"); if (b) b.innerHTML = '<div class="muted-note">' + esc("خواندن صف ممکن نشد: " + ghErrorFa(e)) + "</div>"; });
+    }
+    function drawPView(c) {
+      var box = document.getElementById("pview"); if (!box) return;
+      var now = Date.now(), st = {};
+      c.jobs.forEach(function (j) { st[j.id] = pubStatusOf(j, now, c.running); });
+      if (v8ui.pview === "cal") { box.innerHTML = calendarHTML(c.jobs, st); bindCalendar(box, c, st); return; }
+      var f = v8ui.pf, counts = { all: c.jobs.length };
+      c.jobs.forEach(function (j) { counts[st[j.id]] = (counts[st[j.id]] || 0) + 1; });
+      var shown = f === "all" ? c.jobs : c.jobs.filter(function (j) { return st[j.id] === f; });
+      box.innerHTML = filterSeg("publish", f, counts) + '<div class="jobs" id="jobs">' + (shown.length ? shown.map(function (j) { return jobHTML(j, st[j.id], c.records[j.id]); }).join("") :
+        '<div class="muted-note">' + (c.jobs.length ? "در این وضعیت چیزی نیست." : "هنوز چیزی در صف نیست.") + "</div>") + "</div>";
+      box.querySelector(".sfilter").onclick = function (e) { var b = e.target.closest("button[data-f]"); if (!b) return; v8ui.pf = b.getAttribute("data-f"); drawPView(c); };
+      bindJobs(box, c);
+      var fj = hashQuery().job; if (fj) { var el = document.getElementById("job-" + fj); if (el) { el.classList.add("focus"); el.scrollIntoView({ block: "center" }); } }
+    }
+    function bindJobs(box, c) {
+      box.onclick = function (e) {
+        var b = e.target.closest("button[data-jact]"); if (!b) return;
+        var name = b.getAttribute("data-name"), act = b.getAttribute("data-jact"), key = b.getAttribute("data-key");
+        if (act === "cancel" && !window.confirm("این انتشار لغو شود؟")) return;
+        if (act === "manual" && !window.confirm("این مقصد را دستی منتشر کردی؟")) return;
+        b.disabled = true;
+        updateQueueFile(name, function (job) {
+          if (act === "cancel") { job.status = "cancelled"; job.cancelled_at = new Date().toISOString(); }
+          else {
+            job.results = job.results || {};
+            job.results[key] = { status: "published", manual: true, reason: "دستی منتشر شد", at: new Date().toISOString() };
+            var all = (job.targets || []).map(function (t) { return (job.results[t.page + "/" + t.platform] || {}).status; });
+            var fin = ["published", "failed", "needs_setup", "skipped", "manual", "cancelled"];
+            if (all.every(function (s) { return fin.indexOf(s) >= 0 && s !== "manual"; })) { job.status = all.every(function (s) { return s === "published"; }) ? "published" : "partial"; job.finished_at = new Date().toISOString(); }
+          }
+          return job;
+        }).then(function () { toast(act === "cancel" ? "انتشار لغو شد" : "ثبت شد: دستی منتشر شد ✓"); loadPView(); }, function (er) { b.disabled = false; toast("✗ " + ghErrorFa(er), 5000); });
+      };
+    }
+    function bindCalendar(box, c, st) {
+      box.onclick = function (e) {
+        var b = e.target.closest("button[data-cal]"); if (!b) return;
+        var a = b.getAttribute("data-cal"), cal = v8ui.cal, step = cal.mode === "week" ? 7 : 30;
+        if (a === "month" || a === "week") cal.mode = a;
+        else if (a === "prev") cal.anchor = (cal.anchor || tehNoon(now0())) - step * DAY;
+        else if (a === "next") cal.anchor = (cal.anchor || tehNoon(now0())) + step * DAY;
+        else if (a === "today") { cal.anchor = null; cal.day = null; }
+        else if (a === "day") cal.day = b.getAttribute("data-day");
+        drawPView(c);
+      };
+    }
+    loadYt().then(function () { redrawMatrix(); }, function () {});
+    fetchRepoJSON("config/publish_caps.json").then(function (c) { state.caps = c; redrawMatrix(); }, function () {});
+    loadPView();
+  }
+  function now0() { return Date.now(); }
+  function submitGalleryJob(it, title, caption, targets, when) {
+    var o = tehranParts(new Date());
+    var id = o.year + o.month + o.day + "-" + o.hour + o.minute + o.second + "-" + Math.random().toString(36).slice(2, 6);
+    var nowIso = o.year + "-" + o.month + "-" + o.day + "T" + o.hour + ":" + o.minute + ":" + o.second + "+03:30";
+    var m0 = it.media[0];
+    var job = { id: id, created_at: nowIso, publish_at: when || nowIso, targets: targets, title: title || it.title || m0.name, caption: caption,
+      media: { path: "gallery/" + m0.name, blob_sha: m0.blob_sha || null, name: m0.name, type: m0.type, size: m0.size, source: "gallery" },
+      asset_url: m0.url, assets: it.media.map(function (m) { return m.url; }), status: "pending", results: {} };
+    return gh("/contents/queue/" + id + ".json", { method: "PUT", body: { message: "queue: " + id + (when ? " (scheduled)" : ""), content: b64utf8(JSON.stringify(job, null, 1) + "\n"), branch: GH_BRANCH } }).then(function () { return job; });
+  }
+  function updateQueueFile(name, mutate) {
+    var tries = 0;
+    function attempt() {
+      return gh("/contents/queue/" + name + "?ref=" + GH_BRANCH + "&t=" + Date.now()).then(function (f) {
+        var job = mutate(JSON.parse(utf8b64dec(f.content)));
+        return gh("/contents/queue/" + name, { method: "PUT", body: { message: "queue: update " + job.id, content: b64utf8(JSON.stringify(job, null, 1) + "\n"), sha: f.sha, branch: GH_BRANCH } });
+      }).catch(function (e) { if ((e.status === 409 || e.status === 422) && tries++ < 4) return sleep(800 * tries).then(attempt); throw e; });
+    }
+    return attempt();
+  }
+  function jobHTML(j, st, rec) {
+    var res = j.results || {};
+    var extra = j.status === "cancelled" ? "لغو شد" : j.status === "partial" ? "بخشی" : "";
+    return '<div class="job" id="job-' + esc(j.id) + '" data-id="' + esc(j.id) + '" data-status="' + st + '"><div class="jh">' + stChip("publish", st, extra) + '<b class="jt">' + esc(j.title || "(بدون عنوان)") + "</b></div>" + stDots("publish", st) +
+      '<div class="jm">' + esc("زمان انتشار: " + fmtDateTime(j.publish_at)) + (j.media && j.media.source === "gallery" ? " · از گالری" : "") + "</div>" +
+      (rec && rec.gallery_id ? '<a class="lchip" href="#/gallery/' + esc(rec.page) + "?focus=" + esc(rec.gallery_id) + '">▣ آیتم گالری</a>' : "") +
+      '<ul class="jtargets">' + (j.targets || []).map(function (t) {
+        var key = t.page + "/" + t.platform, r = res[key] || {}, ts = targetState(j, t);
+        var chip = ts === "published" ? '<span class="schip s-publish-published">' + (r.manual ? "دستی منتشر شد" : "منتشر شد") + "</span>" :
+          ts === "manual" ? '<span class="schip manual">' + MANUAL_LABEL + "</span>" :
+          ts === "error" ? (r.status === "needs_setup" ? '<span class="schip manual">' + MANUAL_LABEL + "</span>" : '<span class="schip s-publish-error">' + (r.status === "skipped" ? "رد شد" : "خطا") + "</span>") :
+          j.status === "cancelled" ? '<span class="schip s-publish-error">لغو شد</span>' : stChip("publish", st === "published" || st === "error" ? "queued" : st);
+        var canManual = (ts === "manual" || r.status === "needs_setup") && j.status !== "cancelled";
+        return "<li>" + picon(t.platform) + '<span class="tn">' + esc(targetName(t)) + "</span>" + chip +
+          (r.reason && !r.manual ? '<div class="tr">' + esc(r.reason) + "</div>" : "") + (r.url ? '<a class="tr" href="' + esc(r.url) + '" target="_blank" rel="noopener">مشاهده ↗</a>' : "") +
+          (canManual ? '<div class="tr">' + (j.asset_url ? '<a href="' + esc(j.asset_url) + '" target="_blank" rel="noopener">دانلود فایل ↓</a> · ' : "") + '<button class="linkbtn" data-jact="manual" data-key="' + esc(key) + '" data-name="' + esc(j._name) + '">دستی منتشر کردم ✓</button></div>' : "") + "</li>";
+      }).join("") + "</ul>" +
+      (j.status === "pending" ? '<button class="ghost danger sm" data-jact="cancel" data-name="' + esc(j._name) + '">لغو این انتشار</button>' : "") + "</div>";
+  }
+  // ---- calendar (Persian months, weeks start on Saturday, Tehran time)
+  var JFMT = null, JMON = null, JDAY = null;
+  function jparts(t) {
+    JFMT = JFMT || new Intl.DateTimeFormat("en-US-u-ca-persian", { timeZone: TZ, year: "numeric", month: "numeric", day: "numeric", weekday: "short" });
+    var o = {}; JFMT.formatToParts(new Date(t)).forEach(function (p) { o[p.type] = p.value; });
+    return { y: parseInt(o.year, 10), m: parseInt(o.month, 10), d: parseInt(o.day, 10), wd: ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"].indexOf(o.weekday) };
+  }
+  function dayKey(t) { var o = tehranParts(new Date(t)); return o.year + "-" + o.month + "-" + o.day; }
+  function tehNoon(t) { return Date.parse(dayKey(t) + "T12:00:00+03:30"); }
+  function calendarHTML(jobs, st) {
+    var cal = v8ui.cal, anchor = cal.anchor || tehNoon(Date.now()), today = dayKey(Date.now());
+    JMON = JMON || new Intl.DateTimeFormat("fa-IR-u-ca-persian", { timeZone: TZ, month: "long", year: "numeric" });
+    JDAY = JDAY || new Intl.DateTimeFormat("fa-IR-u-ca-persian", { timeZone: TZ, day: "numeric" });
+    var byDay = {};
+    jobs.forEach(function (j) { var t = tsOf(j.publish_at); if (t == null) return; (byDay[dayKey(t)] = byDay[dayKey(t)] || []).push(j); });
+    Object.keys(byDay).forEach(function (k) { byDay[k].sort(function (a, b) { return tsOf(a.publish_at) - tsOf(b.publish_at); }); });
+    var WD = ["ش", "ی", "د", "س", "چ", "پ", "ج"];
+    var days = [], lead = 0, title;
+    if (cal.mode === "week") {
+      var start = anchor - jparts(anchor).wd * DAY;
+      for (var i = 0; i < 7; i++) days.push(start + i * DAY);
+      title = fmtFmt(days[0], { month: "long", day: "numeric" }) + " تا " + fmtFmt(days[6], { month: "long", day: "numeric" });
+    } else {
+      var p = jparts(anchor), first = anchor - (p.d - 1) * DAY;
+      for (var t = first; jparts(t).m === p.m; t += DAY) days.push(t);
+      lead = jparts(first).wd; title = JMON.format(new Date(anchor));
+    }
+    var h = '<div class="cal" id="cal" data-mode="' + cal.mode + '"><div class="calbar"><div class="seg small"><button data-cal="month" class="' + (cal.mode === "month" ? "on" : "") + '">ماه</button><button data-cal="week" class="' + (cal.mode === "week" ? "on" : "") + '">هفته</button></div>' +
+      '<button class="ghost sm" data-cal="prev" aria-label="قبلی">→</button><b class="caltitle">' + esc(title) + '</b><button class="ghost sm" data-cal="next" aria-label="بعدی">←</button><button class="ghost sm" data-cal="today">امروز</button></div>';
+    if (cal.mode === "month") {
+      h += '<div class="calgrid">' + WD.map(function (w) { return '<span class="wd">' + w + "</span>"; }).join("");
+      for (var l = 0; l < lead; l++) h += '<span class="cd blank"></span>';
+      days.forEach(function (d) {
+        var k = dayKey(d), js = byDay[k] || [];
+        h += '<button class="cd' + (k === today ? " today" : "") + (k === cal.day ? " sel" : "") + (js.length ? " has" : "") + '" data-cal="day" data-day="' + k + '"><span class="dn">' + JDAY.format(new Date(d)) + '</span><span class="cdots">' +
+          js.slice(0, 4).map(function (j) { return '<i class="s-publish-' + st[j.id] + '"></i>'; }).join("") + (js.length > 4 ? "<em>+" + fa(js.length - 4) + "</em>" : "") + "</span></button>";
+      });
+      h += "</div>";
+      var dsel = cal.day && byDay[cal.day] ? cal.day : null;
+      h += '<div class="calday">' + (dsel ? "<h4>" + esc(fmtFmt(Date.parse(dsel + "T12:00:00+03:30"), { weekday: "long", month: "long", day: "numeric" })) + "</h4>" + byDay[dsel].map(function (j) { return calRow(j, st[j.id]); }).join("") :
+        '<div class="muted-note">روی یک روز بزن تا انتشارهایش را ببینی.</div>') + "</div>";
+    } else {
+      h += '<div class="calweek">' + days.map(function (d) {
+        var k = dayKey(d), js = byDay[k] || [];
+        return '<div class="wrow' + (k === today ? " today" : "") + '"><div class="wh">' + esc(fmtFmt(d, { weekday: "long", day: "numeric", month: "short" })) + "</div>" +
+          (js.length ? js.map(function (j) { return calRow(j, st[j.id]); }).join("") : '<div class="muted-note">—</div>') + "</div>";
+      }).join("") + "</div>";
+    }
+    return h + "</div>";
+  }
+  function calRow(j, s) {
+    return '<a class="crow" href="#/publish?job=' + esc(j.id) + '" data-id="' + esc(j.id) + '"><span class="ct">' + esc(fmtTime(j.publish_at)) + '</span><span class="cti">' + esc(j.title || "(بدون عنوان)") + "</span>" + stChip("publish", s) + "</a>";
   }
 
   // ------------------------------------------------------------- login
@@ -1752,14 +2750,17 @@
 
   // ------------------------------------------------------------- router
   function render() {
+    viewSeq++;
     if (!authed()) { if (!document.getElementById("lf")) loginView(); return; }
     if (state.error && !state.config) { app.innerHTML = '<div class="loading">بارگذاری داده‌ها ناموفق بود. اتصال را بررسی کنید.</div>'; return; }
     if (!state.config) return;
     var h = location.hash || "#/";
-    var a = h.match(/^#\/a\/([\w-]+)\/(\w+)/), pb = h.match(/^#\/publish(?:\/([\w-]+))?(?:\/(\w+))?/);
+    var br, gl, a = h.match(/^#\/a\/([\w-]+)\/(\w+)/), pb = h.match(/^#\/publish(?:\/([\w-]+))?(?:\/(\w+))?/);
     if (a) analyticsView(a[1], a[2]);
     else if (pb) publishView(pb[1], pb[2]);
     else if (/^#\/settings/.test(h)) settingsView();
+    else if ((br = h.match(/^#\/brain(?:\/([\w-]+))?(?:\/(\w+))?/))) { if (br[1]) brainWorkView(br[1], br[2]); else brainHomeView(); }
+    else if ((gl = h.match(/^#\/gallery(?:\/([\w-]+))?(?:\/(\w+))?/))) { if (gl[1]) galleryWorkView(gl[1], gl[2]); else galleryHomeView(); }
     else if (/^#\/tools/.test(h)) toolsView();
     else if (/^#\/(channels|p\/)/.test(h)) channelsView();
     else homeView();

@@ -45,7 +45,9 @@ try:
 except ValueError:
     SECRETS = {}
 
-FINAL = {"published", "failed", "needs_setup", "skipped", "cancelled"}
+FINAL = {"published", "failed", "needs_setup", "skipped", "cancelled", "manual"}
+GALLERY_TAG = "gallery"  # «گالری محتوا»: files staged under gallery/ on the media branch move here
+GALLERY_PREFIX = "gallery/"
 
 
 def log(*a):
@@ -84,13 +86,15 @@ def gh(method, path, **kw):
     return r
 
 
-def ensure_release():
-    r = gh("GET", f"/releases/tags/{RELEASE_TAG}")
+def ensure_release(tag=RELEASE_TAG):
+    r = gh("GET", f"/releases/tags/{tag}")
     if r.status_code == 200:
         return r.json()
+    body = ("Files uploaded from the panel for scheduled publishing. Safe to delete old assets." if tag == RELEASE_TAG else
+            "Media of the panel's gallery (metadata is encrypted in vault/). Files are public to anyone with the link.")
     r = gh("POST", "/releases", json={
-        "tag_name": RELEASE_TAG, "name": "Media queue (panel uploads)", "prerelease": True,
-        "body": "Files uploaded from the panel for scheduled publishing. Safe to delete old assets."})
+        "tag_name": tag, "name": "Media queue (panel uploads)" if tag == RELEASE_TAG else "Gallery (panel content store)", "prerelease": True,
+        "body": body})
     r.raise_for_status()
     return r.json()
 
@@ -142,8 +146,55 @@ def migrate_to_release(job):
             pass
 
 
-def rebuild_media_branch(keep_paths):
-    """Keep only files that still need moving; delete the branch when nothing is left."""
+def migrate_gallery():
+    """Move every file staged under gallery/ on the media branch into the "gallery" release (same asset name).
+    Returns the set of paths that are now in the release (safe to drop from the branch)."""
+    moved = set()
+    r = gh("GET", f"/git/ref/heads/{MEDIA_BRANCH}")
+    if r.status_code != 200:
+        return moved
+    head = r.json()["object"]["sha"]
+    commit = gh("GET", f"/git/commits/{head}").json()
+    tree = gh("GET", f"/git/trees/{commit['tree']['sha']}?recursive=1").json()
+    files = [t for t in tree.get("tree", []) if t["type"] == "blob" and t["path"].startswith(GALLERY_PREFIX)]
+    if not files:
+        return moved
+    rel = ensure_release(GALLERY_TAG)
+    have = {a["name"] for a in rel.get("assets", [])}
+    for t in files:
+        name = t["path"][len(GALLERY_PREFIX):]
+        if name in have:
+            moved.add(t["path"])
+            continue
+        ext = os.path.splitext(name)[1].lower()
+        ctype = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif", ".heic": "image/heic",
+                 ".mp4": "video/mp4", ".mov": "video/quicktime", ".webm": "video/webm", ".m4v": "video/mp4"}.get(ext, "application/octet-stream")
+        fd, path = tempfile.mkstemp(suffix=ext)
+        os.close(fd)
+        try:
+            download_staged({"media": {"blob_sha": t["sha"]}}, path)
+            with open(path, "rb") as f:
+                u = requests.post(f"https://uploads.github.com/repos/{REPO}/releases/{rel['id']}/assets", params={"name": name},
+                                  headers={"Authorization": f"Bearer {GH_TOKEN}", "Content-Type": ctype, "Content-Length": str(os.path.getsize(path)),
+                                           "Accept": "application/vnd.github+json"}, data=f, timeout=900)
+            if u.status_code in (200, 201):
+                moved.add(t["path"])
+                log(f"gallery: {name} -> release {GALLERY_TAG}")
+            else:
+                log(f"gallery: {name} upload HTTP {u.status_code}: {u.text[:200]}")
+        except Exception as e:
+            log(f"gallery: {name} move failed: {e}")
+        finally:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+    return moved
+
+
+def rebuild_media_branch(keep_paths, gallery_moved=frozenset()):
+    """Keep files that still need moving (queue files of pending jobs, gallery files not in the release yet);
+    delete the branch when nothing is left."""
     r = gh("GET", f"/git/ref/heads/{MEDIA_BRANCH}")
     if r.status_code == 404:
         return
@@ -152,8 +203,13 @@ def rebuild_media_branch(keep_paths):
     commit = gh("GET", f"/git/commits/{head}").json()
     tree = gh("GET", f"/git/trees/{commit['tree']['sha']}?recursive=1").json()
     files = [t for t in tree.get("tree", []) if t["type"] == "blob"]
-    remain = [t for t in files if t["path"] in keep_paths]
+    remain = [t for t in files if t["path"] in keep_paths or (t["path"].startswith(GALLERY_PREFIX) and t["path"] not in gallery_moved)]
     if len(remain) == len(files):
+        return
+    # the panel may have staged a new file while this run worked: never drop what we did not look at
+    again = gh("GET", f"/git/ref/heads/{MEDIA_BRANCH}")
+    if again.status_code == 200 and again.json()["object"]["sha"] != head:
+        log("media branch moved during this run; cleanup left for the next run")
         return
     if not remain:
         d = gh("DELETE", f"/git/refs/heads/{MEDIA_BRANCH}")
@@ -176,11 +232,17 @@ def local_file(job):
     fd, path = tempfile.mkstemp(suffix=ext)
     os.close(fd)
     if job.get("asset_url"):
-        with requests.get(job["asset_url"], stream=True, timeout=600) as r:
-            r.raise_for_status()
-            with open(path, "wb") as f:
-                for chunk in r.iter_content(1 << 20):
-                    f.write(chunk)
+        try:
+            with requests.get(job["asset_url"], stream=True, timeout=600) as r:
+                r.raise_for_status()
+                with open(path, "wb") as f:
+                    for chunk in r.iter_content(1 << 20):
+                        f.write(chunk)
+        except Exception:
+            # a gallery file that is not in its release yet: read the staged blob instead
+            if not (job.get("media") or {}).get("blob_sha"):
+                raise
+            download_staged(job, path)
     else:
         download_staged(job, path)
     _FILES[job["id"]] = path
@@ -373,6 +435,53 @@ PUBLISHERS = {"youtube": publish_youtube, "instagram": publish_instagram,
               "aparat": publish_aparat, "tiktok": publish_tiktok}
 
 
+# --------------------------------------------------------------------------- capabilities (for the panel)
+def caps():
+    """Which channels can publish automatically. Booleans + Persian reasons only, never a secret value."""
+    with open(os.path.join(ROOT, "config.json"), encoding="utf-8") as f:
+        cfg = json.load(f)
+    store = {}
+    try:
+        with open(os.path.join(ROOT, "config", "yt_tokens.enc.json"), encoding="utf-8") as f:
+            store = (json.load(f) or {}).get("channels") or {}
+    except (OSError, ValueError):
+        store = {}
+    yt_app = bool(secret("YT_CLIENT_ID") and secret("YT_CLIENT_SECRET") and secret("TOKEN_KEY"))
+    out = {}
+    for p in cfg["pages"]:
+        pid, sfx = p["id"], suffix(p["id"])
+        acc = p.get("accounts") or {}
+        if acc.get("youtube"):
+            conn = any(e.get("page") == pid and not e.get("mismatch") for e in store.values())
+            out[f"{pid}/youtube"] = {"ready": yt_app and conn, "reason_fa": None if yt_app and conn else
+                                     ("یوتیوب این پیج هنوز متصل نیست" if yt_app else "Secretهای OAuth یوتیوب کامل نیست")}
+        if acc.get("instagram"):
+            ok = bool(secret(f"IG_ACCESS_TOKEN_{sfx}") and secret(f"IG_USER_ID_{sfx}"))
+            out[f"{pid}/instagram"] = {"ready": ok, "reason_fa": None if ok else "کلید API اینستاگرام (Business) ثبت نشده"}
+        if acc.get("tiktok"):
+            ok = bool(secret(f"TIKTOK_ACCESS_TOKEN_{sfx}"))
+            out[f"{pid}/tiktok"] = {"ready": ok, "reason_fa": None if ok else "کلید API تیک‌تاک ثبت نشده"}
+        if acc.get("aparat"):
+            out[f"{pid}/aparat"] = {"ready": False, "reason_fa": "آپارات API انتشار عمومی ندارد"}
+    return out
+
+
+def write_caps():
+    path = os.path.join(ROOT, "config", "publish_caps.json")
+    ch = caps()
+    try:
+        with open(path, encoding="utf-8") as f:
+            if (json.load(f) or {}).get("channels") == ch:
+                return  # unchanged: no commit
+    except (OSError, ValueError):
+        pass
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"v": 1, "updated_at": iso_tehran(), "note": "written by scripts/publish.py: whether each channel can publish automatically (no secret values)",
+                   "channels": ch}, f, ensure_ascii=False, indent=1)
+        f.write("\n")
+
+
 # --------------------------------------------------------------------------- main
 def parse_time(v):
     try:
@@ -390,7 +499,9 @@ def aggregate(job):
         return "published"
     if any(s == "published" for s in sts):
         return "partial"
-    if all(s in ("needs_setup", "skipped") for s in sts):
+    if all(s == "manual" for s in sts):
+        return "manual"
+    if all(s in ("needs_setup", "skipped", "manual") for s in sts):
         return "needs_setup"
     return "failed"
 
@@ -399,6 +510,12 @@ def main():
     if not GH_TOKEN:
         log("GITHUB_TOKEN missing; cannot move media or read blobs")
     os.makedirs(QUEUE, exist_ok=True)
+    gallery_moved = set()
+    if GH_TOKEN:
+        try:
+            gallery_moved = migrate_gallery()
+        except Exception as e:
+            log(f"gallery move failed: {e}")
     changed = 0
     keep_paths = set()
     for path in sorted(glob.glob(os.path.join(QUEUE, "*.json"))):
@@ -430,6 +547,11 @@ def main():
                 if (job["results"].get(key) or {}).get("status") in FINAL:
                     continue
                 fn = PUBLISHERS.get(t["platform"])
+                if t.get("manual"):
+                    # chosen in the panel while the channel had no automatic connection: a reminder, not an attempt
+                    job["results"][key] = {"status": "manual", "reason": "نیاز به اتصال / انتشار دستی", "at": iso_tehran()}
+                    log(f"{job['id']}: {key} -> manual")
+                    continue
                 try:
                     if not fn:
                         raise NeedsSetup("این شبکه پشتیبانی نمی‌شود")
@@ -459,9 +581,13 @@ def main():
             pass
     if GH_TOKEN:
         try:
-            rebuild_media_branch(keep_paths)
+            rebuild_media_branch(keep_paths, gallery_moved)
         except Exception as e:
             log(f"media branch cleanup failed: {e}")
+    try:
+        write_caps()
+    except Exception as e:
+        log(f"publish_caps.json not written: {e}")
     log(f"done: {changed} job file(s) updated")
 
 

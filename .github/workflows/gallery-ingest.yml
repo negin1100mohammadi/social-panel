@@ -1,0 +1,54 @@
+name: Gallery ingest (inbox)
+run-name: "gallery-ingest ${{ inputs.domain }} ${{ inputs.req }}"
+
+# Inbox for content made in external tools (Hark or a future pipeline):
+#   POST /repos/negin1100mohammadi/social-panel/actions/workflows/gallery-ingest.yml/dispatches
+#   {"ref":"main","inputs":{"url":"https://…/file.mp4","domain":"titan-station","kind":"auto","title":"…"}}
+# The file is downloaded, classified (ffprobe/Pillow, same rules as the panel), uploaded to the "gallery"
+# release and announced as inbox/<id>.enc.json — encrypted to the panel's public key, merged by the panel.
+on:
+  workflow_dispatch:
+    inputs:
+      url:      { description: "direct link to the image/video (≤ 70 MB)", required: true, type: string }
+      domain:   { description: "page id (hamrah-seller, titan-station, fancatstic-four, shode-dige, pretime-tv)", required: true, type: string }
+      kind:     { description: "auto | slide | reel | story | video", required: false, default: "auto", type: string }
+      story:    { description: "true = meant as a story (video ≤ 60 s → story)", required: false, default: "false", type: string }
+      title:    { description: "title in the gallery", required: false, default: "", type: string }
+      brain_id: { description: "id of a «مغز متفکر» item to link", required: false, default: "", type: string }
+      req:      { description: "request id (shows in the run name)", required: false, default: "", type: string }
+      dry_run:  { description: "true = download + classify only", required: false, default: "false", type: string }
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gallery-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          pip install requests pillow cryptography
+          command -v ffprobe >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg)
+      - name: Ingest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/gallery_ingest.py   # inputs are read from $GITHUB_EVENT_PATH
+      - name: Commit inbox item
+        if: inputs.dry_run != 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add inbox/
+          if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
+          git commit -m "inbox: gallery item $(TZ=Asia/Tehran date '+%Y-%m-%d %H:%M') Tehran"
+          for i in 1 2 3 4 5; do git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push && exit 0; sleep $((i*3)); done
+          exit 1

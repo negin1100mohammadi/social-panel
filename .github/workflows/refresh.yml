@@ -10,6 +10,8 @@ on:
       - "data/**"          # data commits are deployed by the run that made them
       - "queue/**"         # publish queue is handled by publish.yml
       - "config/**"        # encrypted token sync file; read from the GitHub API, not from Pages
+      - "vault/**"         # encrypted brain/gallery/publish data (contents API only)
+      - "inbox/**"         # encrypted gallery inbox (gallery-ingest.yml)
 
 permissions:
   contents: write
