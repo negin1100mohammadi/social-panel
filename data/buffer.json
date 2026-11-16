@@ -1,20 +1,1399 @@
 {
- "updated": "2026-11-16T21:53:27.095415+00:00",
+ "updated": "2026-11-16T21:56:35.371214+00:00",
  "pages": {
   "hamrah-seller": {
    "status": "error",
    "error": "'latin-1' codec can't encode characters in position 7-45: ordinal not in range(256)"
   },
   "titan-station": {
-   "status": "no_key"
+   "status": "ok",
+   "account": "amirmajidi1375@gmail.com",
+   "channels": [
+    {
+     "id": "6afb0a76ece6dfde5fe47684",
+     "name": "titanstation",
+     "displayName": "titanstation",
+     "service": "instagram",
+     "avatar": "https://buffer-channel-avatars-bucket.s3.amazonaws.com/6afb0a76ece6dfde5fe47684_1794837110159",
+     "isQueuePaused": false
+    },
+    {
+     "id": "6ae48c482f1f5ed6481f63ca",
+     "name": "titan_station",
+     "displayName": "titan_station",
+     "service": "tiktok",
+     "avatar": "https://buffer-channel-avatars-bucket.s3.amazonaws.com/6ae48c482f1f5ed6481f63ca_1793363081077",
+     "isQueuePaused": false
+    }
+   ],
+   "posts": [
+    {
+     "id": "6afb739ebac2722791a18537",
+     "text": "«از شنبه شروع می‌کنم.»\nتا حالا چند بار این جمله رو به خودت گفتی؟\n\nمغزت با تو لج نکرده. فقط از هر تغییر بزرگی می‌ترسه، چون براش یعنی انرژی بیشتر و بیرون اومدن از منطقهٔ امن. پس ترمز می‌کشه و تو می‌مونی منتظر انگیزه.\n\nراه‌ش: هدف بزرگ نیست، قدم‌های دو دقیقه‌ایه\n• به‌جای «روزی یه ساعت کتاب»، روزی دو صفحه\n• به‌جای «از شنبه باشگاه»، همین امروز ده تا اسکوات\n\nهر تکرار کوچیک یه رأیه به آدمی که می‌خوای بشی.\n\nقدم دو دقیقه‌ای تو برای امروز چیه؟ تو کامنت بنویس تا یادت بمونه. ذخیره‌ش کن برای شنبهٔ بعد.\n\n#روانشناسی #روانشناسی_روزمره #عادت #انگیزه #تغییر #خودسازی #TitanStation #عادت_سازی #تایتان_استیشن ",
+     "dueAt": "2026-11-16T21:20:31.024Z",
+     "channelId": "6ae48c482f1f5ed6481f63ca",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 0,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Video Views",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 0,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T21:20:30.858Z"
+    },
+    {
+     "id": "6afb408f58b04b19b2e9c58f",
+     "text": "به همه می‌گی \"باشه\" و بعدش از خودت حرص می‌خوری. چی شد؟\n\nبه این می‌گن تلهٔ خوشایندسازی: وقتی از ترس اینکه نکنه دیگران ناراحت بشن، به هر درخواستی \"باشه\" می‌گی، در حالی که خودت از خستگی بریدی. مثل کسی که خونه‌ی خودش رو آتیش می‌زنه فقط برای اینکه بقیه سردشون نشه. نتیجه؟ تو می‌مونی و حرص اینکه چرا نه نگفتی.\n\nیادت باشه: \"نه\" گفتن بی‌ادبی نیست، مرز گذاشتنه. دفعهٔ بعد بدون توضیح اضافه، یه \"نه\" ساده کافیه.\n\nتو هم اینو تجربه کردی؟ 👇 ",
+     "dueAt": "2026-11-16T17:42:39.448Z",
+     "channelId": "6ae48c482f1f5ed6481f63ca",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 9,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 7.09,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Video Views",
+       "value": 127,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 15.3,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 6.75,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T18:41:33.960Z"
+    },
+    {
+     "id": "6afb0a78dbbf158e2c63352e",
+     "text": "خوشحالی هیچ‌وقت خودش نمیاد...\n\n🎵 Touching Story — Kevin MacLeod (incompetech.com) | CC BY 4.0",
+     "dueAt": "2026-10-23T11:35:20.000Z",
+     "channelId": "6afb0a76ece6dfde5fe47684",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 130,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 3,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 5.62,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 4564,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 63,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 34,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 662.66,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 9.81,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 4196,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T13:51:52.164Z"
+    },
+    {
+     "id": "6afb0a78dbbf158e2c633529",
+     "text": "بعد از یه سنی، پدر و مادرت کم‌کم می‌شن بچه‌هات. ولی قضیه فقط پیری نیست؛ قضیه اینه که همهٔ موجودات زنده یه چیز می‌خوان: مورد توجه بودن. دفعهٔ بعد که یه بهونهٔ کوچیک گرفتن، بدون دنبال توجه‌ان، نه دردسر. تو هم این حس رو تجربه کردی؟ 👇\nMusic: Kevin MacLeod – Touching Story (CC BY 4.0)",
+     "dueAt": "2026-10-25T10:58:20.000Z",
+     "channelId": "6afb0a76ece6dfde5fe47684",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 9,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 10.11,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 184,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 7,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 1,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 21.03,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 7.17,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 178,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T13:51:52.179Z"
+    },
+    {
+     "id": "6afb0a78dbbf158e2c633525",
+     "text": "به همه می‌گی \"باشه\" و بعدش از خودت حرص می‌خوری. چی شد؟\n\nبه این می‌گن تلهٔ خوشایندسازی: وقتی از ترس اینکه نکنه دیگران ناراحت بشن، به هر درخواستی \"باشه\" می‌گی، در حالی که خودت از خستگی بریدی. مثل کسی که خونه‌ی خودش رو آتیش می‌زنه فقط برای اینکه بقیه سردشون نشه. نتیجه؟ تو می‌مونی و حرص اینکه چرا نه نگفتی.\n\nیادت باشه: \"نه\" گفتن بی‌ادبی نیست، مرز گذاشتنه. دفعهٔ بعد بدون توضیح اضافه، یه \"نه\" ساده کافیه.\n\nتو هم اینو تجربه کردی؟ 👇",
+     "dueAt": "2026-11-14T13:23:34.000Z",
+     "channelId": "6afb0a76ece6dfde5fe47684",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 33,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 3.65,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 1943,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 12,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 20,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 322.62,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 11.03,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 1810,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T13:51:52.087Z"
+    },
+    {
+     "id": "6afb0a78dbbf158e2c633522",
+     "text": "چرا از کسی که اذیتت می‌کنه دفاع می‌کنی؟\nجلوی بقیه مسخرت می‌کنه، ساعت‌ها جواب نمیده، فقط وقتی کار داره سراغت میاد — و تو به‌جای اینکه از خودت دفاع کنی، شروع می‌کنی به دفاع از اون: شاید شوخی کردن بلد نیست، شاید حالش خوب نیست، شاید منظورش من نبودم.\nاحتمالاً سه تا دلیل پشت این رفتاره. دلیل دومش اینه که نمی‌خوای ناراحتش کنی؛ انقدر نگران ناراحت شدن اونی که حتی «نه» گفتن هم برات سخته. انگار ناراحتی بقیه از ناراحتی خودت مهم‌تره.\nو دلیل سوم، عمیق‌ترینشه: ته ذهنت باور داری اگه به‌اندازهٔ کافی درکش کنی و صبور باشی، بالاخره می‌فهمه و عوض می‌شه.\nحقیقت تلخ اینه: تو با فهمیدن زخم‌های یه آدم نمی‌تونی مجبورش کنی زخم‌هاش رو درمان کنه.\nآدم خوب بودن یعنی آدم خوبی باشی، نه اینکه همیشه قابل تحمل باشی. می‌تونی دلیل رفتارش رو بفهمی، بدون نفرت ازش فاصله بگیری — اما دیگه اجازه ندی تکرارش کنه.\nحالا صادقانه بگو: آخرین باری که یکی ناراحتت کرد، بیشتر به این فکر کردی که چرا این کار رو کرد، یا چرا اجازه دادی باهات اینطوری رفتار کنه؟ 👇",
+     "dueAt": "2026-11-11T14:30:25.000Z",
+     "channelId": "6afb0a76ece6dfde5fe47684",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 6,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 3.71,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 375,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 2,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 5,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 183.37,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 32.08,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 350,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T13:51:52.252Z"
+    },
+    {
+     "id": "6afb0a78dbbf158e2c633520",
+     "text": "تصاویری ساده با مفاهیم عمیق زندگی\n\nدنبال چیزی باش که خوشحالت می‌کنه...\n\nگذشته رو نمی‌شه تغییر داد؛ آینده رو نمی‌شه پیش‌بینی کرد\n\nقدر داشته‌هات رو بدون و تا وقتی داریشون، ازشون لذت ببر و استفاده کن\n\nآدم‌های بد، زندگیت رو بد می‌کنن\n\nماهی‌گیری یاد بگیر\n\nوفادار باش، حتی اگر شکستی\n\nغرور نابودت می‌کنه\n\nاز اشتباهاتت یاد بگیر\n\nچشم بسته به هیچ‌کس اعتماد نکن\n\nما رو فالو کن",
+     "dueAt": "2026-10-07T21:51:29.000Z",
+     "channelId": "6afb0a76ece6dfde5fe47684",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 1,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 50,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 3,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "follows",
+       "name": "Follows",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 2,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T13:51:52.080Z"
+    },
+    {
+     "id": "6afb0a78dbbf158e2c63351e",
+     "text": "گاهی قهرش هنوز سر جاشه، ولی دلش طاقتِ دوری رو نداره... 💚\nبفرست برای اونی که با اینکه قهره، دستت رو ول نمی‌کنه! ✨\nPride says turn away. Love says don’t let go.\nTag or send this to that one person. 💚\n#روانشناسی_رابطه #رابطه #عشق relationships #animation#",
+     "dueAt": "2026-11-14T20:09:35.000Z",
+     "channelId": "6afb0a76ece6dfde5fe47684",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 22,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 1.62,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 1708,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 2,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 225.52,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 8.9,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 1480,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T13:51:52.071Z"
+    },
+    {
+     "id": "6afb0a78dbbf158e2c63351c",
+     "text": "هرچی بیشتر می‌دوی، دورتر می‌شن.\nپروانه‌ها این‌جوری‌ان؛ آدم‌ها هم، فرصت‌ها هم، آرامش هم.\nهرچی بیشتر بچسبی و بدوی، بیشتر ازت فرار می‌کنن.\nولی وقتی وایمیسی، می‌شینی، نفس می‌کشی... خودشون میان سراغت.\nبعضی چیزها رو نمی‌شه با دویدن گرفت؛ باید جا باز کرد تا بیان.\nتو چی رو داری دنبال می‌کنی که هی ازت فرار می‌کنه؟ 👇",
+     "dueAt": "2026-11-07T20:54:46.000Z",
+     "channelId": "6afb0a76ece6dfde5fe47684",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 2,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 25,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 24,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 2.31,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 7.28,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 8,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T13:51:52.174Z"
+    },
+    {
+     "id": "6afb0a78dbbf158e2c63351a",
+     "text": "تو هم زیر دوش برنده‌ی همه‌ی بحث‌هایی هستی که تو واقعیت حتی نتونستی یه کلمه حرف بزنی؟\nوقتی یکی داره ریز و درشت بارت می‌کنه، تو فقط نگاش می‌کنی — ولی چند ساعت بعد، زیر دوش، مغزت جلسه‌ی فوق‌العاده می‌ذاره و جواب‌های طلایی یکی‌یکی میان سراغت.\nجالب اینجاست که توی اون بحث‌های فرضی، طرف مقابل حتی فرصت دفاع کردن هم پیدا نمی‌کنه؛ تو هم جواب می‌دی، هم دیالوگ اون رو تعیین می‌کنی.\nروانشناسی بهش می‌گه «پردازش پس از رویداد» — مغزت داره سعی می‌کنه از یه اتفاق اجتماعی درس بگیره. ولی وقتی این مرور تبدیل به چرخه می‌شه، هر بار دوباره همون اتفاق داره برات می‌افته: دوباره عصبانی می‌شی، دوباره ناراحت می‌شی.\nقرار نیست تو هر بحثی رو ببری، مخصوصا بحث‌هایی که فقط توی ذهن تو برگزار می‌شن.\nحالا اعتراف کن: تو هم زیر دوش جواب بحث‌هایی رو می‌دی که ۳ سال پیش اتفاق افتادن؟ 👇\nMusic: Kevin MacLeod – Reawakening (CC BY 4.0)",
+     "dueAt": "2026-11-12T09:37:21.000Z",
+     "channelId": "6afb0a76ece6dfde5fe47684",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 7,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 3.83,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 263,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 2,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 161,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 41.11,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 235,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T13:51:52.169Z"
+    },
+    {
+     "id": "6afb0a78dbbf158e2c633518",
+     "text": "وقتی کسی آزارت میده، ذهنت به‌جای دفاع از خودت شروع می‌کنه به دفاع از اون آدم.\nساعت‌ها جواب نمیده، فقط وقتی کار داره سراغت میاد، جلوی بقیه مسخرت می‌کنه — و تو بازم براش دلیل میاری: شاید شوخی کردن بلد نیست، شاید حالش خوب نیست، شاید منظورش من نبودم.\nسه تا دلیل داره این رفتار، و سومی از همه عمیق‌تره: ته ذهنت باور داری اگه به‌اندازهٔ کافی درکش کنی و صبور باشی، بالاخره می‌فهمه و عوض می‌شه.\nحقیقت تلخ اینه: تو با فهمیدن زخم‌های یه آدم نمی‌تونی مجبورش کنی زخم‌هاش رو درمان کنه.\nمی‌تونی دلیل رفتارش رو بفهمی، اما دیگه اجازه ندی تکرارش کنه.\nآخرین باری که یکی ناراحتت کرد، بیشتر به این فکر کردی که چرا این کار رو کرد، یا چرا اجازه دادی باهات اینطوری رفتار کنه؟ 👇\nMusic: Kevin MacLeod (CC BY 4.0)",
+     "dueAt": "2026-11-10T19:05:14.000Z",
+     "channelId": "6afb0a76ece6dfde5fe47684",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 10,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 4.85,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 410,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 3,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 5,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 203.28,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 32.61,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 371,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T13:51:52.154Z"
+    },
+    {
+     "id": "6afb0a78dbbf158e2c633516",
+     "text": "رفتی گلایه کنی، ولی ده دقیقه بعد این تویی که داری عذرخواهی می‌کنی. چی شد؟\n\nبه این می‌گن الگوی داروو (DARVO): وقتی یه آدم دستکاری‌گر با خطاش روبه‌رو می‌شه، سه تا کار می‌کنه — اول اصل ماجرا رو انکار می‌کنه، بعد بهت حمله می‌کنه که تو زیادی حساسی و بهونه‌گیری، و آخرش خودش رو قربانی جا می‌زنه تا تو احساس گناه کنی. نتیجه؟ موضوع اصلی فراموش می‌شه و تو می‌مونی و عذاب وجدان.\n\nیادت باشه: توی یه رابطه‌ی سالم وقتی دردت رو می‌گی قراره شنیده بشی، نه محاکمه.\n\nتو هم اینو تجربه کردی؟ 👇",
+     "dueAt": "2026-11-13T11:06:47.000Z",
+     "channelId": "6afb0a76ece6dfde5fe47684",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 49,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 6.49,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 1858,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 25,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 31,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 456.75,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 16.91,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 1619,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T13:51:52.150Z"
+    },
+    {
+     "id": "6afb0a78dbbf158e2c633514",
+     "text": "کمال‌گرا هنوز داره ردیف اول رو تراز می‌کنه…\nعمل‌گرا دیوارش رو ساخت و رفت.\nتو کدومی؟ 👇\n\n🎵 Тёмная ночь — Марк Бернес",
+     "dueAt": "2026-10-23T19:40:02.000Z",
+     "channelId": "6afb0a76ece6dfde5fe47684",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 2,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 1,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 1.81,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 248,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 21.54,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 7.47,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 166,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T13:51:52.144Z"
+    },
+    {
+     "id": "6af8c0694cec742ed9bab20b",
+     "text": "گاهی قهرش هنوز سر جاشه، ولی دلش طاقتِ دوری رو نداره... 💚\nبفرست برای اونی که با اینکه قهره، دستت رو ول نمی‌کنه! ✨\nPride says turn away. Love says don’t let go.\nTag or send this to that one person. 💚\n#روانشناسی_رابطه #رابطه #عشق relationships #animation#",
+     "dueAt": "2026-11-14T20:11:21.711Z",
+     "channelId": "6ae48c482f1f5ed6481f63ca",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 8,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 5.3,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Video Views",
+       "value": 151,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 20.83,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 7.15,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T18:41:33.960Z"
+    },
+    {
+     "id": "6af6eef3e443fe998ae77746",
+     "text": "رفتی گلایه کنی، ولی ده دقیقه بعد این تویی که داری عذرخواهی میکنی. چی شد؟ به این میگن الگوی داروو (DARVO): وقتی یه آدم دستکاریگر با خطاش روبهرو میشه، سه تا کار میکنه — اول اصل ماجرا رو انکار میکنه، بعد بهت حمله میکنه که تو زیادی حساسی و بهونهگیری، و آخرش خودش رو قربانی جا میزنه تا تو احساس گناه کنی. نتیجه؟ موضوع اصلی فراموش میشه و تو میمونی و عذاب وجدان. یادت باشه: توی یه رابطهی سالم وقتی دردت رو میگی قراره شنیده بشی، نه محاکمه. تو هم اینو تجربه کردی؟ 👇",
+     "dueAt": "2026-11-13T11:05:23.918Z",
+     "channelId": "6ae48c482f1f5ed6481f63ca",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 26,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 16.57,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Video Views",
+       "value": 169,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 2,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 125,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 33.83,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 9.62,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T18:41:33.960Z"
+    },
+    {
+     "id": "6af46323b2d82a574e1b26a6",
+     "text": "تو هم زیر دوش برندهی همهی بحثهایی هستی که تو واقعیت حتی نتونستی یه کلمه حرف بزنی؟ وقتی یکی داره ریز و درشت بارت میکنه، تو فقط نگاش میکنی — ولی چند ساعت بعد، زیر دوش، مغزت جلسهی فوقالعاده میذاره و جوابهای طلایی یکییکی میان سراغت. جالب اینجاست که توی اون بحثهای فرضی، طرف مقابل حتی فرصت دفاع کردن هم پیدا نمیکنه؛ تو هم جواب میدی، هم دیالوگ اون رو تعیین میکنی. روانشناسی بهش میگه «پردازش پس از رویداد» — مغزت داره سعی میکنه از یه اتفاق اجتماعی درس بگیره. ولی وقتی این مرور تبدیل به چرخه میشه، هر بار دوباره همون اتفاق داره برات میافته: دوباره عصبانی میشی، دوباره ناراحت میشی. قرار نیست تو هر بحثی رو ببری، مخصوصا بحثهایی که فقط توی ذهن تو برگزار میشن. حالا اعتراف کن: تو هم زیر دوش جواب بحثهایی رو میدی که ۳ سال پیش اتفاق افتادن؟ 👇 Music: Kevin MacLeod – Reawakening (CC BY 4.0)",
+     "dueAt": "2026-11-12T09:30:42.587Z",
+     "channelId": "6ae48c482f1f5ed6481f63ca",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 12,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 8.39,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Video Views",
+       "value": 143,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 142,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 27.42,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 8.4,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T18:41:33.960Z"
+    },
+    {
+     "id": "6af37c4ce957a10ec3ad831a",
+     "text": "چرا از کسی که اذیتت میکنه دفاع میکنی؟ جلوی بقیه مسخرت میکنه، ساعتها جواب نمیده، فقط وقتی کار داره سراغت میاد — و تو بهجای اینکه از خودت دفاع کنی، شروع میکنی به دفاع از اون: شاید شوخی کردن بلد نیست، شاید حالش خوب نیست، شاید منظورش من نبودم. احتمالاً سه تا دلیل پشت این رفتاره. دلیل دومش اینه که نمیخوای ناراحتش کنی؛ انقدر نگران ناراحت شدن اونی که حتی «نه» گفتن هم برات سخته. انگار ناراحتی بقیه از ناراحتی خودت مهمتره. و دلیل سوم، عمیقترینشه: ته ذهنت باور داری اگه بهاندازهٔ کافی درکش کنی و صبور باشی، بالاخره میفهمه و عوض میشه. حقیقت تلخ اینه: تو با فهمیدن زخمهای یه آدم نمیتونی مجبورش کنی زخمهاش رو درمان کنه. آدم خوب بودن یعنی آدم خوبی باشی، نه اینکه همیشه قابل تحمل باشی. میتونی دلیل رفتارش رو بفهمی، بدون نفرت ازش فاصله بگیری — اما دیگه اجازه ندی تکرارش کنه. حالا صادقانه بگو: آخرین باری که یکی ناراحتت کرد، بیشتر به این فکر کردی که چرا این کار رو کرد، یا چرا اجازه دادی باهات اینطوری رفتار کنه؟ 👇",
+     "dueAt": "2026-11-11T14:30:00.000Z",
+     "channelId": "6ae48c482f1f5ed6481f63ca",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 9,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 5.33,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Video Views",
+       "value": 169,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 168,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 34.78,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 10.49,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T18:41:33.960Z"
+    },
+    {
+     "id": "6af36a49bcc165180968cf9d",
+     "text": "وقتی کسی آزارت میده، ذهنت بهجای دفاع از خودت شروع میکنه به دفاع از اون آدم. ساعتها جواب نمیده، فقط وقتی کار داره سراغت میاد، جلوی بقیه مسخرت میکنه — و تو بازم براش دلیل میاری: شاید شوخی کردن بلد نیست، شاید حالش خوب نیست، شاید منظورش من نبودم. سه تا دلیل داره این رفتار، و سومی از همه عمیقتره: ته ذهنت باور داری اگه بهاندازهٔ کافی درکش کنی و صبور باشی، بالاخره میفهمه و عوض میشه. حقیقت تلخ اینه: تو با فهمیدن زخمهای یه آدم نمیتونی مجبورش کنی زخمهاش رو درمان کنه. میتونی دلیل رفتارش رو بفهمی، اما دیگه اجازه ندی تکرارش کنه. آخرین باری که یکی ناراحتت کرد، بیشتر به این فکر کردی که چرا این کار رو کرد، یا چرا اجازه دادی باهات اینطوری رفتار کنه؟ 👇 Music: Kevin MacLeod (CC BY 4.0)",
+     "dueAt": "2026-11-10T19:02:34.124Z",
+     "channelId": "6ae48c482f1f5ed6481f63ca",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 3,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 2.61,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Video Views",
+       "value": 115,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 114,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 11.72,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 4.6,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T18:41:33.960Z"
+    }
+   ]
   },
   "fancatstic-four": {
    "status": "error",
    "error": "'latin-1' codec can't encode characters in position 7-45: ordinal not in range(256)"
   },
   "shode-dige": {
-   "status": "error",
-   "error": "'latin-1' codec can't encode characters in position 7-45: ordinal not in range(256)"
+   "status": "ok",
+   "account": "rajuamdada@gmail.com",
+   "channels": [
+    {
+     "id": "6afb4621ece6dfde5fe8239c",
+     "name": "shode.dige",
+     "displayName": "shode.dige",
+     "service": "instagram",
+     "avatar": "https://buffer-channel-avatars-bucket.s3.amazonaws.com/6afb4621ece6dfde5fe8239c_1794852385707",
+     "isQueuePaused": false
+    },
+    {
+     "id": "6ae4a2992f1f5ed648205e12",
+     "name": "shodedige",
+     "displayName": "shodedige",
+     "service": "tiktok",
+     "avatar": "https://buffer-channel-avatars-bucket.s3.amazonaws.com/6ae4a2992f1f5ed648205e12_1793368729735",
+     "isQueuePaused": false
+    }
+   ],
+   "posts": [
+    {
+     "id": "6afb4623b4a7756f8d81f2ab",
+     "text": "🦦",
+     "dueAt": "2026-10-19T04:09:17.000Z",
+     "channelId": "6afb4621ece6dfde5fe8239c",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 0,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 203,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 13.93,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 5.1,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 156,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T18:06:27.242Z"
+    },
+    {
+     "id": "6afb4623b4a7756f8d81f2a9",
+     "text": "تو هم حاضری بستری شی ولی ساعت ۶ بیدار نشی؟ 🌧️",
+     "dueAt": "2026-10-23T08:41:27.000Z",
+     "channelId": "6afb4621ece6dfde5fe8239c",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 0,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 2,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 0.97,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 11.59,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 1,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T18:06:27.238Z"
+    },
+    {
+     "id": "6afb4623b4a7756f8d81f2a7",
+     "text": "😐",
+     "dueAt": "2026-10-19T18:39:56.000Z",
+     "channelId": "6afb4621ece6dfde5fe8239c",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 0,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 666,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 43.39,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 5.81,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 446,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T18:06:27.240Z"
+    },
+    {
+     "id": "6afb4623b4a7756f8d81f2a5",
+     "text": "If you know, you know",
+     "dueAt": "2026-11-13T13:30:55.000Z",
+     "channelId": "6afb4621ece6dfde5fe8239c",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 0,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 157,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 106.12,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 56.35,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 116,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-16T18:06:27.235Z"
+    }
+   ]
   },
   "pretime-tv": {
    "status": "no_key"
