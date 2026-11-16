@@ -1,11 +1,11 @@
 {
  "v": 1,
- "updated_at": "2026-11-16T13:37:30+03:30",
+ "updated_at": "2026-11-16T13:46:34+03:30",
  "note": "written by scripts/publish.py: whether each channel can publish automatically (no secret values)",
  "channels": {
   "hamrah-seller/youtube": {
-   "ready": false,
-   "reason_fa": "یوتیوب این پیج هنوز متصل نیست"
+   "ready": true,
+   "reason_fa": null
   },
   "hamrah-seller/instagram": {
    "ready": false,
@@ -36,8 +36,8 @@
    "reason_fa": "آپارات API انتشار عمومی ندارد"
   },
   "fancatstic-four/youtube": {
-   "ready": false,
-   "reason_fa": "یوتیوب این پیج هنوز متصل نیست"
+   "ready": true,
+   "reason_fa": null
   },
   "fancatstic-four/instagram": {
    "ready": false,
@@ -52,8 +52,8 @@
    "reason_fa": "آپارات API انتشار عمومی ندارد"
   },
   "shode-dige/youtube": {
-   "ready": false,
-   "reason_fa": "یوتیوب این پیج هنوز متصل نیست"
+   "ready": true,
+   "reason_fa": null
   },
   "shode-dige/instagram": {
    "ready": false,
@@ -68,8 +68,8 @@
    "reason_fa": "آپارات API انتشار عمومی ندارد"
   },
   "pretime-tv/youtube": {
-   "ready": false,
-   "reason_fa": "یوتیوب این پیج هنوز متصل نیست"
+   "ready": true,
+   "reason_fa": null
   },
   "pretime-tv/instagram": {
    "ready": false,
