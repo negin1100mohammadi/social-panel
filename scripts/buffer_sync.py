@@ -21,7 +21,7 @@ Q_POSTS = """query($o:OrganizationId!){ posts(first:30, input:{organizationId:$o
  edges{ node{ id text dueAt channelId metrics{ type name value unit } metricsUpdatedAt } } } }"""
 def main():
     cfg = json.load(open("config.json"))
-    out = {"updated": datetime.datetime.utcnow().isoformat() + "Z", "pages": {}}
+    out = {"updated": datetime.datetime.now(datetime.timezone.utc).isoformat(), "pages": {}}
     ok = 0
     for p in cfg["pages"]:
         env = "BUFFER_KEY_" + p["id"].upper().replace("-", "_")
@@ -36,8 +36,8 @@ def main():
                 posts = [e["node"] for e in gql(key, Q_POSTS, {"o": org})["posts"]["edges"]]
             except Exception as e:
                 posts = []; print(p["id"], "posts:", e, file=sys.stderr)
-            out["pages"][p["id"]] = {"status": "ok", "channels": ch, "posts": posts}
-            print(p["id"], "ok", len(ch), "channels", len(posts), "posts"); ok += 1
+            out["pages"][p["id"]] = {"status": "ok", "account": a.get("email"), "channels": ch, "posts": posts}
+            print(p["id"], "ok", a.get("email"), a["organizations"][0].get("name"), len(ch), "channels", len(posts), "posts"); ok += 1
         except Exception as e:
             out["pages"][p["id"]] = {"status": "error", "error": str(e)[:200]}
             print(p["id"], "ERROR", e, file=sys.stderr)
