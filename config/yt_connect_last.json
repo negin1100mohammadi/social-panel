@@ -1,11 +1,11 @@
 {
- "req": "cmwj3rcy9j3bxry",
- "page": "fancatstic-four",
+ "req": "cmwj3smj6lj0f74",
+ "page": "shode-dige",
  "ok": true,
- "channel_id": "UCIQ32GL3mxkGKJoxToCrMDg",
- "title": "FanCATstic Four",
- "handle": "@fancatsticfour",
- "expected_channel_id": "UCIQ32GL3mxkGKJoxToCrMDg",
+ "channel_id": "UCy_RFO09PBC9RhAqtgMf_Eg",
+ "title": "شده دیگه",
+ "handle": "@shodedige",
+ "expected_channel_id": "UCy_RFO09PBC9RhAqtgMf_Eg",
  "mismatch": false,
  "scopes": [
   "https://www.googleapis.com/auth/youtube.force-ssl",
@@ -13,5 +13,5 @@
   "https://www.googleapis.com/auth/youtube.upload",
   "https://www.googleapis.com/auth/yt-analytics.readonly"
  ],
- "at": "2026-11-16T10:10:29Z"
+ "at": "2026-11-16T10:11:26Z"
 }

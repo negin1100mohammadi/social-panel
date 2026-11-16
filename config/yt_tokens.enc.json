@@ -56,8 +56,27 @@
    "status": "ok",
    "thumb": "https://yt3.ggpht.com/8Wem8H717Jdwd4HGK0oxRdaXKz87etTxXxv5uYvzjlrmGF_ooWHtfGn57zh9LxRX9Wkh0qVDZ3o=s88-c-k-c0x00ffffff-no-rj",
    "title": "Raw Instinct"
+  },
+  "UCy_RFO09PBC9RhAqtgMf_Eg": {
+   "channel_id": "UCy_RFO09PBC9RhAqtgMf_Eg",
+   "connected_at": "2026-11-16T10:11:26Z",
+   "ct": "O2d0MMC8K4h/DfJY5o/S4Z/Jn/KjZYLVxJ+S+Z1f2+G7pCjaJFMiRoWhmK89Lr0ghtPE/8jepGOLp7CVb0eatII8fAkimyLMF/lGxgQ9YD8lVX3bjxOceSqXGjMUGfCmXIufnN1mh+QV3U/blc7V6vVwQFPjwKI=",
+   "expected_channel_id": "UCy_RFO09PBC9RhAqtgMf_Eg",
+   "handle": "@shodedige",
+   "iv": "0moAnsY2hbuolnZJ",
+   "mismatch": false,
+   "page": "shode-dige",
+   "scopes": [
+    "https://www.googleapis.com/auth/youtube.force-ssl",
+    "https://www.googleapis.com/auth/youtube.readonly",
+    "https://www.googleapis.com/auth/youtube.upload",
+    "https://www.googleapis.com/auth/yt-analytics.readonly"
+   ],
+   "status": "ok",
+   "thumb": "https://yt3.ggpht.com/ytc/AIdro_lmT2fUR25crFAORC4PocxXmU8mnl0Ece1kOpIO-t2mavHDHYlQWqwkQAcDHjtPpRl5Zgs=s88-c-k-c0x00ffffff-no-rj",
+   "title": "شده دیگه"
   }
  },
- "updated_at": "2026-11-16T10:10:29Z",
+ "updated_at": "2026-11-16T10:11:26Z",
  "v": 1
 }
