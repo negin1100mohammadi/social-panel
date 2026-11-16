@@ -1,11 +1,11 @@
 {
- "req": "cmwj3smj6lj0f74",
- "page": "shode-dige",
+ "req": "cmwj3tvr88l5660",
+ "page": "pretime-tv",
  "ok": true,
- "channel_id": "UCy_RFO09PBC9RhAqtgMf_Eg",
- "title": "شده دیگه",
- "handle": "@shodedige",
- "expected_channel_id": "UCy_RFO09PBC9RhAqtgMf_Eg",
+ "channel_id": "UCgByc7LjKGswrjkXavPJoxA",
+ "title": "PreTime",
+ "handle": "@pretimetv",
+ "expected_channel_id": "UCgByc7LjKGswrjkXavPJoxA",
  "mismatch": false,
  "scopes": [
   "https://www.googleapis.com/auth/youtube.force-ssl",
@@ -13,5 +13,5 @@
   "https://www.googleapis.com/auth/youtube.upload",
   "https://www.googleapis.com/auth/yt-analytics.readonly"
  ],
- "at": "2026-11-16T10:11:26Z"
+ "at": "2026-11-16T10:12:27Z"
 }

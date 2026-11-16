@@ -38,6 +38,25 @@
    "thumb": "https://yt3.ggpht.com/uBmqKC1KAanMSRUdmgGGa_hEnvi-m_J6mqX0GCSwjOcOg_3WdJZNmjIXCmc3xrwHM7gUO-zIYw=s88-c-k-c0x00ffffff-no-rj",
    "title": "Titan Station"
   },
+  "UCgByc7LjKGswrjkXavPJoxA": {
+   "channel_id": "UCgByc7LjKGswrjkXavPJoxA",
+   "connected_at": "2026-11-16T10:12:27Z",
+   "ct": "7voZcPJs/G8tR4BwaJ5VxiTf0XmWFQGlkS79kswKGPFbRwyaT6glKQt6zPN/JK75qd0/K1HEfG+oqsJS4PnJxilDffh1pZUkBqscTw3+b/+rJdEklZgWnPsoY1/l3Bb0NFQKB/I3aLYPyFvqXa1Ud1ANLpwKXb6sAxEEotw6eRBksZX5U/zaZhWkKLEiscQ=",
+   "expected_channel_id": "UCgByc7LjKGswrjkXavPJoxA",
+   "handle": "@pretimetv",
+   "iv": "bmyc3m2dDwtScPfz",
+   "mismatch": false,
+   "page": "pretime-tv",
+   "scopes": [
+    "https://www.googleapis.com/auth/youtube.force-ssl",
+    "https://www.googleapis.com/auth/youtube.readonly",
+    "https://www.googleapis.com/auth/youtube.upload",
+    "https://www.googleapis.com/auth/yt-analytics.readonly"
+   ],
+   "status": "ok",
+   "thumb": "https://yt3.ggpht.com/XDUF32HbOvs12RehSieShY9wnV-ehd_uJMJDy3EUv3tR0j5n04kH4vajGesmoGlwtUaXyo9S=s88-c-k-c0x00ffffff-no-rj",
+   "title": "PreTime"
+  },
   "UCigdA2CyiIANNclIAcq5Wew": {
    "channel_id": "UCigdA2CyiIANNclIAcq5Wew",
    "connected_at": "2026-11-16T05:00:32Z",
@@ -77,6 +96,6 @@
    "title": "شده دیگه"
   }
  },
- "updated_at": "2026-11-16T10:11:26Z",
+ "updated_at": "2026-11-16T10:12:27Z",
  "v": 1
 }
