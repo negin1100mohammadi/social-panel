@@ -1,0 +1,12 @@
+{
+ "v": 1,
+ "kid": "cf5f61aaccbaa3d5",
+ "kdf": "PBKDF2-SHA256",
+ "iter": 310000,
+ "alg": "AES-256-GCM",
+ "salt": "Dwp/dzlm3JTO0Gh1975WDw==",
+ "iv": "5uV7h+864TYjMCKf",
+ "ct": "THqSoFoMayMRyIHZ0MuXXPRQ3LasI69mKix7Q0sPbgp2hSuSeNEjmXnVa0auMv8e5lVqRQJ784trNzDp6/US1AWaCU0Wp782t/g5phLe+FZ++KmZBij1kHY/UzpK0DBjPma6BUyuNKNYQ4+fZO+zWg3burc2F+j+7XJlkiK7vUMCwQRXmuzRmlBBSXmhDyenuESI/cvc2XQh8ghoI4seSPlmgRWi1dIJFOB5sqcBMyLyV6kYwAuM4ZrJGA+s8s05GsSBC6Ofc6nusrOOziJGpDbIBNjf8VP5r2QWrhexJWee3GA7fm6oD7oZSd5Poe/5QqEJLTKrdJwWXBlssuQ1AnmUyg==",
+ "created_at": "2026-11-16T10:09:55.367Z",
+ "about": "social-panel data key, wrapped with the panel password (vault/*.enc.json are encrypted with it)"
+}
