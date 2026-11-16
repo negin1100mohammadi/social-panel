@@ -1,8 +1,17 @@
 {
- "req": "verify3",
- "page": "shode-dige",
- "ok": false,
- "error": "invalid_grant",
- "error_fa": "کد تأیید منقضی یا قبلاً استفاده شده؛ دوباره «اتصال» را بزن.",
- "at": "2026-11-15T20:32:21Z"
+ "req": "cmwisor8gc7knv6",
+ "page": "titan-station",
+ "ok": true,
+ "channel_id": "UCigdA2CyiIANNclIAcq5Wew",
+ "title": "Raw Instinct",
+ "handle": "@raw_instinct",
+ "expected_channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g",
+ "mismatch": true,
+ "scopes": [
+  "https://www.googleapis.com/auth/youtube.force-ssl",
+  "https://www.googleapis.com/auth/youtube.readonly",
+  "https://www.googleapis.com/auth/youtube.upload",
+  "https://www.googleapis.com/auth/yt-analytics.readonly"
+ ],
+ "at": "2026-11-16T05:00:32Z"
 }
