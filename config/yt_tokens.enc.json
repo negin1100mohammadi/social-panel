@@ -1,5 +1,24 @@
 {
  "channels": {
+  "UCJu9uDiwC2XOug0s7kkzZ3g": {
+   "channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g",
+   "connected_at": "2026-11-16T05:01:33Z",
+   "ct": "MMzPCxW6OlM4wTRenUnrXF5d2HU+e/y/WzvEIiTACl37Ikw8CoQMfGaK6XDWzHUa1Vktz+EbPWfhptb1P68qwtHCNW/NXZi8zFf++v5cbSPe+maUiCQxdIQQbgHJjsV0d58EP+l+TP7S4/ylBXPBAjEhe83zBhU7VMH4Uv9a0KUHrVwb8liKEbM9aETSLkE=",
+   "expected_channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g",
+   "handle": "@titan.station",
+   "iv": "f3X7itYaj4agf4M5",
+   "mismatch": false,
+   "page": "titan-station",
+   "scopes": [
+    "https://www.googleapis.com/auth/youtube.force-ssl",
+    "https://www.googleapis.com/auth/youtube.readonly",
+    "https://www.googleapis.com/auth/youtube.upload",
+    "https://www.googleapis.com/auth/yt-analytics.readonly"
+   ],
+   "status": "ok",
+   "thumb": "https://yt3.ggpht.com/uBmqKC1KAanMSRUdmgGGa_hEnvi-m_J6mqX0GCSwjOcOg_3WdJZNmjIXCmc3xrwHM7gUO-zIYw=s88-c-k-c0x00ffffff-no-rj",
+   "title": "Titan Station"
+  },
   "UCigdA2CyiIANNclIAcq5Wew": {
    "channel_id": "UCigdA2CyiIANNclIAcq5Wew",
    "connected_at": "2026-11-16T05:00:32Z",
@@ -20,6 +39,6 @@
    "title": "Raw Instinct"
   }
  },
- "updated_at": "2026-11-16T05:00:32Z",
+ "updated_at": "2026-11-16T05:01:33Z",
  "v": 1
 }

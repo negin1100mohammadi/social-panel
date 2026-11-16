@@ -1,17 +1,17 @@
 {
- "req": "cmwisor8gc7knv6",
+ "req": "cmwispw8rzbujj1",
  "page": "titan-station",
  "ok": true,
- "channel_id": "UCigdA2CyiIANNclIAcq5Wew",
- "title": "Raw Instinct",
- "handle": "@raw_instinct",
+ "channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g",
+ "title": "Titan Station",
+ "handle": "@titan.station",
  "expected_channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g",
- "mismatch": true,
+ "mismatch": false,
  "scopes": [
   "https://www.googleapis.com/auth/youtube.force-ssl",
   "https://www.googleapis.com/auth/youtube.readonly",
   "https://www.googleapis.com/auth/youtube.upload",
   "https://www.googleapis.com/auth/yt-analytics.readonly"
  ],
- "at": "2026-11-16T05:00:32Z"
+ "at": "2026-11-16T05:01:33Z"
 }
