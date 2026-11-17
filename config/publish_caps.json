@@ -1,6 +1,6 @@
 {
  "v": 1,
- "updated_at": "2026-11-17T12:18:33+03:30",
+ "updated_at": "2026-11-17T14:21:29+03:30",
  "note": "written by scripts/publish.py: whether each channel can publish automatically (no secret values)",
  "channels": {
   "hamrah-seller/youtube": {
@@ -80,14 +80,14 @@
    "reason_fa": null
   },
   "pretime-tv/instagram": {
-   "ready": false,
-   "via": null,
-   "reason_fa": "نه کلید API رسمی اینستاگرام هست نه اتصال بافر"
+   "ready": true,
+   "via": "buffer",
+   "reason_fa": null
   },
   "pretime-tv/tiktok": {
-   "ready": false,
-   "via": null,
-   "reason_fa": "نه کلید API رسمی تیک‌تاک هست نه اتصال بافر"
+   "ready": true,
+   "via": "buffer",
+   "reason_fa": null
   },
   "pretime-tv/aparat": {
    "ready": false,
