@@ -21,7 +21,7 @@
   var MEDIA_BRANCH = "media-upload";
   var MAX_UPLOAD = 70 * 1024 * 1024; // GitHub blob API limit is 100 MB after base64
 
-  var SP_VERSION = "v18";
+  var SP_VERSION = "v19";
   window.SP_VERSION = SP_VERSION;
   var state = { config: null, latest: null, history: null, postsHist: null, error: null, busy: false, progress: "", syncAvailable: false, encCreated: null, chOrder: null };
   var app = document.getElementById("app");
@@ -269,10 +269,10 @@
     return '<header class="topbar" id="topbar" data-title="' + esc(title) + '">' +
       '<button class="refresh-btn' + (state.busy ? " spin" : "") + '" id="refresh" aria-label="به‌روزرسانی همه‌ی کانال‌ها" title="به‌روزرسانی همه‌ی کانال‌ها">' + ICON_REFRESH + "</button>" +
       '<div class="brand"><b>' + esc(title) + "</b></div>" +
-      '<button class="tbox" id="theme" aria-label="تغییر تم">' + (dark ? ICON_SUN : ICON_MOON) + '<span class="tlabel">' + (dark ? "لایت" : "دارک") + "</span></button>" +
-      '<a class="tbox guidebtn" id="guidebtn" href="#/guide" aria-label="راهنمای اپ" title="راهنمای اپ (توضیح همه‌ی بخش‌ها)"><span class="gq">؟</span><span class="glabel">راهنما</span></a>' +
-      '<a class="tbox idbtn" id="idbtn" href="#/identity" aria-label="هویت برند" title="هویت برند (شناسنامه‌ی هر برند)">' + ICON_IDCARD + '<span>هویت</span></a>' +
       '<div class="tbox" title="ساعت تهران · آخرین خواندن داده‌ها: ' + esc(fmtShort(L && L.updated_at)) + '">' + ICON_CLOCK + '<span class="ul"><b class="clk-now">' + esc(nowTehran()) + '</b><span class="clk-ago" data-iso="' + esc((L && L.updated_at) || "") + '">داده: ' + esc(ago(L && L.updated_at)) + "</span></span></div>" +
+      '<a class="tbox idbtn" id="idbtn" href="#/identity" aria-label="هویت برند" title="هویت برند (شناسنامه‌ی هر برند)">' + ICON_IDCARD + '<span>هویت</span></a>' +
+      '<a class="tbox guidebtn" id="guidebtn" href="#/guide" aria-label="راهنمای اپ" title="راهنمای اپ (توضیح همه‌ی بخش‌ها)"><span class="gq">؟</span><span class="glabel">راهنما</span></a>' +
+      '<button class="tbox" id="theme" aria-label="تغییر تم">' + (dark ? ICON_SUN : ICON_MOON) + '<span class="tlabel">' + (dark ? "لایت" : "دارک") + "</span></button>" +
       "</header>" +
       '<div class="progress' + (state.busy ? " on" : "") + '" id="prog" role="status"><span class="bar"></span><span class="pt" id="progtext">' + esc(state.progress || "در حال به‌روزرسانی…") + "</span></div>";
   }
