@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-17T08:09:49.202195+00:00",
+ "updated": "2026-11-17T10:35:43.029477+00:00",
  "pages": {
   "hamrah-seller": {
    "status": "ok",
@@ -1627,7 +1627,27 @@
    ]
   },
   "pretime-tv": {
-   "status": "no_key"
+   "status": "ok",
+   "account": "wildframerecreated@gmail.com",
+   "channels": [
+    {
+     "id": "6afb45a3ece6dfde5fe81656",
+     "name": "pretimetv",
+     "displayName": "pretimetv",
+     "service": "instagram",
+     "avatar": "https://buffer-channel-avatars-bucket.s3.amazonaws.com/6afb45a3ece6dfde5fe81656_1794852259440",
+     "isQueuePaused": false
+    },
+    {
+     "id": "6ae492492f1f5ed6481f97e9",
+     "name": "pretimetv",
+     "displayName": "pretimetv",
+     "service": "tiktok",
+     "avatar": "https://buffer-channel-avatars-bucket.s3.amazonaws.com/6ae492492f1f5ed6481f97e9_1793364553762",
+     "isQueuePaused": false
+    }
+   ],
+   "posts": []
   }
  }
 }
