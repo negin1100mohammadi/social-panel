@@ -490,6 +490,20 @@
     var T = toolsConf(), opened = lsGet("sp_tool_open", "");
     var html = topbar("ابزارها");
     html += '<button class="back" id="back">→ صفحه‌ی اصلی</button>';
+    // per-brand AI projects as icon tiles (config.tools.brand_links)
+    var BL = (state.config && state.config.tools && state.config.tools.brand_links) || {};
+    var TSHORT = { gemini: "Gemini", claude: "Claude", chatgpt: "ChatGPT", aistudio: "AI Studio", flow: "Flow", hark: "Hark", muse: "Muse" };
+    var bhtml = ((state.config && state.config.pages) || []).filter(function (p) { return BL[p.id]; }).map(function (p) {
+      var b = BL[p.id];
+      return '<section class="bset"><div class="bset-h"><b>' + esc(p.name) + '</b><small dir="ltr">' + esc(b.google || "") + "</small></div>" +
+        '<div class="bicons">' + (b.links || []).map(function (l) {
+          var ic = '<span class="tbadge" style="background:' + (TOOL_COLORS[l[0]] || "#64748b") + '">' + esc((TSHORT[l[0]] || "?").charAt(0)) + "</span>";
+          var cap = '<span class="bi-t">' + esc(TSHORT[l[0]] || l[0]) + '</span><span class="bi-r">' + esc(l[1]) + "</span>";
+          return l[2] ? '<a class="bicon" href="' + esc(l[2]) + '" target="_blank" rel="noopener">' + ic + cap + "</a>"
+                      : '<span class="bicon off" title="هنوز ساخته نشده">' + ic + cap + '<span class="bi-r">نساخته</span></span>';
+        }).join("") + "</div></section>";
+    }).join("");
+    if (bhtml) html += '<h3 class="bsec">پروژه‌های هر برند</h3><div class="bsets">' + bhtml + '</div><h3 class="bsec">همه‌ی ابزارها</h3>';
     html += '<div class="tlist" id="tlist">' + T.items.map(function (it) {
       var open = opened === it.id, url = toolURL(it);
       var badge = '<span class="tbadge" style="background:' + (TOOL_COLORS[it.id] || "#64748b") + '">' + esc((it.name || "?").replace(/^Google\s+/, "").charAt(0).toUpperCase()) + "</span>";

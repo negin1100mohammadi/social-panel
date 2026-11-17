@@ -108,7 +108,174 @@
         "name": "Google Flow",
         "url": "https://labs.google/fx/tools/flow"
       }
-    ]
+    ],
+    "brand_links": {
+      "pretime-tv": {
+        "google": "wildframerecreated@gmail.com",
+        "links": [
+          [
+            "gemini",
+            "ایده و سناریو",
+            "https://gemini.google.com/gem/8348c681b1be"
+          ],
+          [
+            "gemini",
+            "کارگردان و پرامپت",
+            "https://gemini.google.com/gem/5177ae3a279f"
+          ],
+          [
+            "claude",
+            "غربال و اسکریپت",
+            "https://claude.ai/project/01a1e8d9-d621-75e0-acd2-5e304ed76dca"
+          ],
+          [
+            "chatgpt",
+            "کپشن و کامنت",
+            "https://chatgpt.com/g/g-p-6afc1ff703c48191990f3595cce9de68/project"
+          ],
+          [
+            "aistudio",
+            "تصویر و کاور",
+            "https://aistudio.google.com/prompts/1xbLd5HQ0IDq2y-oAlxqT0ahJA4YxA8QU"
+          ],
+          [
+            "flow",
+            "ویدیو",
+            ""
+          ]
+        ]
+      },
+      "titan-station": {
+        "google": "amirmajidi1375@gmail.com",
+        "links": [
+          [
+            "gemini",
+            "ایده و سناریو",
+            "https://gemini.google.com/notebook/ee4cbd87-dc7d-4974-97bf-04fd25ee6439"
+          ],
+          [
+            "gemini",
+            "کارگردان و پرامپت",
+            "https://gemini.google.com/notebook/d6c899e4-5ca0-4da7-9e4b-eaee2f7afa47"
+          ],
+          [
+            "claude",
+            "غربال و اسکریپت",
+            "https://claude.ai/project/01a1e901-3bce-7626-a2f8-9a2f02c60b05"
+          ],
+          [
+            "chatgpt",
+            "کپشن و کامنت",
+            "https://chatgpt.com/g/g-p-6afc29d27ddc81919b2e216d8a24f362/project"
+          ],
+          [
+            "aistudio",
+            "تصویر و کاور",
+            "https://aistudio.google.com/prompts/1_Iig-2tSC1mKRQ5xPfjlvycHAUFnW8R7"
+          ],
+          [
+            "flow",
+            "ویدیو",
+            ""
+          ]
+        ]
+      },
+      "hamrah-seller": {
+        "google": "amirhow3einmj@gmail.com",
+        "links": [
+          [
+            "gemini",
+            "ایده و سناریو",
+            "https://gemini.google.com/notebook/ea03611b-6192-46a7-b96c-a9cbc3e23b6c"
+          ],
+          [
+            "gemini",
+            "راهنمای بصری",
+            "https://gemini.google.com/notebook/0eec24e2-08f8-44e7-911d-b7cbf123f813"
+          ],
+          [
+            "claude",
+            "غربال و اسکریپت",
+            "https://claude.ai/project/01a1e8f3-a0fb-7724-a3a1-3ac1b106f447"
+          ],
+          [
+            "chatgpt",
+            "کپشن و کامنت",
+            "https://chatgpt.com/g/g-p-6afc260bbde481918991c529dbec16c1/project"
+          ],
+          [
+            "aistudio",
+            "تصویر و کاور",
+            "https://aistudio.google.com/prompts/1Ph4sjWhGSbI3PcDMaaAxMV4A6cGIEX76"
+          ],
+          [
+            "flow",
+            "ویدیو",
+            ""
+          ]
+        ]
+      },
+      "shode-dige": {
+        "google": "rajuamdada@gmail.com",
+        "links": [
+          [
+            "gemini",
+            "ایده‌یابی",
+            "https://gemini.google.com/gem/7fe2fa6edec5"
+          ],
+          [
+            "claude",
+            "غربال و اسکریپت",
+            "https://claude.ai/project/01a1e8f6-7bc5-75ca-a997-a361f7b98b7b"
+          ],
+          [
+            "chatgpt",
+            "کپشن و کامنت",
+            "https://chatgpt.com/g/g-p-6afc26cf82388191a8b367788a0e43aa/project"
+          ],
+          [
+            "aistudio",
+            "سناریو",
+            "https://aistudio.google.com/prompts/1x2htRKXnpsatn7_pwGeZ-fFCUdhnfaim"
+          ],
+          [
+            "flow",
+            "ویدیو",
+            ""
+          ]
+        ]
+      },
+      "fancatstic-four": {
+        "google": "suchameoww@gmail.com",
+        "links": [
+          [
+            "gemini",
+            "ایده و سناریو",
+            "https://gemini.google.com/notebook/e9cc1fa4-07a4-411a-98c3-54893d93d3fc"
+          ],
+          [
+            "claude",
+            "غربال و اسکریپت",
+            "https://claude.ai/project/01a1e8f9-0d6b-7285-86a5-178695eb12b1"
+          ],
+          [
+            "chatgpt",
+            "کپشن و کامنت",
+            "https://chatgpt.com/g/g-p-6afc2787721c81919288f36ee8e77970/project"
+          ],
+          [
+            "aistudio",
+            "تصویر و کاور",
+            "https://aistudio.google.com/prompts/1DlgFpkJfQjfgpCfUSnyqHzqjacRON8Fr"
+          ],
+          [
+            "flow",
+            "ویدیو",
+            ""
+          ]
+        ]
+      }
+    }
   },
   "youtube_oauth": {
     "client_id": "37619814235-dmnoad0krqqla6bcgpp5kc7vnrre1c66.apps.googleusercontent.com",

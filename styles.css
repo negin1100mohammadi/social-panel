@@ -1096,3 +1096,17 @@ a.tbox.idbtn:active { transform: scale(.96); }
 .acc-row > button { flex: none; align-self: center; }
 .acc-row small.acc-h { text-align: right; }
 .clogo.empty { padding: 0; border-radius: 50%; }
+
+/* v14: per-brand AI project icons */
+.bsec { font-size: 14px; margin: 14px 4px 8px; color: var(--muted); }
+.bsets { display: grid; gap: 10px; }
+.bset { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; }
+.bset-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.bset-h small { font-size: 11px; color: var(--faint); overflow-wrap: anywhere; }
+.bicons { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 8px; }
+.bicon { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border-radius: 13px; text-align: center; color: inherit; text-decoration: none; }
+.bicon:active { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.bicon .tbadge { width: 42px; height: 42px; border-radius: 14px; }
+.bicon .bi-t { font-size: 12px; font-weight: 700; direction: ltr; }
+.bicon .bi-r { font-size: 10.5px; color: var(--muted); line-height: 1.4; }
+.bicon.off { opacity: .45; }
