@@ -173,6 +173,10 @@ const hashTo = async (page, h, sel) => { await page.evaluate((x) => { location.h
         const hd = await page.$eval(".ahead", (e) => ({ p: e.getAttribute("data-page"), pl: e.getAttribute("data-platform"), title: (document.getElementById("a-title") || {}).textContent, plat: (document.getElementById("a-platform") || {}).textContent, icon: !!e.querySelector(".picon." + e.getAttribute("data-platform")) }));
         const cp = config.pages.find((c) => c.id === pid);
         ok(hd.p === pid && hd.pl === pl && hd.title === cp.name && hd.icon && hd.plat === { instagram: "اینستاگرام", youtube: "یوتیوب", aparat: "آپارات", tiktok: "تیک‌تاک" }[pl], `${tag}: header ${JSON.stringify(hd)}`);
+        const al = await page.$$eval(".ahead .alinks a", (as) => as.map((a) => [a.getAttribute("href"), a.target, a.rel, a.textContent.trim()]));
+        const hh = String(cp.accounts[pl]).replace(/^@/, "");
+        const want = { instagram: "https://www.instagram.com/" + hh + "/", tiktok: "https://www.tiktok.com/@" + hh, youtube: "https://www.youtube.com/@" + hh, aparat: "https://www.aparat.com/" + hh }[pl];
+        ok(al.length === 1 && al[0][0] === want && al[0][1] === "_blank" && /noopener/.test(al[0][2]) && /صفحه‌ی عمومی/.test(al[0][3]), `${tag}: header has one public-page link ${JSON.stringify(al)}`);
       }
     }
     if (vp === "mobile") await page.screenshot({ path: `/tmp/v6shot-${theme}-analytics.png`, fullPage: true });
@@ -329,17 +333,19 @@ const hashTo = async (page, h, sel) => { await page.evaluate((x) => { location.h
     await hitTest("all open after reload");
     const n = await clickAllCharts("all open", vp === "mobile");
     ok(n === config.pages.length * 4, `${vp}: expected ${config.pages.length * 4} chart links, got ${n}`);
-    // admin ("ورود") links
-    const adm = await page.$$eval(".branch", (els) => els.map((b) => ({ pl: b.getAttribute("data-pl"), page: b.getAttribute("data-page"), hrefs: [...b.querySelectorAll("a.adm")].map((a) => a.href), target: [...b.querySelectorAll("a.adm")].map((a) => a.target) })));
+    // v12: no «ورود»/admin buttons; the network row link is the channel's own public page (new tab)
+    const adm = await page.$$eval(".branch", (els) => els.map((b) => ({ pl: b.getAttribute("data-pl"), page: b.getAttribute("data-page"), hrefs: [...b.querySelectorAll("a.bnet")].map((a) => a.getAttribute("href")), target: [...b.querySelectorAll("a.bnet")].map((a) => a.target), rel: [...b.querySelectorAll("a.bnet")].map((a) => a.rel), txt: [...b.querySelectorAll("a.bnet")].map((a) => a.textContent.trim()), adm: b.querySelectorAll("a.adm").length, n: b.querySelectorAll("a.chlink, a[data-admin]").length })));
+    ok(adm.length === config.pages.length * 4, `${vp}: ${adm.length} network rows`);
     for (const a of adm) {
-      const t = `${vp} admin ${a.page}/${a.pl}`;
-      ok(a.target.every((x) => x === "_blank"), `${t}: must open in a new tab`);
-      if (a.pl === "instagram") ok(a.hrefs[0] === "https://www.instagram.com/accounts/login/?next=%2Faccounts%2Fprofessional_dashboard%2F" && a.hrefs[1] === "https://business.facebook.com/latest/home", `${t}: ${a.hrefs}`);
-      if (a.pl === "aparat") ok(a.hrefs[0] === "https://www.aparat.com/dashboard", `${t}: ${a.hrefs}`);
-      if (a.pl === "tiktok") ok(a.hrefs[0] === "https://www.tiktok.com/tiktokstudio", `${t}: ${a.hrefs}`);
-      if (a.pl === "youtube") ok(/^https:\/\/accounts\.google\.com\/ServiceLogin\?service=youtube&continue=https%3A%2F%2Fstudio\.youtube\.com%2F/.test(a.hrefs[0]), `${t}: ${a.hrefs}`);
+      const t = `${vp} channel link ${a.page}/${a.pl}`;
+      const h = String(config.pages.find((p) => p.id === a.page).accounts[a.pl]).replace(/^@/, "");
+      ok(a.hrefs.length === 1 && a.adm === 0 && a.n === 0, `${t}: one row link, no admin/«ورود» buttons (${a.hrefs})`);
+      ok(a.target[0] === "_blank" && /noopener/.test(a.rel[0]), `${t}: opens in a new tab`);
+      const want = { instagram: "https://www.instagram.com/" + h + "/", tiktok: "https://www.tiktok.com/@" + h, youtube: "https://www.youtube.com/@" + h, aparat: "https://www.aparat.com/" + h }[a.pl];
+      ok(a.hrefs[0] === want, `${t}: ${a.hrefs[0]} != ${want}`);
     }
-    ok(await page.$(".adm-note"), `${vp}: multi-account note missing`);
+    ok(!/ورود|صفحه‌ی کانال|Meta Business|داشبورد|Studio/.test(await page.textContent("#clist")), `${vp}: no «ورود» / admin-dashboard text on the channels page`);
+    ok(!(await page.$(".app-note")), `${vp}: native-app account-switch note removed`);
     ok(!page._errors.length, `${vp} links: page errors ` + page._errors.slice(0, 3).join(" | "));
     await ctx.close();
   }

@@ -1,6 +1,6 @@
 /* Service worker: network-first for everything (fresh data, avatars and app code),
    falling back to the last cached copy only when offline. */
-const VERSION = "v11";
+const VERSION = "v12";
 const SHELL = `shell-${VERSION}`;
 const DATA = `data-${VERSION}`;
 const SHELL_FILES = ["./", "index.html", "styles.css", "app.js", "styles.css?v=11", "app.js?v=11", "vendor/fflate.js?v=0.8.3", "manifest.json",

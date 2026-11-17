@@ -21,7 +21,7 @@
   var MEDIA_BRANCH = "media-upload";
   var MAX_UPLOAD = 70 * 1024 * 1024; // GitHub blob API limit is 100 MB after base64
 
-  var SP_VERSION = "v11";
+  var SP_VERSION = "v12";
   window.SP_VERSION = SP_VERSION;
   var state = { config: null, latest: null, history: null, postsHist: null, error: null, busy: false, progress: "", syncAvailable: false, encCreated: null, chOrder: null };
   var app = document.getElementById("app");
@@ -97,45 +97,22 @@
   }
 
   // ------------------------------------------------------------ platform info
-  // "ورود" opens the account's owner/admin area (sign-in first when needed), not the public page
-  // v10: on a phone «ورود» opens the native app on that account (desktop keeps the web dashboards)
-  function isMobileUA() {
-    var ua = navigator.userAgent || "";
-    return /iPhone|iPad|iPod|Android/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  }
-  function appLinks(cp, pl, r) {
-    var h = String((cp.accounts || {})[pl] || "").replace(/^@/, "");
-    if (pl === "instagram" && h) return [{ label: "ورود", long: "اپ اینستاگرام روی @" + h, url: "instagram://user?username=" + encodeURIComponent(h), fallback: "https://www.instagram.com/" + encodeURIComponent(h) + "/", app: true }];
-    if (pl === "tiktok" && h) return [{ label: "ورود", long: "اپ تیک‌تاک روی @" + h, url: "https://www.tiktok.com/@" + encodeURIComponent(h), app: true }];
+  // v12: the network row (and the analytics header link) open the channel's own main public page, built from the
+  // config.json handle, in a new tab. No admin / dashboard / «ورود» links anymore.
+  function channelUrl(cp, pl, r) {
+    var raw = String((cp.accounts || {})[pl] || "").trim(), h = raw.replace(/^@/, "");
+    if (pl === "instagram") return h ? "https://www.instagram.com/" + encodeURIComponent(h) + "/" : "";
+    if (pl === "tiktok") return h ? "https://www.tiktok.com/@" + encodeURIComponent(h) : "";
+    if (pl === "aparat") return h ? "https://www.aparat.com/" + encodeURIComponent(h) : "";
     if (pl === "youtube") {
+      if (/^UC[\w-]{22}$/.test(h)) return "https://www.youtube.com/channel/" + h;
+      if (h) return "https://www.youtube.com/@" + encodeURIComponent(h);
       var cid = r && /^UC[\w-]{22}$/.test(r.channel_id || "") ? r.channel_id : "";
-      return [{ label: "ورود", long: "اپ YouTube Studio", url: "https://studio.youtube.com/" + (cid ? "channel/" + cid : ""), app: true }];
+      return cid ? "https://www.youtube.com/channel/" + cid : "";
     }
-    return null;
-  }
-  function adminLinks(cp, pl, r) {
-    var m = isMobileUA() && appLinks(cp, pl, r); if (m) return m;
-    if (pl === "instagram") return [
-      { label: "ورود", long: "داشبورد حرفه‌ای اینستاگرام", url: "https://www.instagram.com/accounts/login/?next=%2Faccounts%2Fprofessional_dashboard%2F" },
-      { label: "Meta", long: "Meta Business Suite", url: "https://business.facebook.com/latest/home" }];
-    if (pl === "youtube") {
-      var cid = r && /^UC[\w-]{22}$/.test(r.channel_id || "") ? r.channel_id : "";
-      var studio = "https://studio.youtube.com/" + (cid ? "channel/" + cid : "");
-      return [{ label: "ورود", long: "YouTube Studio", url: "https://accounts.google.com/ServiceLogin?service=youtube&continue=" + encodeURIComponent(studio) }];
-    }
-    if (pl === "aparat") return [{ label: "ورود", long: "داشبورد آپارات", url: "https://www.aparat.com/dashboard" }];
-    if (pl === "tiktok") return [{ label: "ورود", long: "TikTok Studio", url: "https://www.tiktok.com/tiktokstudio" }];
-    return [];
+    return "";
   }
   var NO_ACCESS = "فقط با دسترسی به خود اکانت";
-  var APP_NOTE = "اپ‌ها روی همون حسابی باز می‌شن که الان فعاله؛ اگه حساب دیگه بود، یه بار از منوی اکانت اپ عوضش کن (اینستا تا ۵ اکانت رو با هم نگه می‌داره)";
-  // instagram://… opens the app; when the app is not installed the page stays visible -> the web profile instead
-  document.addEventListener("click", function (e) {
-    var a = e.target && e.target.closest ? e.target.closest("a[data-fallback]") : null; if (!a) return;
-    var fb = a.getAttribute("data-fallback"), left = false;
-    var onHide = function () { left = true; }; document.addEventListener("visibilitychange", onHide, { once: true }); window.addEventListener("pagehide", onHide, { once: true });
-    setTimeout(function () { if (!left && document.visibilityState === "visible") location.href = fb; }, 1600);
-  });
   var PICON = {
     instagram: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="16.9" cy="7.1" r="1" fill="#fff" stroke="none"/></svg>',
     youtube: '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M10 8.5v7l6-3.5z" fill="#fff"/></svg>',
@@ -153,7 +130,6 @@
   var ICON_CHANNELS = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2.5"/><path d="M8 21h8M12 17v4"/><path d="M10 8.5v5l4-2.5z" fill="currentColor"/></svg>';
   var ICON_BELL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>';
   var ICON_CHART = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 20V12M10 20V6M15 20v-9M20 20V4"/></svg>';
-  var ICON_LOGIN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 16l4-4-4-4M14 12H4"/></svg>';
   var ICON_EYE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
   var ICON_EYE_OFF = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
   var ICON_SEND = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>';
@@ -441,23 +417,18 @@
         '<span class="cn"><span class="cname">' + esc(cp.name) + '</span><span class="csub">' + esc(sub) + "</span></span>" +
         '<span class="bell' + (nc ? " on" : "") + '" title="' + (nc ? "لایک یا کامنت جدید" : "چیز جدیدی نیست") + '">' + ICON_BELL + (nc ? "<i>" + esc(compact(nc)) + "</i>" : "") + "</span>" +
         '<span class="pm">' + (open ? "−" : "+") + "</span></button>" +
-        '<a class="pubmini" href="#/publish/' + esc(cp.id) + '" title="انتشار در ' + esc(cp.name) + '" aria-label="انتشار در ' + esc(cp.name) + '">' + ICON_SEND_SM + "</a></div>" +
-        '<p class="app-note">' + esc(APP_NOTE) + "</p>";
+        '<a class="pubmini" href="#/publish/' + esc(cp.id) + '" title="انتشار در ' + esc(cp.name) + '" aria-label="انتشار در ' + esc(cp.name) + '">' + ICON_SEND_SM + "</a></div>";
       if (open) {
         html += '<div class="branches">';
         PLATFORMS.forEach(function (pl) {
           var r = page.platforms[pl];
           var handle = (cp.accounts || {})[pl]; if (!handle) return;
-          var url = (r && r.url) || "#";
+          var url = channelUrl(cp, pl, r) || (r && r.url) || "#";
           var shown = pl === "tiktok" ? "@" + String(handle).replace(/^@/, "") : handle;
           var route = "#/a/" + cp.id + "/" + pl;
           html += '<div class="branch" data-pl="' + pl + '" data-page="' + esc(cp.id) + '">' +
-            '<a class="bnet" href="' + esc(url) + '" target="_blank" rel="noopener" title="صفحه‌ی عمومی ' + PNAME[pl] + '">' + picon(pl) +
+            '<a class="bnet" data-publink="' + pl + '" href="' + esc(url) + '" target="_blank" rel="noopener" title="صفحه‌ی عمومی ' + PNAME[pl] + " " + esc(cp.name) + '">' + picon(pl) +
             '<span class="bt"><b>' + PNAME[pl] + '</b><span class="bh">' + esc(shown) + "</span></span></a>" +
-            adminLinks(cp, pl, r).map(function (x, i) {
-              return '<a class="bbtn adm' + (i ? " alt" : "") + '" data-admin="' + pl + '" href="' + esc(x.url) + '"' + (/^https?:/.test(x.url) && !x.app ? ' target="_blank"' : "") +
-                (x.fallback ? ' data-fallback="' + esc(x.fallback) + '"' : "") + (x.app ? ' data-app="1"' : "") + ' rel="noopener" title="' + esc(x.long) + '">' + (i ? "" : ICON_LOGIN) + "<span>" + esc(x.label) + "</span></a>";
-            }).join("") +
             (pl === "youtube" ? ytBtnHTML(cp.id) : "") +
             ((pl === "instagram" || pl === "tiktok") && bufferCh(cp.id, pl) ? '<span class="bbtn ytc bufok" data-st="ok" title="از طریق بافر وصل است: آمار و انتشار از طریق بافر">متصل (بافر) ✓</span>' :
               (pl === "instagram" || pl === "tiktok") && bufferChAny(cp.id, pl) ? '<span class="bbtn ytc bufok" data-st="mismatch" title="کانال بافر (' + esc(bufferChAny(cp.id, pl).name) + ') با هندل این پیج (' + esc(handle) + ') یکی نیست؛ آمار و انتشار از بافر استفاده نمی‌شود">بافر: هندل فرق دارد</span>' : "") +
@@ -470,7 +441,6 @@
           if (any) html += '<p class="adm-note buf-warn">' + esc(PNAME[pl] + ": کانال بافر @" + any.name + " با هندل پیج (@" + String(cp.accounts[pl]).replace(/^@/, "") + ") یکی نیست؛ آمار و انتشار از بافر استفاده نمی‌شود. اگر همان اکانت است، هندل را در config.json درست کن.") + "</p>";
         });
         if (bufPl.length) html += '<p class="adm-note buf-note">«متصل (بافر) ✓»: ' + bufPl.map(function (pl) { return PNAME[pl]; }).join(" و ") + " این پیج از طریق بافر وصل است — آمار و انتشار از طریق بافر.</p>";
-        html += '<p class="adm-note">«ورود» بخش مدیریت همان اکانت را باز می‌کند. اگر در آن مرورگر چند اکانت وارد شده‌اند، بعد از باز شدن از منوی همان سایت اکانت درست را انتخاب کن.</p>';
         html += "</div>";
       }
       html += "</div>";
@@ -976,8 +946,7 @@
     html += '<div class="ahead" data-page="' + esc(pid) + '" data-platform="' + pl + '">' +
       '<span class="aplat">' + picon(pl) + "</span>" + logoHTML(cp, page, "big", pl) +
       '<div class="at"><h1 id="a-title">' + esc(cp.name) + '</h1><div class="asub"><b class="pname" id="a-platform">' + PNAME[pl] + '</b><span class="ah" dir="ltr">' + esc(pl === "tiktok" ? "@" + String(handle).replace(/^@/, "") : handle) + "</span></div>" +
-      '<div class="alinks"><a href="' + esc(r.url || "#") + '" target="_blank" rel="noopener">صفحه‌ی عمومی ↗</a>' +
-      adminLinks(cp, pl, r).map(function (x) { return '<a class="admin" href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.long) + " ↗</a>"; }).join("") + "</div></div></div>";
+      '<div class="alinks"><a class="publink" data-publink="' + pl + '" href="' + esc(channelUrl(cp, pl, r) || r.url || "#") + '" target="_blank" rel="noopener">صفحه‌ی عمومی ↗</a></div></div></div>';
     var isYt = pl === "youtube";
     if (isYt) html += '<section class="card ytcard" id="yt-conn-card" data-page="' + esc(pid) + '">' + ytConnCardHTML(pid) + "</section>";
 

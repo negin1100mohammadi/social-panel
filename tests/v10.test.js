@@ -477,20 +477,20 @@ z.writestr("readme.txt","brand pack"); z.close()`]);
     await page.click('.cbox[data-id="' + P1 + '"]'); await page.waitForSelector('.branch[data-page="' + P1 + '"]');
     ok(/متصل \(بافر\) ✓/.test(await page.textContent('.branch[data-page="' + P1 + '"][data-pl="instagram"]')) && /متصل \(بافر\) ✓/.test(await page.textContent('.branch[data-page="' + P1 + '"][data-pl="tiktok"]')), "channels: «متصل (بافر) ✓» on Instagram + TikTok");
     ok(!/بافر/.test(await page.textContent('.branch[data-page="' + P1 + '"][data-pl="youtube"]')) && /آمار و انتشار از طریق بافر/.test(await page.textContent('.cgroup[data-page="' + P1 + '"]')), "channels: Buffer line explains what it enables");
-    ok((await page.getAttribute('.branch[data-page="' + P1 + '"][data-pl="instagram"] a.adm', "href")).startsWith("https://www.instagram.com/accounts/login"), "desktop «ورود» keeps the web dashboard");
-    ok((await page.$$(".cgroup .app-note")).length === 5 && /اینستا تا ۵ اکانت/.test(await page.textContent(".app-note")), "help line under each brand box");
-    // phone: native apps
+    ok((await page.getAttribute('.branch[data-page="' + P1 + '"][data-pl="instagram"] a.bnet', "href")) === "https://www.instagram.com/" + config.pages[0].accounts.instagram + "/", "desktop: Instagram row opens the public page");
+    ok(!(await page.$(".cgroup .app-note")) && !(await page.$("a.adm, a.chlink, a[data-admin]")) && !/ورود|Meta/.test(await page.textContent("#clist")), "no «ورود» / Meta / admin links, no native-app note (v12)");
+    // phone: the same public pages (the OS may hand them to the native app), still in a new tab
     {
       const I = await device(browser, R, "iphone", { pw: P });
       await nav(I.page, base, "#/channels", ".cgroup");
       await I.page.click('.cbox[data-id="' + P1 + '"]'); await I.page.waitForSelector('.branch[data-page="' + P1 + '"]');
-      const hrefs = await I.page.$$eval('.branch[data-page="' + P1 + '"] a.adm', (a) => a.map((x) => [x.closest(".branch").getAttribute("data-pl"), x.getAttribute("href"), x.getAttribute("data-fallback"), x.getAttribute("target")]));
+      const hrefs = await I.page.$$eval('.branch[data-page="' + P1 + '"] a.bnet', (a) => a.map((x) => [x.closest(".branch").getAttribute("data-pl"), x.getAttribute("href"), x.getAttribute("data-fallback"), x.getAttribute("target")]));
       const H = (pl) => hrefs.find((h) => h[0] === pl);
-      const ig = config.pages[0].accounts.instagram, tt = String(config.pages[0].accounts.tiktok).replace(/^@/, "");
-      ok(H("instagram")[1] === "instagram://user?username=" + ig && H("instagram")[2] === "https://www.instagram.com/" + ig + "/" && !H("instagram")[3], `iPhone: Instagram «ورود» opens the app (${H("instagram")})`);
-      ok(H("tiktok")[1] === "https://www.tiktok.com/@" + tt, `iPhone: TikTok universal link (${H("tiktok")})`);
-      ok(/^https:\/\/studio\.youtube\.com\//.test(H("youtube")[1]) && !/accounts\.google/.test(H("youtube")[1]), `iPhone: YouTube Studio app link (${H("youtube")})`);
-      ok(/aparat\.com\/dashboard/.test(H("aparat")[1]), "iPhone: Aparat unchanged");
+      const acc = config.pages[0].accounts, nh = (v) => String(v).replace(/^@/, "");
+      ok(H("instagram")[1] === "https://www.instagram.com/" + nh(acc.instagram) + "/" && !H("instagram")[2] && H("instagram")[3] === "_blank", `iPhone: Instagram public page (${H("instagram")})`);
+      ok(H("tiktok")[1] === "https://www.tiktok.com/@" + nh(acc.tiktok) && H("tiktok")[3] === "_blank", `iPhone: TikTok public page (${H("tiktok")})`);
+      ok(H("youtube")[1] === "https://www.youtube.com/@" + nh(acc.youtube) && H("youtube")[3] === "_blank", `iPhone: YouTube channel page (${H("youtube")})`);
+      ok(H("aparat")[1] === "https://www.aparat.com/" + nh(acc.aparat) && H("aparat")[3] === "_blank", `iPhone: Aparat channel page (${H("aparat")})`);
       await noOverflow(I.page, "375 iphone channels");
       await I.ctx.close();
     }
