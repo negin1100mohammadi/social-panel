@@ -21,7 +21,7 @@
   var MEDIA_BRANCH = "media-upload";
   var MAX_UPLOAD = 70 * 1024 * 1024; // GitHub blob API limit is 100 MB after base64
 
-  var SP_VERSION = "v20";
+  var SP_VERSION = "v21";
   window.SP_VERSION = SP_VERSION;
   var state = { config: null, latest: null, history: null, postsHist: null, error: null, busy: false, progress: "", syncAvailable: false, encCreated: null, chOrder: null };
   var app = document.getElementById("app");
@@ -365,36 +365,36 @@
     var total = 0, ts = tokenState();
     state.config.pages.forEach(function (cp) { total += newCount(cp, pageData(cp)); });
     html += '<div class="boxes">';
-    html += '<a class="vault hb hb-purple" href="' + VAULT_URL + '" rel="noopener">' +
+    html += '<a class="vault hb hb-1" href="' + VAULT_URL + '" rel="noopener">' +
       '<span class="vi">' + ICON_LOCK + '</span><span><div class="vt">پسوورد منیجر</div>' +
       '<div class="vs">باز کردن Vaultwarden</div></span><span class="arrow">↗</span></a>';
-    html += '<a class="chbox hb hb-white" href="#/channels">' +
+    html += '<a class="chbox hb hb-2" href="#/channels">' +
       '<span class="vi">' + ICON_CHANNELS + '</span><span><div class="vt">کانال‌ها</div>' +
       '<div class="vs">' + fa(state.config.pages.length) + " کانال</div></span>" +
       (total ? '<span class="bell on">' + ICON_BELL + '<i>' + esc(compact(total)) + "</i></span>" : "") +
       '<span class="arrow">←</span></a>';
-    html += '<a class="brainbox hb hb-lilac" href="#/brain" id="brainbox">' +
+    html += '<a class="brainbox hb hb-3" href="#/brain" id="brainbox">' +
       '<span class="vi">' + ICON_BRAIN + '</span><span><div class="vt">مغز متفکر</div>' +
       '<div class="vs">ایده، سناریو و اسکریپت هر پیج</div></span>' +
       '<span class="arrow">←</span></a>';
-    html += '<a class="galbox hb hb-gray" href="#/gallery" id="galbox">' +
+    html += '<a class="galbox hb hb-4" href="#/gallery" id="galbox">' +
       '<span class="vi">' + ICON_GALLERY + '</span><span><div class="vt">گالری محتوا</div>' +
       '<div class="vs">اسلاید، ریل، استوری و ویدئوی آماده</div></span>' +
       '<span class="arrow">←</span></a>';
-    html += '<a class="pubbox hb hb-purple" href="#/publish" id="pubbox">' +
+    html += '<a class="pubbox hb hb-5" href="#/publish" id="pubbox">' +
       '<span class="vi">' + ICON_SEND + '</span><span><div class="vt">انتشار محتوا</div>' +
       '<div class="vs">' + esc(ts.has ? "آپلود ویدیو یا عکس، انتشار و زمان‌بندی" : ts.locked ? "برای فعال‌سازی اتصال، رمز پنل را یک بار وارد کن" : "اول توکن گیت‌هاب را در تنظیمات بگذار") + "</div></span>" +
       '<span class="arrow">←</span></a>';
-    html += '<a class="toolbox hb hb-white" href="#/tools" id="toolbox">' +
+    html += '<a class="toolbox hb hb-6" href="#/tools" id="toolbox">' +
       '<span class="vi">' + ICON_TOOLS + '</span><span><div class="vt">ابزارها</div>' +
       '<div class="vs">هوش‌های مصنوعی برای نگین و امیرحسین</div></span>' +
       '<span class="arrow">←</span></a>';
-    html += '<a class="todobox hb hb-lilac" href="#/todo" id="todobox">' +
+    html += '<a class="todobox hb hb-7" href="#/todo" id="todobox">' +
       '<span class="vi">' + ICON_TODO + '</span><span><div class="vt">To do</div>' +
       '<div class="vs">کارها، چک‌ها و کم‌وکاستی‌هایی که باید رفع کنیم</div></span>' +
       '<span class="arrow">←</span></a>';
     html += "</div>";
-    html += '<a class="setrow hb-gray" href="#/settings">' + ICON_GEAR + "<span>تنظیمات</span><em id=\"tok-pill\" data-state=\"" + ts.state + "\">" + esc(ts.label) + "</em></a>";
+    html += '<a class="setrow hb-8" href="#/settings">' + ICON_GEAR + "<span>تنظیمات</span><em id=\"tok-pill\" data-state=\"" + ts.state + "\">" + esc(ts.label) + "</em></a>";
     html += '<button class="logout" id="logout">خروج از پنل</button>';
     app.innerHTML = html;
     bindTopbar();

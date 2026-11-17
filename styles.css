@@ -1183,3 +1183,23 @@ a.tbox.guidebtn .gq { width: 22px; height: 22px; border-radius: 50%; background:
 .tchk input:checked + span::after { content: "✓"; color: #fff; display: grid; place-items: center; height: 100%; font-size: 13px; font-weight: 800; }
 .tdel { flex: none; border: 0; background: transparent; color: var(--faint); font-size: 18px; line-height: 1; cursor: pointer; padding: 2px 4px; }
 .tempty { font-size: 12.5px; color: var(--faint); padding: 8px; text-align: center; }
+
+/* v21: no repeated colours — one shade per box, deep purple → lilac → light gray → white */
+.hb.hb-1 { background: linear-gradient(135deg, #5b21b6, #6d28d9); color: #fff; border: 0; }
+.hb.hb-2 { background: linear-gradient(135deg, #8b5cf6, #a78bfa); color: #fff; border: 0; }
+.hb.hb-3 { background: linear-gradient(135deg, #b48bd6, #c4a1e0); color: #fff; border: 0; }
+.hb.hb-4 { background: #dcc3e6; color: #3b1f47; border: 1px solid #cfb0dc; }
+.hb.hb-5 { background: #f1e6f6; color: #4a2a55; border: 1px solid #e4d1ec; }
+.hb.hb-6 { background: #ebe8f1; color: #2a2338; border: 1px solid #ddd8e7; }
+.hb.hb-7 { background: #eef0f3; color: #1f2937; border: 1px solid #dfe3e8; }
+.setrow.hb-8 { background: #ffffff; border: 1px solid var(--line); }
+.hb.hb-1 .vi, .hb.hb-2 .vi, .hb.hb-3 .vi { background: rgba(255,255,255,.2) !important; color: #fff !important; }
+.hb.hb-4 .vi { background: #a855f7 !important; color: #fff !important; }
+.hb.hb-5 .vi { background: #C8A2C8 !important; color: #fff !important; }
+.hb.hb-6 .vi { background: #a39bb5 !important; color: #fff !important; }
+.hb.hb-7 .vi { background: #9ca3af !important; color: #fff !important; }
+[data-theme="dark"] .hb.hb-4 { background: #4a3357; color: #f3e6f8; border-color: #5d4370; }
+[data-theme="dark"] .hb.hb-5 { background: #362a40; color: #efe3f5; border-color: #4a3a57; }
+[data-theme="dark"] .hb.hb-6 { background: #2d2a36; color: #e7e4ef; border-color: #3d3948; }
+[data-theme="dark"] .hb.hb-7 { background: #2a2c33; color: #e5e7eb; border-color: #3a3d46; }
+[data-theme="dark"] .setrow.hb-8 { background: var(--card); }
