@@ -21,7 +21,7 @@
   var MEDIA_BRANCH = "media-upload";
   var MAX_UPLOAD = 70 * 1024 * 1024; // GitHub blob API limit is 100 MB after base64
 
-  var SP_VERSION = "v12";
+  var SP_VERSION = "v13";
   window.SP_VERSION = SP_VERSION;
   var state = { config: null, latest: null, history: null, postsHist: null, error: null, busy: false, progress: "", syncAvailable: false, encCreated: null, chOrder: null };
   var app = document.getElementById("app");
@@ -2789,10 +2789,15 @@
     { k: "hashtags", t: "هشتگ‌ها", f: [["hashtags", "هشتگ‌ها", "list"]] },
     { k: "ctas", t: "CTAها", f: [["ctas", "CTAها", "list"]] },
     { k: "refs", t: "رقبا / مرجع‌ها", f: [["competitors", "رقبا / مرجع‌ها", "list"]] },
-    { k: "ai", t: "نکات برای ابزارهای AI", f: [["ai_notes", "System prompt آماده‌ی کپی", "text"]] }
+    { k: "ai", t: "نکات برای ابزارهای AI", f: [["ai_notes", "System prompt آماده‌ی کپی", "text"]] },
+    // v13: everything from the team's master kit that fits no other section (nothing is dropped). Fields marked "nobrief"
+    // stay out of «کپی کل شناسنامه» (accounts, status, history, guide files are long and not brand identity).
+    { k: "other", t: "سایر (از کیت)", f: [["other_rules", "قوانین تولید و اجرا", "text"], ["other_accounts", "حساب‌ها و پلتفرم‌ها", "text", "", "nobrief"],
+      ["other_status", "وضعیت، کارهای باز و تصمیم‌های منتظر", "text", "", "nobrief"], ["other_history", "تاریخچه و پیوست‌ها", "text", "", "nobrief"],
+      ["other_files", "متن فایل‌های راهنمای کیت", "text", "", "nobrief"]] }
   ];
-  var ID_TYPE = {}, ID_LABEL = {};
-  ID_SECTIONS.forEach(function (s) { s.f.forEach(function (f) { ID_TYPE[f[0]] = f[2]; ID_LABEL[f[0]] = f[1]; }); });
+  var ID_TYPE = {}, ID_LABEL = {}, ID_NOBRIEF = {};
+  ID_SECTIONS.forEach(function (s) { s.f.forEach(function (f) { ID_TYPE[f[0]] = f[2]; ID_LABEL[f[0]] = f[1]; if (f[4] === "nobrief") ID_NOBRIEF[f[0]] = 1; }); });
   var IDA_KIND = { logo: "لوگو", font: "فونت", image: "تصویر", zip: "ZIP", other: "فایل" };
   var ICON_FILE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
   var v10ui = { open: {} };
@@ -2819,18 +2824,35 @@
     if (!m || !m.id || d.hark_seen[m.id]) return d;
     d.hark_seen[m.id] = now;
     var seen = Object.keys(d.hark_seen); if (seen.length > 300) seen.sort(function (a, b) { return String(d.hark_seen[a]).localeCompare(String(d.hark_seen[b])); }).slice(0, seen.length - 300).forEach(function (k) { delete d.hark_seen[k]; });
-    var fs = m.fields || {};
+    var fs = m.fields || {}, team = m.team === true;
     Object.keys(fs).forEach(function (k) {
       var type = ID_TYPE[k]; if (!type) return;
       var raw = fs[k], wrapped = !!(raw && typeof raw === "object" && !Array.isArray(raw) && ("v" in raw || "value" in raw));
       var val = idNorm(type, wrapped ? ("v" in raw ? raw.v : raw.value) : raw);
       if (idEmpty(val)) return;
       var at = (wrapped && raw.at) || m.created_at || now, cur = d.fields[k];
+      if (team) {
+        // v13: team-approved content imported by Hark from the team's own kit (e.g. Pages.zip). It replaces Hark's drafts and
+        // earlier kit imports, but never a field the team itself edited or approved in the panel.
+        if (cur && !idEmpty(cur.v) && cur.src !== "hark" && !cur.kit) return;
+        if (cur && cur.kit && !idEmpty(cur.v) && (tsOf(cur.at) || 0) >= (tsOf(at) || 0)) return;
+        d.fields[k] = { v: val, at: at, by: String(m.by || "kit"), src: "user", draft: false, kit: String(m.label || "از کیت تیم"), note: wrapped && raw.note ? String(raw.note) : "" };
+        return;
+      }
       if (cur && !idEmpty(cur.v) && (tsOf(cur.at) || 0) >= (tsOf(at) || 0)) return;
       d.fields[k] = { v: val, at: at, by: "hark", src: "hark", draft: !(wrapped && raw.draft === false), label: String(m.label || "پیشنهاد هارک — تأیید کن"), note: wrapped && raw.note ? String(raw.note) : "" };
     });
+    // v13: encrypted files Hark already uploaded to the identity-assets branch (each with its own key) join the brand's files
+    (Array.isArray(m.assets) ? m.assets : []).forEach(function (a) {
+      if (!a || !a.id || !a.sha || !a.k || !a.iv || !/^[\w-]+$/.test(a.id) || findBy(d.assets, "id", a.id)) return;
+      d.assets.push({ id: a.id, name: String(a.name || a.id), type: String(a.type || ""), size: +a.size || 0, kind: IDA_KIND[a.kind] ? a.kind : "other", sha: String(a.sha),
+        iv: String(a.iv), k: String(a.k), branch: IDASSET_BRANCH, path: pidOf(a.path, a.id), thumb: /^data:image\/(png|jpeg);base64,/.test(a.thumb || "") ? a.thumb : "",
+        zip: Array.isArray(a.zip) ? a.zip.slice(0, 2000) : null, zip_error: false, at: a.at || m.created_at || now, by: String(a.by || m.by || "kit"), kit: m.team ? String(m.label || "") : "" });
+    });
     return d;
   }
+  function pidOf(path, id) { return /^[\w-]+\/[\w-]+\.bin$/.test(path || "") ? path : ""; }
+  function idWho(x) { return x.kit ? x.kit : x.src === "hark" ? "هارک" : (AUTHORS[x.by] || x.by || ""); }
   function idValText(type, v) {
     if (type === "list") return v.map(function (x) { return "- " + x; }).join("\n");
     if (type === "colors") return v.map(function (c) { return "- " + (c.name ? c.name + ": " : "") + c.hex; }).join("\n");
@@ -2846,13 +2868,15 @@
     ID_SECTIONS.forEach(function (s) {
       var parts = [];
       s.f.forEach(function (f) {
-        var x = d.fields[f[0]]; if (!x || idEmpty(x.v)) return;
+        var x = d.fields[f[0]]; if (!x || idEmpty(x.v) || ID_NOBRIEF[f[0]]) return;
         var t = idValText(f[2], x.v);
         if (s.f.length === 1) parts.push(t);
         else parts.push(f[1] + ":" + (t.indexOf("\n") >= 0 || f[2] === "list" ? "\n" + t : " " + t));
       });
       if (parts.length) out.push("", "## " + s.t, parts.join("\n"));
     });
+    var held = Object.keys(ID_NOBRIEF).filter(function (k) { var x = d.fields[k]; return x && !idEmpty(x.v); });
+    if (held.length) out.push("", "(در پنل، بخش «سایر (از کیت)»: " + held.map(function (k) { return ID_LABEL[k]; }).join("، ") + ")");
     var files = d.assets.map(function (a) { return "- " + (IDA_KIND[a.kind] || "فایل") + ": " + a.name; });
     if (files.length) out.push("", "## فایل‌های برند (در پنل)", files.join("\n"));
     return out.join("\n").trim();
@@ -3034,7 +3058,7 @@
     var lab = '<div class="idf-h"><label for="idf-' + k + '">' + esc(f[1]) + "</label>" +
       (x && x.src === "hark" ? '<span class="hkbadge">' + esc(x.label || "پیشنهاد هارک — تأیید کن") + (x.draft ? " · پیش‌نویس" : "") + '</span><button class="go xs" type="button" data-act="approve" data-ak="' + k + '">تأیید</button>' : "") + "</div>";
     if (type === "line") h = '<input id="idf-' + k + '" type="text" data-k="' + k + '" dir="auto" value="' + esc(v || "") + '">';
-    else if (type === "text") h = '<textarea id="idf-' + k + '" data-k="' + k + '" dir="auto" rows="' + (k === "ai_notes" || k === "base_prompt" ? 7 : 4) + '">' + esc(v || "") + "</textarea>";
+    else if (type === "text") h = '<textarea id="idf-' + k + '" data-k="' + k + '" dir="auto" rows="' + (/^other_/.test(k) ? 10 : k === "ai_notes" || k === "base_prompt" ? 7 : 4) + '">' + esc(v || "") + "</textarea>";
     else if (type === "list") h = '<textarea id="idf-' + k + '" data-k="' + k + '" dir="auto" rows="5" placeholder="' + esc(hint || "هر مورد یک خط") + '">' + esc((v || []).join("\n")) + "</textarea>";
     else if (type === "colors") {
       h = '<div class="swatches">' + (v || []).map(function (c) { return '<span style="background:' + esc(c.hex) + '" title="' + esc(c.name || c.hex) + '"></span>'; }).join("") + "</div>" +
@@ -3043,7 +3067,7 @@
     } else if (type === "chars") {
       h = '<div class="chars" data-k="' + k + '">' + (v || []).map(charHTML).join("") + "</div>" + '<button class="ghost sm" type="button" data-act="chadd" data-k="' + k + '">+ افزودن کاراکتر</button>';
     }
-    var meta = x && x.at ? '<p class="idmeta">' + (x.src === "hark" ? "هارک" : esc(AUTHORS[x.by] || x.by || "")) + " · " + esc(fmtShort(x.at)) + (x.from_hark ? " · از پیشنهاد هارک" : "") + (x.note ? " · " + esc(x.note) : "") + "</p>" : "";
+    var meta = x && x.at ? '<p class="idmeta' + (x.kit ? " kit" : "") + '">' + esc(idWho(x)) + " · " + esc(fmtShort(x.at)) + (x.from_hark ? " · از پیشنهاد هارک" : "") + (x.note ? " · " + esc(x.note) : "") + "</p>" : "";
     return '<div class="idf' + (x && x.src === "hark" ? " hk" : "") + '" data-fk="' + k + '">' + lab + h + meta + "</div>";
   }
   function colorRowHTML(c) {
@@ -3078,7 +3102,7 @@
     var img = a.kind === "logo" || a.kind === "image";
     return '<div class="asset" data-aid="' + esc(a.id) + '">' +
       (a.thumb ? '<img class="athumb" alt="" src="' + esc(a.thumb) + '">' : '<span class="athumb ic">' + (a.kind === "zip" ? "ZIP" : a.kind === "font" ? "Aa" : ICON_FILE) + "</span>") +
-      '<div class="ainfo"><b dir="auto">' + esc(a.name) + "</b><small>" + esc(IDA_KIND[a.kind] || "فایل") + " · " + esc(mb(a.size)) + " · " + esc(AUTHORS[a.by] || "") + " " + esc(fmtShort(a.at)) +
+      '<div class="ainfo"><b dir="auto">' + esc(a.name) + "</b><small>" + esc(IDA_KIND[a.kind] || "فایل") + " · " + esc(mb(a.size)) + " · " + esc(a.kit || AUTHORS[a.by] || "") + " " + esc(fmtShort(a.at)) +
       (a.zip ? " · " + fa(a.zip.length) + " فایل داخل ZIP" : "") + "</small>" +
       '<div class="iact">' + (img ? '<button class="ghost sm" data-act="aview">نمایش</button>' : "") + (a.kind === "zip" || a.zip ? '<button class="ghost sm" data-act="azip">محتوای ZIP</button>' : "") +
       '<button class="ghost sm" data-act="adl">دانلود</button><button class="ghost sm danger" data-act="adel">حذف</button></div></div>' +

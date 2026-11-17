@@ -256,7 +256,7 @@ z.writestr("readme.txt","brand pack"); z.close()`]);
     ok(JSON.stringify(u.cols) === JSON.stringify([{ name: "", hex: "#aabbcc" }, { name: "بنفش", hex: "#7c3aed" }]), "colors normalised to #rrggbb, invalid dropped");
     ok(u.newer === "hark-new" && u.final === "hark-new", "identity merge: a newer Hark value replaces an older one; idempotent by message id");
     ok(/شناسنامه‌ی برند «Titan Station»/.test(u.brief) && /## اسلوگان\nhark-new/.test(u.brief) && /بنفش: #7c3aed/.test(u.brief), "identityBrief: clean Persian brief");
-    ok(u.n === 19, "19 identity sections");
+    ok(u.n === 20, "20 identity sections");
     ok(u.hook === "H-new" && u.ed === "amirhossein" && u.rev.length === 1 && /H-old/.test(u.rev[0].prev_text) && u.rev[0].note === "n1", "applyEdit keeps who/when/note/previous text");
 
     // ---------------------------------------------- Hark -> panel identity drafts (bridge -> browser)
@@ -274,7 +274,7 @@ z.writestr("readme.txt","brand pack"); z.close()`]);
     ok(outFiles(R, P1).length === 0, "identity page merged + deleted the outbox file");
     ok(/پیشنهاد هارک برای تأیید/.test(await page.textContent('#id-domains [data-page="' + P1 + '"]')), "brand box shows pending Hark drafts");
     await page.click('#id-domains [data-page="' + P1 + '"]'); await page.waitForSelector("#idsecs");
-    ok((await page.$$("#idsecs .idsec")).length === 19, "brand page: 19 sections");
+    ok((await page.$$("#idsecs .idsec")).length === 20, "brand page: 20 sections");
     ok(/پیشنهاد هارک — تأیید کن/.test(await page.textContent("#sec-slogan")) && await page.$("#sec-slogan .hkchip"), "Hark field marked «پیشنهاد هارک — تأیید کن»");
     const vraw = R.text("vault/identity-" + P1 + ".enc.json");
     ok(isEncFile(vraw) && !/ذهن|تایتان/.test(vraw), "identity stored encrypted in vault/identity-<page>.enc.json");
