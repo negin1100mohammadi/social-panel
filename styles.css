@@ -1203,3 +1203,6 @@ a.tbox.guidebtn .gq { width: 22px; height: 22px; border-radius: 50%; background:
 [data-theme="dark"] .hb.hb-6 { background: #2d2a36; color: #e7e4ef; border-color: #3d3948; }
 [data-theme="dark"] .hb.hb-7 { background: #2a2c33; color: #e5e7eb; border-color: #3a3d46; }
 [data-theme="dark"] .setrow.hb-8 { background: var(--card); }
+.tfilter { margin-bottom: 12px; }
+.tf { font-style: normal; padding: 0 6px; border-radius: 6px; margin-inline-end: 6px; background: #ebe8f1; color: #4a2a55; }
+[data-theme="dark"] .tf { background: #3d3948; color: #efe3f5; }
