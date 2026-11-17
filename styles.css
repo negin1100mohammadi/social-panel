@@ -1069,3 +1069,4 @@ a.tbox.idbtn:active { transform: scale(.96); }
 .app-note { font-size: 11px; color: var(--muted); line-height: 1.8; margin: 6px 6px 2px; }
 .kpis.bufx { margin-top: 8px; }
 .kpis.bufx .bufsrc, .bufsrc { grid-column: 1 / -1; font-size: 11.5px; color: var(--muted); margin: 2px 4px 0; }
+.buf-warn { color: var(--warn) !important; }

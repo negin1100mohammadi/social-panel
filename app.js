@@ -459,11 +459,16 @@
                 (x.fallback ? ' data-fallback="' + esc(x.fallback) + '"' : "") + (x.app ? ' data-app="1"' : "") + ' rel="noopener" title="' + esc(x.long) + '">' + (i ? "" : ICON_LOGIN) + "<span>" + esc(x.label) + "</span></a>";
             }).join("") +
             (pl === "youtube" ? ytBtnHTML(cp.id) : "") +
-            ((pl === "instagram" || pl === "tiktok") && bufferCh(cp.id, pl) ? '<span class="bbtn ytc bufok" data-st="ok" title="از طریق بافر وصل است: آمار و انتشار از طریق بافر">متصل (بافر) ✓</span>' : "") +
+            ((pl === "instagram" || pl === "tiktok") && bufferCh(cp.id, pl) ? '<span class="bbtn ytc bufok" data-st="ok" title="از طریق بافر وصل است: آمار و انتشار از طریق بافر">متصل (بافر) ✓</span>' :
+              (pl === "instagram" || pl === "tiktok") && bufferChAny(cp.id, pl) ? '<span class="bbtn ytc bufok" data-st="mismatch" title="کانال بافر (' + esc(bufferChAny(cp.id, pl).name) + ') با هندل این پیج (' + esc(handle) + ') یکی نیست؛ آمار و انتشار از بافر استفاده نمی‌شود">بافر: هندل فرق دارد</span>' : "") +
             '<a class="bbtn chartbtn" data-route="' + esc(route.slice(2)) + '" href="' + esc(route) + '" title="آمار ' + PNAME[pl] + " " + esc(cp.name) + '" aria-label="آمار ' + PNAME[pl] + " " + esc(cp.name) + '">' + ICON_CHART + "</a>" +
             "</div>";
         });
         var bufPl = ["instagram", "tiktok"].filter(function (pl) { return (cp.accounts || {})[pl] && bufferCh(cp.id, pl); });
+        ["instagram", "tiktok"].forEach(function (pl) {
+          var any = (cp.accounts || {})[pl] && !bufferCh(cp.id, pl) && bufferChAny(cp.id, pl);
+          if (any) html += '<p class="adm-note buf-warn">' + esc(PNAME[pl] + ": کانال بافر @" + any.name + " با هندل پیج (@" + String(cp.accounts[pl]).replace(/^@/, "") + ") یکی نیست؛ آمار و انتشار از بافر استفاده نمی‌شود. اگر همان اکانت است، هندل را در config.json درست کن.") + "</p>";
+        });
         if (bufPl.length) html += '<p class="adm-note buf-note">«متصل (بافر) ✓»: ' + bufPl.map(function (pl) { return PNAME[pl]; }).join(" و ") + " این پیج از طریق بافر وصل است — آمار و انتشار از طریق بافر.</p>";
         html += '<p class="adm-note">«ورود» بخش مدیریت همان اکانت را باز می‌کند. اگر در آن مرورگر چند اکانت وارد شده‌اند، بعد از باز شدن از منوی همان سایت اکانت درست را انتخاب کن.</p>';
         html += "</div>";
@@ -3449,10 +3454,17 @@
   }
   var MANUAL_LABEL = "اتصال برقرار نیست";
   // Instagram/TikTok through Buffer: data/buffer.json (buffer-sync.yml) lists the page's connected channels
-  function bufferCh(pid, pl) {
+  // only a channel whose Buffer name is the page's own handle counts (same safety rule as publish.py)
+  function bufferChAny(pid, pl) {
     var p = state.buffer && state.buffer.pages && state.buffer.pages[pid];
     if (!p || p.status !== "ok") return null;
     return (p.channels || []).filter(function (c) { return c.service === pl; })[0] || null;
+  }
+  function bufferCh(pid, pl) {
+    var c = bufferChAny(pid, pl), cp = cpById(pid); if (!c || !cp) return null;
+    var want = String((cp.accounts || {})[pl] || "").replace(/^@/, "").toLowerCase();
+    var got = [c.name, c.displayName].map(function (x) { return String(x || "").replace(/^@/, "").toLowerCase(); });
+    return !want || got.indexOf(want) >= 0 ? c : null;
   }
   // one Persian line: why this channel can't publish automatically + what fixes it (the real cause, not a stale message)
   function connWhy(pid, pl, r) {
