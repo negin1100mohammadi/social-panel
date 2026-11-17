@@ -21,7 +21,7 @@
   var MEDIA_BRANCH = "media-upload";
   var MAX_UPLOAD = 70 * 1024 * 1024; // GitHub blob API limit is 100 MB after base64
 
-  var SP_VERSION = "v15";
+  var SP_VERSION = "v16";
   window.SP_VERSION = SP_VERSION;
   var state = { config: null, latest: null, history: null, postsHist: null, error: null, busy: false, progress: "", syncAvailable: false, encCreated: null, chOrder: null };
   var app = document.getElementById("app");
@@ -982,6 +982,32 @@
     });
     return { runs: [t0], posts: posts };
   }
+  // Buffer only knows posts sent through Buffer and refreshes their stats about daily. The hourly public reading
+  // (likes/comments of the latest posts, incl. ones posted straight in the app) is merged in: posts Buffer lacks are
+  // added, and for posts both have, likes/comments come from the public series while views stay Buffer's.
+  function postKey(u) { var m = /instagram\.com\/(?:[^/]+\/)?(?:p|reel|reels|tv)\/([\w-]+)/.exec(u || "") || /\/video\/(\d+)/.exec(u || ""); return m ? m[1] : null; }
+  function mergePH(bp, pp) {
+    if (!pp || !pp.posts.length) return bp;
+    if (!bp || !bp.posts.length) return pp;
+    var byKey = {}; pp.posts.forEach(function (p) { var k = postKey(p.url) || p.id; byKey[k] = p; });
+    var used = {};
+    var posts = bp.posts.map(function (b) {
+      var k = postKey(b.url), q = k && byKey[k]; if (!q) return b;
+      used[k] = 1;
+      var ts = {}; b.pts.concat(q.pts).forEach(function (x) { ts[x.t] = 1; });
+      var first = Math.min(b.first, q.first);
+      var pts = Object.keys(ts).map(Number).sort(function (x, y) { return x - y; }).map(function (t) {
+        var bv = t >= b.first ? valAt(b, "v", t) : undefined, ql = t >= q.first ? valAt(q, "l", t) : undefined, qc = t >= q.first ? valAt(q, "c", t) : undefined;
+        var bl = t >= b.first ? valAt(b, "l", t) : undefined, bc = t >= b.first ? valAt(b, "c", t) : undefined;
+        return { t: t, v: bv == null ? null : bv, l: ql != null ? ql : (q.first > t && bl != null ? bl : null), c: qc != null ? qc : (q.first > t && bc != null ? bc : null) };
+      });
+      return { id: b.id, title: b.title || q.title, url: b.url || q.url, thumb: q.thumb || b.thumb, published: b.published != null ? b.published : q.published,
+        first: first, last: Math.max(b.last || 0, q.last || 0) || null, pts: pts };
+    });
+    pp.posts.forEach(function (p) { var k = postKey(p.url) || p.id; if (!used[k]) posts.push(p); });
+    var rs = {}; bp.runs.concat(pp.runs).forEach(function (t) { rs[t] = 1; });
+    return { runs: Object.keys(rs).map(Number).sort(function (x, y) { return x - y; }), posts: posts };
+  }
   function bufNote(B) { return "(از بافر، به‌روز: " + (B.updated != null ? fmtShort(new Date(B.updated).toISOString()) : "—") + ")"; }
   function analyticsView(pid, pl, nowArg) {
     var cp = cpById(pid);
@@ -1026,7 +1052,7 @@
     bindTopbar();
     document.getElementById("back").onclick = function () { location.hash = "#/channels"; };
 
-    var ph = B ? bufferPH(pid, pl, B) : loadPH(pid, pl);
+    var ph = B ? mergePH(bufferPH(pid, pl, B), loadPH(pid, pl)) : loadPH(pid, pl);
     var hasPostLists = ph && ph.posts.length;
     var A = { ph: ph, noPosts: null };
     if (!hasPostLists && r.posts === 0 && pl !== "tiktok") A.noPosts = "هنوز " + POSTS_LABEL[pl] + "ی در این کانال منتشر نشده.";
@@ -1050,7 +1076,7 @@
         kpi(FOLLOW_LABEL[pl], fa(r.followers)) +
         kpi("کل " + POSTS_LABEL[pl] + "‌ها", fa(r.posts)) +
         kpi(pl === "tiktok" ? "کل لایک‌ها" : "کل بازدیدها", fa(pl === "tiktok" ? r.total_likes : r.total_views), "", (pl === "tiktok" ? r.total_likes : r.total_views) == null ? NO_ACCESS : "") + "</div>";
-      b += summaryHTML(A, pl, rg, A.W, B ? '<div class="chan-total bufsrc" id="buf-sum">' + esc("بازدید تازه از اندازه‌گیری‌های بافر " + bufNote(B) + (A.ph.runs.length < 2 ? " — تا دو اندازه‌گیری ثبت نشده، برای پست‌های منتشرشده در این بازه کل بازدیدشان حساب می‌شود." : "")) + "</div>" : channelTotalHTML(series, pl, r, rg, now));
+      b += summaryHTML(A, pl, rg, A.W, B ? '<div class="chan-total bufsrc" id="buf-sum">' + esc("بازدید از بافر (فقط پست‌هایی که با بافر منتشر شده‌اند، حدوداً روزانه)؛ لایک و کامنت از صفحه‌ی عمومی، ساعتی " + bufNote(B) + (A.ph.runs.length < 2 ? " — تا دو اندازه‌گیری ثبت نشده، برای پست‌های منتشرشده در این بازه کل بازدیدشان حساب می‌شود." : "")) + "</div>" : channelTotalHTML(series, pl, r, rg, now));
       if (!A.noPosts) { // without per-post data the summary already says so; no empty chart/list boxes
         b += trendHTML(A, pl, rg, pref, now);
         b += "<h3 id=\"plist-h\">" + esc(POSTS_LABEL[pl] + "‌ها در " + rg.label + " — به ترتیب " + KNAME[A.W.sortKey] + " تازه") + "</h3>";
