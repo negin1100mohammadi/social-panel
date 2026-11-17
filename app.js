@@ -21,7 +21,7 @@
   var MEDIA_BRANCH = "media-upload";
   var MAX_UPLOAD = 70 * 1024 * 1024; // GitHub blob API limit is 100 MB after base64
 
-  var SP_VERSION = "v10";
+  var SP_VERSION = "v11";
   window.SP_VERSION = SP_VERSION;
   var state = { config: null, latest: null, history: null, postsHist: null, error: null, busy: false, progress: "", syncAvailable: false, encCreated: null, chOrder: null };
   var app = document.getElementById("app");
@@ -315,7 +315,7 @@
     bindTopbar();
   }
   function onFormPage() { return /^#\/(publish|settings|brain|gallery|identity)/.test(location.hash); }
-  function rerenderSafe() { if (onFormPage() && document.getElementById("topbar") && authed()) redrawTopbar(); else render(); }
+  function rerenderSafe() { if (onFormPage() && document.getElementById("topbar") && authed()) { redrawTopbar(); updateAccList(); } else render(); }
   function setProgress(msg) {
     state.progress = msg;
     var el = document.getElementById("progtext"); if (el) el.textContent = msg;
@@ -1468,18 +1468,69 @@
     var acc = document.getElementById("yt-accounts-list"); if (acc) acc.innerHTML = ytAccountsListHTML();
     var ib = document.getElementById("yt-inbox"); if (ib) renderInbox(ib.getAttribute("data-page"));
   }
-  function ytAccountsListHTML() {
-    var rows = state.config.pages.filter(function (cp) { return (cp.accounts || {}).youtube; }).map(function (cp) {
-      var s = ytStatus(cp.id), e = s.e, page = pageData(cp);
-      return '<div class="yacc" data-page="' + esc(cp.id) + '" data-yst="' + s.st + '">' + logoHTML(cp, page, "", "youtube") +
-        '<div class="yacc-t"><b>' + esc(cp.name) + '</b><small dir="ltr">' + esc(e ? (e.title || e.channel_id) : cp.accounts.youtube) + "</small>" +
-        '<span class="yacc-s"><span class="pill ' + (YT_PILL[s.st] || "") + '">' + esc(s.label) + "</span>" + (e ? "<small>وصل‌شده " + esc(ago(e.connected_at)) + "</small>" : "") + "</span></div>" +
-        ytBtnHTML(cp.id, "bbtn ytc") + "</div>";
-    }).join("");
-    return rows || '<div class="muted-note">هیچ پیجی حساب یوتیوب ندارد.</div>';
+  // v11: settings «حساب‌های متصل» — every brand (channel order) × every network it has in config.json
+  var ACC_ORDER = ["youtube", "instagram", "tiktok", "aparat"];
+  function bufferKeyName(pid) { return "BUFFER_KEY_" + String(pid).toUpperCase().replace(/[^A-Z0-9]/g, "_"); }
+  // one row's state: { st: ok|mismatch|none|na|unknown|revoked|error, chip, cls, via, how, avatar, name, sub, both }
+  function accState(cp, pl) {
+    var page = pageData(cp), r = page.platforms[pl] || {}, handle = String((cp.accounts || {})[pl] || ""), bare = handle.replace(/^@/, "");
+    var o = { pl: pl, handle: handle, avatar: avatarURL(r), name: r.title || "", sub: pl === "tiktok" || pl === "instagram" ? "@" + bare : handle };
+    if (pl === "youtube") {
+      var s = ytStatus(cp.id), e = s.e;
+      o.yst = s.st; o.st = s.st;
+      if (e) { o.name = e.title || o.name; if (e.handle) o.sub = e.handle; if (!o.avatar && e.thumb && !e.mismatch) o.avatar = e.thumb; }
+      if (s.st === "ok") { o.chip = "متصل ✓"; o.cls = "good"; o.via = "یوتیوب رسمی"; }
+      else if (s.st === "none") { o.chip = "متصل نیست"; o.cls = "bad"; o.how = "دکمه‌ی «اتصال» را بزن و در صفحه‌ی گوگل همین کانال را انتخاب کن."; }
+      else if (s.st === "unknown") { o.chip = s.label; o.cls = ""; o.how = state.yt.err ? "وضعیت اتصال از گیت‌هاب خوانده نشد (توکن گیت‌هاب را بررسی کن)." : ""; }
+      else { o.chip = s.label; o.cls = YT_PILL[s.st] || "warn"; o.via = s.st === "error" ? "یوتیوب رسمی" : ""; o.how = s.st === "mismatch" ? "«اتصال دوباره» را بزن و کانال درست را انتخاب کن." : s.st === "revoked" ? "«اتصال دوباره» را بزن." : "تا درست شود آمار عمومی نشان داده می‌شود."; }
+      return o;
+    }
+    if (pl === "aparat") { o.st = "na"; o.chip = "متصل نیست"; o.cls = "na"; o.how = "آپارات API ندارد — فقط لینک"; return o; }
+    var b = bufferCh(cp.id, pl), any = bufferChAny(cp.id, pl), bp = state.buffer && state.buffer.pages && state.buffer.pages[cp.id];
+    var c = state.caps && state.caps.channels && state.caps.channels[cp.id + "/" + pl];
+    if (b) { o.st = "ok"; o.chip = "متصل ✓"; o.cls = "good"; o.via = "بافر"; if (!o.avatar && b.avatar) o.avatar = b.avatar; return o; }
+    if (c && c.ready && c.via === "official") { o.st = "ok"; o.chip = "متصل ✓"; o.cls = "good"; o.via = "API رسمی"; return o; }
+    if (any) {
+      o.st = "mismatch"; o.chip = "هندل فرق دارد"; o.cls = "warn"; if (!o.avatar && any.avatar) o.avatar = any.avatar;
+      o.both = { buffer: String(any.name || any.displayName || "").replace(/^@/, ""), config: bare };
+      o.how = "اگر همان اکانت است، هندل را در config.json به \u2066@" + o.both.buffer + "\u2069 تغییر بده؛ وگرنه اکانت \u2066@" + bare + "\u2069 را در بافر این برند وصل کن.";
+      return o;
+    }
+    o.st = "none"; o.chip = "متصل نیست"; o.cls = "bad";
+    var k = bufferKeyName(cp.id), nm = PNAME[pl];
+    if (!bp || bp.status === "no_key") o.how = "اکانت " + nm + " را در بافرِ این برند وصل کن و کلید API بافر را در Secret " + k + " بگذار.";
+    else if (bp.status !== "ok") o.how = "کلید بافر این برند نامعتبر است" + (/token is not valid|invalid/i.test(bp.error || "") ? "" : " یا خوانده نشد") + "؛ فقط خود کلید (بدون متن اضافه) را دوباره در Secret " + k + " بچسبان، بعد اکانت " + nm + " را در همان بافر وصل کن.";
+    else o.how = "اکانت " + nm + " (\u2066@" + bare + "\u2069) را در بافرِ این برند وصل کن؛ کلید بافر ثبت شده است.";
+    return o;
   }
+  function accRowHTML(cp, a) {
+    var yt = a.pl === "youtube";
+    var av = a.avatar ? '<span class="clogo acc-av"><img alt="" referrerpolicy="no-referrer" src="' + esc(a.avatar) + '" onerror="this.parentNode.classList.add(\'empty\');this.remove()"></span>' : '<span class="clogo acc-av empty"></span>';
+    var hd = a.both ? '<small class="acc-both">بافر: <span dir="ltr">@' + esc(a.both.buffer) + '</span> · پیج: <span dir="ltr">@' + esc(a.both.config) + "</span></small>" :
+      '<small class="acc-h" dir="ltr">' + esc(a.sub) + "</small>";
+    return '<div class="acc-row' + (yt ? " yacc" : "") + '" data-page="' + esc(cp.id) + '" data-pl="' + a.pl + '" data-acc-st="' + a.st + '"' + (yt ? ' data-yst="' + a.yst + '"' : "") + ">" +
+      picon(a.pl) + av +
+      '<div class="yacc-t"><b><span class="acc-pl">' + PNAME[a.pl] + "</span>" + (a.name ? ' <span class="acc-nm" dir="auto">' + esc(a.name) + "</span>" : "") + "</b>" + hd +
+      '<span class="yacc-s"><span class="pill acc-chip ' + esc(a.cls || "") + '">' + esc(a.chip) + "</span>" + (a.via ? '<small class="acc-via">از طریق ' + esc(a.via) + "</small>" : "") + "</span>" +
+      (a.how ? '<small class="acc-how">' + esc(a.how) + "</small>" : "") + "</div>" +
+      (yt ? ytBtnHTML(cp.id, "bbtn ytc") : "") + "</div>";
+  }
+  function ytAccountsListHTML() {
+    var ids = channelOrder();
+    var html = ids.map(function (id) {
+      var cp = cpById(id); if (!cp) return "";
+      var pls = ACC_ORDER.filter(function (pl) { return (cp.accounts || {})[pl]; }); if (!pls.length) return "";
+      var rows = pls.map(function (pl) { return accState(cp, pl); }), n = rows.filter(function (a) { return a.st === "ok"; }).length;
+      return '<div class="accb" data-page="' + esc(cp.id) + '" data-ok="' + n + '" data-total="' + rows.length + '">' +
+        '<div class="accb-h">' + logoHTML(cp, pageData(cp)) + '<b class="accb-n">' + esc(cp.name) + '</b><span class="accb-sum' + (n === rows.length ? " all" : n ? "" : " zero") + '">' + fa(n) + " از " + fa(rows.length) + " متصل</span></div>" +
+        rows.map(function (a) { return accRowHTML(cp, a); }).join("") + "</div>";
+    }).join("");
+    return html || '<div class="muted-note">هیچ پیجی در config.json حساب ندارد.</div>';
+  }
+  function updateAccList() { var acc = document.getElementById("yt-accounts-list"); if (acc) acc.innerHTML = ytAccountsListHTML(); }
   function ytAccountsSectionHTML() {
     return '<section class="card form" id="yt-accounts"><h2>حساب‌های متصل</h2>' +
+      '<p class="help">همه‌ی برندها و شبکه‌هایشان: «متصل ✓» یعنی آمار و انتشار خودکار از آن راه کار می‌کند (یوتیوب رسمی یا بافر). وضعیت اینستاگرام و تیک‌تاک با هر بار باز شدن پنل از data/buffer.json خوانده می‌شود.</p>' +
       '<p class="help">یوتیوب هر پیج را با دکمه‌ی «اتصال» به‌صورت رسمی وصل کن (مثل Zoho Social). ورود در صفحه‌ی گوگل انجام می‌شود؛ اگر گوگل نوشت «این برنامه تأیید نشده»، روی <b>Advanced</b> و بعد <b dir="ltr">Go to social-panel-app</b> بزن و همه‌ی دسترسی‌ها را تیک بزن. اگر کانال روی یک Brand Account است، در صفحه‌ی گوگل همان کانال را انتخاب کن.</p>' +
       '<div class="yacc-list" id="yt-accounts-list">' + ytAccountsListHTML() + "</div>" +
       '<p class="muted-note">توکن دائمی هر کانال فقط به‌صورت رمزگذاری‌شده (AES-GCM) در مخزن ذخیره می‌شود و فقط اجراهای گیت‌هاب می‌توانند بازش کنند. برای قطع کامل دسترسی: <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">myaccount.google.com/permissions ↗</a></p></section>';
