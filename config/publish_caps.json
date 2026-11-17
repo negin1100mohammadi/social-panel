@@ -1,6 +1,6 @@
 {
  "v": 1,
- "updated_at": "2026-11-16T13:46:34+03:30",
+ "updated_at": "2026-11-17T12:18:33+03:30",
  "note": "written by scripts/publish.py: whether each channel can publish automatically (no secret values)",
  "channels": {
   "hamrah-seller/youtube": {
@@ -8,12 +8,14 @@
    "reason_fa": null
   },
   "hamrah-seller/instagram": {
-   "ready": false,
-   "reason_fa": "کلید API اینستاگرام (Business) ثبت نشده"
+   "ready": true,
+   "via": "buffer",
+   "reason_fa": null
   },
   "hamrah-seller/tiktok": {
    "ready": false,
-   "reason_fa": "کلید API تیک‌تاک ثبت نشده"
+   "via": null,
+   "reason_fa": "نه کلید API رسمی تیک‌تاک هست نه اتصال بافر"
   },
   "hamrah-seller/aparat": {
    "ready": false,
@@ -24,12 +26,14 @@
    "reason_fa": null
   },
   "titan-station/instagram": {
-   "ready": false,
-   "reason_fa": "کلید API اینستاگرام (Business) ثبت نشده"
+   "ready": true,
+   "via": "buffer",
+   "reason_fa": null
   },
   "titan-station/tiktok": {
-   "ready": false,
-   "reason_fa": "کلید API تیک‌تاک ثبت نشده"
+   "ready": true,
+   "via": "buffer",
+   "reason_fa": null
   },
   "titan-station/aparat": {
    "ready": false,
@@ -40,12 +44,14 @@
    "reason_fa": null
   },
   "fancatstic-four/instagram": {
-   "ready": false,
-   "reason_fa": "کلید API اینستاگرام (Business) ثبت نشده"
+   "ready": true,
+   "via": "buffer",
+   "reason_fa": null
   },
   "fancatstic-four/tiktok": {
    "ready": false,
-   "reason_fa": "کلید API تیک‌تاک ثبت نشده"
+   "via": null,
+   "reason_fa": "نه کلید API رسمی تیک‌تاک هست نه اتصال بافر"
   },
   "fancatstic-four/aparat": {
    "ready": false,
@@ -56,12 +62,14 @@
    "reason_fa": null
   },
   "shode-dige/instagram": {
-   "ready": false,
-   "reason_fa": "کلید API اینستاگرام (Business) ثبت نشده"
+   "ready": true,
+   "via": "buffer",
+   "reason_fa": null
   },
   "shode-dige/tiktok": {
-   "ready": false,
-   "reason_fa": "کلید API تیک‌تاک ثبت نشده"
+   "ready": true,
+   "via": "buffer",
+   "reason_fa": null
   },
   "shode-dige/aparat": {
    "ready": false,
@@ -73,11 +81,13 @@
   },
   "pretime-tv/instagram": {
    "ready": false,
-   "reason_fa": "کلید API اینستاگرام (Business) ثبت نشده"
+   "via": null,
+   "reason_fa": "نه کلید API رسمی اینستاگرام هست نه اتصال بافر"
   },
   "pretime-tv/tiktok": {
    "ready": false,
-   "reason_fa": "کلید API تیک‌تاک ثبت نشده"
+   "via": null,
+   "reason_fa": "نه کلید API رسمی تیک‌تاک هست نه اتصال بافر"
   },
   "pretime-tv/aparat": {
    "ready": false,
