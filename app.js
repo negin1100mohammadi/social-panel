@@ -21,7 +21,7 @@
   var MEDIA_BRANCH = "media-upload";
   var MAX_UPLOAD = 70 * 1024 * 1024; // GitHub blob API limit is 100 MB after base64
 
-  var SP_VERSION = "v19";
+  var SP_VERSION = "v20";
   window.SP_VERSION = SP_VERSION;
   var state = { config: null, latest: null, history: null, postsHist: null, error: null, busy: false, progress: "", syncAvailable: false, encCreated: null, chOrder: null };
   var app = document.getElementById("app");
@@ -134,6 +134,7 @@
   var ICON_EYE_OFF = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
   var ICON_SEND = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>';
   var ICON_SEND_SM = ICON_SEND.replace(/width="22" height="22"/, 'width="17" height="17"');
+  var ICON_TODO = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M7.5 9l1.5 1.5L12 7.5"/><path d="M14 9h3"/><path d="M7.5 15l1.5 1.5L12 13.5"/><path d="M14 15h3"/></svg>';
   var ICON_TOOLS = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z"/><path d="M18.5 14.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/><path d="M5.5 15.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>';
   var ICON_GEAR = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
 
@@ -298,7 +299,7 @@
     if (pg) pg.parentNode.replaceChild(tmp.firstChild, pg);
     bindTopbar();
   }
-  function onFormPage() { return /^#\/(publish|settings|brain|gallery|identity)/.test(location.hash); }
+  function onFormPage() { return /^#\/(publish|settings|brain|gallery|identity|todo)/.test(location.hash); }
   function rerenderSafe() { if (onFormPage() && document.getElementById("topbar") && authed()) { redrawTopbar(); updateAccList(); } else render(); }
   function setProgress(msg) {
     state.progress = msg;
@@ -364,32 +365,36 @@
     var total = 0, ts = tokenState();
     state.config.pages.forEach(function (cp) { total += newCount(cp, pageData(cp)); });
     html += '<div class="boxes">';
-    html += '<a class="vault" href="' + VAULT_URL + '" rel="noopener">' +
+    html += '<a class="vault hb hb-purple" href="' + VAULT_URL + '" rel="noopener">' +
       '<span class="vi">' + ICON_LOCK + '</span><span><div class="vt">پسوورد منیجر</div>' +
       '<div class="vs">باز کردن Vaultwarden</div></span><span class="arrow">↗</span></a>';
-    html += '<a class="chbox" href="#/channels">' +
+    html += '<a class="chbox hb hb-white" href="#/channels">' +
       '<span class="vi">' + ICON_CHANNELS + '</span><span><div class="vt">کانال‌ها</div>' +
       '<div class="vs">' + fa(state.config.pages.length) + " کانال</div></span>" +
       (total ? '<span class="bell on">' + ICON_BELL + '<i>' + esc(compact(total)) + "</i></span>" : "") +
       '<span class="arrow">←</span></a>';
-    html += '<a class="brainbox" href="#/brain" id="brainbox">' +
+    html += '<a class="brainbox hb hb-lilac" href="#/brain" id="brainbox">' +
       '<span class="vi">' + ICON_BRAIN + '</span><span><div class="vt">مغز متفکر</div>' +
       '<div class="vs">ایده، سناریو و اسکریپت هر پیج</div></span>' +
       '<span class="arrow">←</span></a>';
-    html += '<a class="galbox" href="#/gallery" id="galbox">' +
+    html += '<a class="galbox hb hb-gray" href="#/gallery" id="galbox">' +
       '<span class="vi">' + ICON_GALLERY + '</span><span><div class="vt">گالری محتوا</div>' +
       '<div class="vs">اسلاید، ریل، استوری و ویدئوی آماده</div></span>' +
       '<span class="arrow">←</span></a>';
-    html += '<a class="pubbox" href="#/publish" id="pubbox">' +
+    html += '<a class="pubbox hb hb-purple" href="#/publish" id="pubbox">' +
       '<span class="vi">' + ICON_SEND + '</span><span><div class="vt">انتشار محتوا</div>' +
       '<div class="vs">' + esc(ts.has ? "آپلود ویدیو یا عکس، انتشار و زمان‌بندی" : ts.locked ? "برای فعال‌سازی اتصال، رمز پنل را یک بار وارد کن" : "اول توکن گیت‌هاب را در تنظیمات بگذار") + "</div></span>" +
       '<span class="arrow">←</span></a>';
-    html += '<a class="toolbox" href="#/tools" id="toolbox">' +
+    html += '<a class="toolbox hb hb-white" href="#/tools" id="toolbox">' +
       '<span class="vi">' + ICON_TOOLS + '</span><span><div class="vt">ابزارها</div>' +
       '<div class="vs">هوش‌های مصنوعی برای نگین و امیرحسین</div></span>' +
       '<span class="arrow">←</span></a>';
+    html += '<a class="todobox hb hb-lilac" href="#/todo" id="todobox">' +
+      '<span class="vi">' + ICON_TODO + '</span><span><div class="vt">To do</div>' +
+      '<div class="vs">کارها، چک‌ها و کم‌وکاستی‌هایی که باید رفع کنیم</div></span>' +
+      '<span class="arrow">←</span></a>';
     html += "</div>";
-    html += '<a class="setrow" href="#/settings">' + ICON_GEAR + "<span>تنظیمات</span><em id=\"tok-pill\" data-state=\"" + ts.state + "\">" + esc(ts.label) + "</em></a>";
+    html += '<a class="setrow hb-gray" href="#/settings">' + ICON_GEAR + "<span>تنظیمات</span><em id=\"tok-pill\" data-state=\"" + ts.state + "\">" + esc(ts.label) + "</em></a>";
     html += '<button class="logout" id="logout">خروج از پنل</button>';
     app.innerHTML = html;
     bindTopbar();
@@ -553,7 +558,7 @@
   }
 
   // -------------------------------------------------------------- guide (#/guide): what every part of the app is
-  var GUIDE = [["start", "شروع: این پنل چیه؟", [["چیه", "پنل مدیریت پنج پیج ما (Hamrah Seller، Titan Station، FanCATstic Four، Shode Dige، PreTime TV) روی چهار شبکه: یوتیوب، اینستاگرام، تیک‌تاک و آپارات. یه وب‌اپه که روی GitHub Pages اجرا می‌شه و روی گوشی هم مثل اپ نصب می‌شه (Add to Home screen)."], ["به چه دردمون می‌خوره", "آمار، ایده‌ها، اسکریپت‌ها، هویت برندها، محتوای ساخته‌شده و صف انتشار همه یه‌جا جمع‌اند تا هر دومون یه تصویر واحد داشته باشیم و کسی کار تکراری نکنه."], ["چطور کار می‌کنه", "داده‌ها رو ربات‌های GitHub (Actions) هر حدود یک ساعت از شبکه‌ها و بافر می‌خونن و توی مخزن negin1100mohammadi/social-panel ذخیره می‌کنن. اپ همون فایل‌ها رو نشون می‌ده؛ پس آمار «زنده‌ی لحظه‌ای» نیست، «تقریباً ساعتی»ه."]]], ["login", "ورود به پنل و رمز پنل", [["چیه", "صفحه‌ی ورود با کاربر admin و رمز پنل. دکمه‌ی چشم رمز رو نشون می‌ده."], ["چطور کار می‌کنه", "رمز هیچ‌جا به‌صورت متن ذخیره نمی‌شه؛ فقط یه هش ازش توی کد هست. همین رمز کلید باز کردن داده‌های رمزشده (توکن GitHub، هویت، مغز متفکر، گالری) روی هر دستگاهه، برای همین هر دستگاه جدید یه بار رمز رو می‌پرسه («باز کردن قفل»)."], ["نکته", "اگه رمز پنل عوض بشه، داده‌های رمزشده باید با رمز جدید دوباره قفل بشن؛ قبلش با هارک هماهنگ کنید."]]], ["topbar", "نوار بالای صفحه", [["دکمه‌ی بنفش چرخشی", "به‌روزرسانی همه‌ی کانال‌ها. اگه توکن GitHub روی دستگاه باز باشه، یه دور خوندن تازه رو همون لحظه راه می‌ندازه و بعد چند دقیقه داده‌ها رو دوباره می‌خونه؛ وگرنه فقط آخرین فایل‌ها رو دوباره بار می‌کنه. نوار پیشرفت زیرش وضعیت رو می‌گه."], ["راهنما", "همین صفحه."], ["ساعت", "بالا: ساعت الان تهران (زنده، هر چند ثانیه به‌روز می‌شه). پایین: آخرین باری که داده‌ها خونده شدن، مثلاً «داده: ۱۲ دقیقه پیش»."], ["هویت", "میان‌بر شناسنامه‌ی برندها (پایین‌تر توضیح داده شده)."], ["دارک / لایت", "تم تیره یا روشن؛ روی هر دستگاه جدا ذخیره می‌شه."]]], ["vault", "باکس مدیر رمز (Vaultwarden)", [["چیه", "باکس بنفش صفحه‌ی اصلی؛ فقط vault.vaultwarden.com رو باز می‌کنه."], ["به چه دردمون می‌خوره", "همه‌ی رمزهای پیج‌ها، گوگل‌ها، بافر و … اونجاست. خود پنل هیچ رمزی نگه نمی‌داره و نشون نمی‌ده."], ["کم‌وکاستی", "سه آیتم خالی (Gmail، GitHub، Social Panel) و رمز «Buffer — PreTime» و «گوگل — اصلی» باید توسط خودتون پر یا به‌روز بشن."]]], ["channels", "کانال‌ها (فهرست پیج‌ها)", [["چیه", "پنج باکس، یکی برای هر برند، با لوگو و اسم. ترتیبشون ثابته تا موقع زدن جابه‌جا نشن."], ["زنگوله", "تعداد لایک و کامنت‌های تازه از آخرین باری که همین دستگاه این صفحه رو باز کرده."], ["باز کردن (+)", "چهار ردیف شبکه باز می‌شه: اسم/هندل، لینک صفحه‌ی عمومی (در تب جدید) و آیکون نمودار برای آنالیتیکس همون شبکه."], ["به چه دردمون می‌خوره", "یه نگاه: کدوم پیج تازه پست داده، کدوم فعالیت تازه داره، و رفتن سریع به صفحه‌ی هر شبکه."]]], ["analytics", "آنالیتیکس هر شبکه", [["چیه", "با آیکون نمودار هر ردیف باز می‌شه: فالوور، بازدید، لایک، کامنت، اشتراک، ذخیره، نرخ تعامل، روند فالوور و فهرست پست‌ها (جدیدترین بالا) با رشد هر پست."], ["فیلترها", "بازه‌ی ۳ ساعت، ۲۴ ساعت، ۳۰ روز، ۹۰ روز و نمودار خطی یا میله‌ای. هر عدد درصد تغییرش رو هم داره."], ["منبع داده", "یوتیوب: API رسمی (کانال‌های متصل)؛ اینستاگرام و تیک‌تاک: بافر + صفحه‌ی عمومی؛ آپارات: صفحه‌ی عمومی."], ["محدودیت", "آمار اینستاگرام بافر حدوداً روزی یه بار تازه می‌شه، پس بازه‌ی ۳ ساعته اغلب تغییری نشون نمی‌ده. اشتراک/ذخیره/مدت تماشا فقط جایی هست که دسترسی مالک داریم."]]], ["brain", "مغز متفکر (ایده تا اسکریپت)", [["چیه", "برای هر برند یه میز کار با تب‌های: پیشنهاد هارک › پیشنهاد ما › غربال‌گری › اسکریپت نهایی › سناریوها › اسکریپت‌ها."], ["پیشنهاد هارک", "هارک هر روز ساعت ۹ صبح سه ایده برای هر پیج می‌ذاره، بر اساس هویت همون برند."], ["پیشنهاد ما", "ایده‌ی خودتون رو با اسم نویسنده (نگین/امیرحسین) ثبت کنید."], ["غربال‌گری و اسکریپت نهایی", "ایده رو برای هارک بفرستید تا امتیاز بده و اسکریپت وایرال (هوک، نگه‌داشت، CTA، کپشن، هشتگ) بنویسه. هارک ساعت‌های ۹، ۱۳، ۱۷ و ۲۱ صف رو بررسی می‌کنه. بعد ویرایش، کپی، تأیید و تاریخچه دارید."], ["ارسال برای ساخت", "اسکریپت تأییدشده رو برای ابزارهای ساخت (Claude، Gemini، AI Studio، ChatGPT، Flow…) می‌فرستید؛ لینک پروژه‌ی هر ابزار برای هر برند همین‌جا ذخیره می‌شه."], ["امنیت", "محتوای مغز متفکر رمزشده ذخیره می‌شه و فقط با رمز پنل باز می‌شه."]]], ["gallery", "گالری محتوا", [["چیه", "محتوای ساخته‌شده‌ی هر برند، خودکار دسته‌بندی‌شده: اسلاید، ریل، استوری، ویدیو."], ["به چه دردمون می‌خوره", "یه آرشیو مرتب از هر چی ساخته شده، تا راحت پیداش کنید و ازش استفاده کنید. ورودی خودکار (gallery-ingest) برای وقتی آماده‌ست که خط تولید ابزارها مستقیم فایل بفرسته."]]], ["publish", "انتشار و زمان‌بندی", [["چیه", "انتخاب از بین ۲۰ کانال (۵ برند × ۴ شبکه)، آپلود فایل (تا ۷۰ مگ)، کپشن، زمان‌بندی، تقویم و صف."], ["وضعیت‌ها", "در صف، منتشر شد، خطا. هر مورد ۳ بار خودکار تلاش می‌شه؛ بعدش «تلاش دوباره»، «انتشار دستی» یا «لغو». ربات انتشار هر ۱۵ دقیقه صف رو می‌خونه."], ["کدوم شبکه چطور", "یوتیوب با API رسمی؛ اینستاگرام و تیک‌تاک از طریق بافر؛ آپارات API آپلود نداره و دستیه."], ["قانون", "هیچ چیزی بدون زدن دکمه توسط خودتون منتشر نمی‌شه."]]], ["identity", "هویت برندها", [["چیه", "شناسنامه‌ی کامل هر برند در ۱۹–۲۰ بخش: معرفی، مخاطب، لحن، رنگ‌ها، فونت‌ها، کاراکترها، هشتگ‌ها، CTAها، رقبا، قوانین و پرامپت AI."], ["چطور کار می‌کنه", "کیت‌هایی که فرستادید (Pages.zip) وارد شده‌اند. پیشنهادهای هارک با برچسب «پیشنهاد هارک» میان و با «تأیید» قطعی می‌شن. «کپی کل شناسنامه برای ابزار AI» یه متن آماده برای ابزارها می‌ده."], ["به چه دردمون می‌خوره", "همه‌ی ایده‌ها، اسکریپت‌ها و تصویرها (چه هارک، چه ابزارها) باید از همین شناسنامه پیروی کنن تا هر پیج یه صدا و یه ظاهر ثابت داشته باشه."], ["کم‌وکاستی", "۲۵ سؤال باز درباره‌ی کیت‌ها (هندل اینستاگرام همراه، پالت و فونت‌ها، املای اسم‌ها، …) هنوز جواب نگرفته. یه بار «هویت» رو باز کنید و قفل رو بزنید تا کیت‌ها با داده‌ی رمزشده ادغام بشن."]]], ["tools", "ابزارها", [["پروژه‌های هر برند", "برای هر برند یه ردیف آیکون: Gemini (ایده/سناریو و کارگردان/پرامپت)، Claude (غربال و اسکریپت نهایی)، ChatGPT (کپشن و کامنت)، AI Studio (تصویر و کاور) و Flow (ویدیو). هر برند روی حساب گوگل خودش ساخته شده (همون ایمیل بافرش) و فایل‌های کیت داخلشه."], ["همه‌ی ابزارها", "لینک عمومی هر ابزار (Hark، Muse، Gemini، ChatGPT، Claude، AI Studio، Flow) با دکمه‌ی نگین و امیرحسین؛ لینک Muse رو خودتون وارد می‌کنید."], ["کم‌وکاستی", "Flow از سرورهای هارک در دسترس نیست؛ پروژه‌های Flow رو خودتون بسازید (آیکونش خاکستریه تا لینکش اضافه بشه). ابزارها خودشون کار نمی‌کنن، فقط آماده‌ی استفاده‌اند."]]], ["settings", "تنظیمات", [["توکن GitHub", "برای دکمه‌ی به‌روزرسانی فوری و ذخیره‌ی داده‌ها؛ رمزشده بین دستگاه‌ها همگام می‌شه."], ["حساب‌های متصل", "جدول همه‌ی برندها × شبکه‌ها با وضعیت (متصل ✓، هندل فرق دارد، متصل نیست) و راه وصل شدن."], ["اتصال یوتیوب", "دکمه‌ی «اتصال» ورود رسمی گوگل رو باز می‌کنه. هر پنج کانال روی حساب amirmajidi1375 هستن."], ["نسخه", "پایین صفحه نسخه‌ی پنل نوشته شده؛ برای گزارش مشکل به هارک بگید."]]], ["behind", "پشت صحنه (برای ادامه‌ی توسعه)", [["مخزن", "github.com/negin1100mohammadi/social-panel؛ اپ: index.html، app.js، styles.css، config.json (هندل‌ها و لینک‌ها)."], ["ربات‌ها", "refresh (آمار، حدوداً ساعتی)، buffer-sync (بافر)، publish (هر ۱۵ دقیقه)، yt-connect و yt-reply (یوتیوب)، gallery-ingest (ورود محتوا)."], ["رمزنگاری", "توکن‌ها و داده‌های حساس با AES-GCM در پوشه‌های vault/ و config/ ذخیره می‌شن؛ کلیدهای API فقط در Secrets گیت‌هاب‌اند."], ["ارتباط با هارک", "یه کانال رمزشده (hark/requests و hark/out) که ایده، غربال و هویت رو بین پنل و هارک جابه‌جا می‌کنه."]]], ["gaps", "کم‌وکاستی‌ها و قدم‌های بعدی", [["اینستاگرام رسمی", "اتصال API رسمی منتظر اپ Meta (کار امیرحسین) است؛ تا اون موقع از بافر استفاده می‌شه."], ["تیک‌تاک", "انتشار مستقیم نیاز به بررسی (audit) تیک‌تاک داره؛ تیک‌تاک FanCATstic و همراه هنوز در بافر نیستن. پلن رایگان بافر هر حساب ۳ کانال داره."], ["آپارات", "API آپلود نداره؛ فقط لینک و انتشار دستی."], ["یوتیوب", "رمز گوگل تایتان (amirmajidi1375) امروز عوض شد؛ در «تنظیمات» چک کنید پنج کانال هنوز «متصل ✓» باشن، وگرنه دوباره «اتصال» بزنید. ویدیوی صف تایتان منتظر تأیید شماست."], ["هویت", "جواب ۲۵ سؤال کیت‌ها و هندل اینستاگرام همراه (hamkargram یا hamrah.seller)."], ["امنیت", "رمزهایی که در چت تایپ شدن (فیسبوک و بافر PreTime) رو عوض کنید."]]]];
+  var GUIDE = [["start", "شروع: این پنل چیه؟", [["چیه", "پنل مدیریت پنج پیج ما (Hamrah Seller، Titan Station، FanCATstic Four، Shode Dige، PreTime TV) روی چهار شبکه: یوتیوب، اینستاگرام، تیک‌تاک و آپارات. یه وب‌اپه که روی GitHub Pages اجرا می‌شه و روی گوشی هم مثل اپ نصب می‌شه (Add to Home screen)."], ["به چه دردمون می‌خوره", "آمار، ایده‌ها، اسکریپت‌ها، هویت برندها، محتوای ساخته‌شده و صف انتشار همه یه‌جا جمع‌اند تا هر دومون یه تصویر واحد داشته باشیم و کسی کار تکراری نکنه."], ["چطور کار می‌کنه", "داده‌ها رو ربات‌های GitHub (Actions) هر حدود یک ساعت از شبکه‌ها و بافر می‌خونن و توی مخزن negin1100mohammadi/social-panel ذخیره می‌کنن. اپ همون فایل‌ها رو نشون می‌ده؛ پس آمار «زنده‌ی لحظه‌ای» نیست، «تقریباً ساعتی»ه."]]], ["login", "ورود به پنل و رمز پنل", [["چیه", "صفحه‌ی ورود با کاربر admin و رمز پنل. دکمه‌ی چشم رمز رو نشون می‌ده."], ["چطور کار می‌کنه", "رمز هیچ‌جا به‌صورت متن ذخیره نمی‌شه؛ فقط یه هش ازش توی کد هست. همین رمز کلید باز کردن داده‌های رمزشده (توکن GitHub، هویت، مغز متفکر، گالری) روی هر دستگاهه، برای همین هر دستگاه جدید یه بار رمز رو می‌پرسه («باز کردن قفل»)."], ["نکته", "اگه رمز پنل عوض بشه، داده‌های رمزشده باید با رمز جدید دوباره قفل بشن؛ قبلش با هارک هماهنگ کنید."]]], ["topbar", "نوار بالای صفحه", [["دکمه‌ی بنفش چرخشی", "به‌روزرسانی همه‌ی کانال‌ها. اگه توکن GitHub روی دستگاه باز باشه، یه دور خوندن تازه رو همون لحظه راه می‌ندازه و بعد چند دقیقه داده‌ها رو دوباره می‌خونه؛ وگرنه فقط آخرین فایل‌ها رو دوباره بار می‌کنه. نوار پیشرفت زیرش وضعیت رو می‌گه."], ["راهنما", "همین صفحه."], ["ساعت", "بالا: ساعت الان تهران (زنده، هر چند ثانیه به‌روز می‌شه). پایین: آخرین باری که داده‌ها خونده شدن، مثلاً «داده: ۱۲ دقیقه پیش»."], ["هویت", "میان‌بر شناسنامه‌ی برندها (پایین‌تر توضیح داده شده)."], ["دارک / لایت", "تم تیره یا روشن؛ روی هر دستگاه جدا ذخیره می‌شه."]]], ["vault", "باکس مدیر رمز (Vaultwarden)", [["چیه", "باکس بنفش صفحه‌ی اصلی؛ فقط vault.vaultwarden.com رو باز می‌کنه."], ["به چه دردمون می‌خوره", "همه‌ی رمزهای پیج‌ها، گوگل‌ها، بافر و … اونجاست. خود پنل هیچ رمزی نگه نمی‌داره و نشون نمی‌ده."], ["کم‌وکاستی", "سه آیتم خالی (Gmail، GitHub، Social Panel) و رمز «Buffer — PreTime» و «گوگل — اصلی» باید توسط خودتون پر یا به‌روز بشن."]]], ["channels", "کانال‌ها (فهرست پیج‌ها)", [["چیه", "پنج باکس، یکی برای هر برند، با لوگو و اسم. ترتیبشون ثابته تا موقع زدن جابه‌جا نشن."], ["زنگوله", "تعداد لایک و کامنت‌های تازه از آخرین باری که همین دستگاه این صفحه رو باز کرده."], ["باز کردن (+)", "چهار ردیف شبکه باز می‌شه: اسم/هندل، لینک صفحه‌ی عمومی (در تب جدید) و آیکون نمودار برای آنالیتیکس همون شبکه."], ["به چه دردمون می‌خوره", "یه نگاه: کدوم پیج تازه پست داده، کدوم فعالیت تازه داره، و رفتن سریع به صفحه‌ی هر شبکه."]]], ["analytics", "آنالیتیکس هر شبکه", [["چیه", "با آیکون نمودار هر ردیف باز می‌شه: فالوور، بازدید، لایک، کامنت، اشتراک، ذخیره، نرخ تعامل، روند فالوور و فهرست پست‌ها (جدیدترین بالا) با رشد هر پست."], ["فیلترها", "بازه‌ی ۳ ساعت، ۲۴ ساعت، ۳۰ روز، ۹۰ روز و نمودار خطی یا میله‌ای. هر عدد درصد تغییرش رو هم داره."], ["منبع داده", "یوتیوب: API رسمی (کانال‌های متصل)؛ اینستاگرام و تیک‌تاک: بافر + صفحه‌ی عمومی؛ آپارات: صفحه‌ی عمومی."], ["محدودیت", "آمار اینستاگرام بافر حدوداً روزی یه بار تازه می‌شه، پس بازه‌ی ۳ ساعته اغلب تغییری نشون نمی‌ده. اشتراک/ذخیره/مدت تماشا فقط جایی هست که دسترسی مالک داریم."]]], ["brain", "مغز متفکر (ایده تا اسکریپت)", [["چیه", "برای هر برند یه میز کار با تب‌های: پیشنهاد هارک › پیشنهاد ما › غربال‌گری › اسکریپت نهایی › سناریوها › اسکریپت‌ها."], ["پیشنهاد هارک", "هارک هر روز ساعت ۹ صبح سه ایده برای هر پیج می‌ذاره، بر اساس هویت همون برند."], ["پیشنهاد ما", "ایده‌ی خودتون رو با اسم نویسنده (نگین/امیرحسین) ثبت کنید."], ["غربال‌گری و اسکریپت نهایی", "ایده رو برای هارک بفرستید تا امتیاز بده و اسکریپت وایرال (هوک، نگه‌داشت، CTA، کپشن، هشتگ) بنویسه. هارک ساعت‌های ۹، ۱۳، ۱۷ و ۲۱ صف رو بررسی می‌کنه. بعد ویرایش، کپی، تأیید و تاریخچه دارید."], ["ارسال برای ساخت", "اسکریپت تأییدشده رو برای ابزارهای ساخت (Claude، Gemini، AI Studio، ChatGPT، Flow…) می‌فرستید؛ لینک پروژه‌ی هر ابزار برای هر برند همین‌جا ذخیره می‌شه."], ["امنیت", "محتوای مغز متفکر رمزشده ذخیره می‌شه و فقط با رمز پنل باز می‌شه."]]], ["gallery", "گالری محتوا", [["چیه", "محتوای ساخته‌شده‌ی هر برند، خودکار دسته‌بندی‌شده: اسلاید، ریل، استوری، ویدیو."], ["به چه دردمون می‌خوره", "یه آرشیو مرتب از هر چی ساخته شده، تا راحت پیداش کنید و ازش استفاده کنید. ورودی خودکار (gallery-ingest) برای وقتی آماده‌ست که خط تولید ابزارها مستقیم فایل بفرسته."]]], ["publish", "انتشار و زمان‌بندی", [["چیه", "انتخاب از بین ۲۰ کانال (۵ برند × ۴ شبکه)، آپلود فایل (تا ۷۰ مگ)، کپشن، زمان‌بندی، تقویم و صف."], ["وضعیت‌ها", "در صف، منتشر شد، خطا. هر مورد ۳ بار خودکار تلاش می‌شه؛ بعدش «تلاش دوباره»، «انتشار دستی» یا «لغو». ربات انتشار هر ۱۵ دقیقه صف رو می‌خونه."], ["کدوم شبکه چطور", "یوتیوب با API رسمی؛ اینستاگرام و تیک‌تاک از طریق بافر؛ آپارات API آپلود نداره و دستیه."], ["قانون", "هیچ چیزی بدون زدن دکمه توسط خودتون منتشر نمی‌شه."]]], ["identity", "هویت برندها", [["چیه", "شناسنامه‌ی کامل هر برند در ۱۹–۲۰ بخش: معرفی، مخاطب، لحن، رنگ‌ها، فونت‌ها، کاراکترها، هشتگ‌ها، CTAها، رقبا، قوانین و پرامپت AI."], ["چطور کار می‌کنه", "کیت‌هایی که فرستادید (Pages.zip) وارد شده‌اند. پیشنهادهای هارک با برچسب «پیشنهاد هارک» میان و با «تأیید» قطعی می‌شن. «کپی کل شناسنامه برای ابزار AI» یه متن آماده برای ابزارها می‌ده."], ["به چه دردمون می‌خوره", "همه‌ی ایده‌ها، اسکریپت‌ها و تصویرها (چه هارک، چه ابزارها) باید از همین شناسنامه پیروی کنن تا هر پیج یه صدا و یه ظاهر ثابت داشته باشه."], ["کم‌وکاستی", "۲۵ سؤال باز درباره‌ی کیت‌ها (هندل اینستاگرام همراه، پالت و فونت‌ها، املای اسم‌ها، …) هنوز جواب نگرفته. یه بار «هویت» رو باز کنید و قفل رو بزنید تا کیت‌ها با داده‌ی رمزشده ادغام بشن."]]], ["tools", "ابزارها", [["پروژه‌های هر برند", "برای هر برند یه ردیف آیکون: Gemini (ایده/سناریو و کارگردان/پرامپت)، Claude (غربال و اسکریپت نهایی)، ChatGPT (کپشن و کامنت)، AI Studio (تصویر و کاور) و Flow (ویدیو). هر برند روی حساب گوگل خودش ساخته شده (همون ایمیل بافرش) و فایل‌های کیت داخلشه."], ["همه‌ی ابزارها", "لینک عمومی هر ابزار (Hark، Muse، Gemini، ChatGPT، Claude، AI Studio، Flow) با دکمه‌ی نگین و امیرحسین؛ لینک Muse رو خودتون وارد می‌کنید."], ["کم‌وکاستی", "Flow از سرورهای هارک در دسترس نیست؛ پروژه‌های Flow رو خودتون بسازید (آیکونش خاکستریه تا لینکش اضافه بشه). ابزارها خودشون کار نمی‌کنن، فقط آماده‌ی استفاده‌اند."]]], ["todo", "To do", [["چیه", "باکس یکی مونده به آخر، بالای تنظیمات: فهرست مشترک کارهایی که باید انجام بدیم، بخش‌هایی که باید چک کنیم و ایرادهایی که باید رفع بشن. هر مورد نوع (کار / چک / رفع ایراد) و اسم ثبت‌کننده داره."], ["چطور کار می‌کنه", "تیک بزنید تا مورد به ستون Done روبه‌روش بره (با تاریخ و اسم)؛ تیک رو بردارید تا برگرده. داده رمزشده بین دستگاه‌ها و بین نگین و امیرحسین همگامه. چند مورد اولیه رو هارک از کم‌وکاستی‌های فعلی گذاشته."]]], ["settings", "تنظیمات", [["توکن GitHub", "برای دکمه‌ی به‌روزرسانی فوری و ذخیره‌ی داده‌ها؛ رمزشده بین دستگاه‌ها همگام می‌شه."], ["حساب‌های متصل", "جدول همه‌ی برندها × شبکه‌ها با وضعیت (متصل ✓، هندل فرق دارد، متصل نیست) و راه وصل شدن."], ["اتصال یوتیوب", "دکمه‌ی «اتصال» ورود رسمی گوگل رو باز می‌کنه. هر پنج کانال روی حساب amirmajidi1375 هستن."], ["نسخه", "پایین صفحه نسخه‌ی پنل نوشته شده؛ برای گزارش مشکل به هارک بگید."]]], ["behind", "پشت صحنه (برای ادامه‌ی توسعه)", [["مخزن", "github.com/negin1100mohammadi/social-panel؛ اپ: index.html، app.js، styles.css، config.json (هندل‌ها و لینک‌ها)."], ["ربات‌ها", "refresh (آمار، حدوداً ساعتی)، buffer-sync (بافر)، publish (هر ۱۵ دقیقه)، yt-connect و yt-reply (یوتیوب)، gallery-ingest (ورود محتوا)."], ["رمزنگاری", "توکن‌ها و داده‌های حساس با AES-GCM در پوشه‌های vault/ و config/ ذخیره می‌شن؛ کلیدهای API فقط در Secrets گیت‌هاب‌اند."], ["ارتباط با هارک", "یه کانال رمزشده (hark/requests و hark/out) که ایده، غربال و هویت رو بین پنل و هارک جابه‌جا می‌کنه."]]], ["gaps", "کم‌وکاستی‌ها و قدم‌های بعدی", [["اینستاگرام رسمی", "اتصال API رسمی منتظر اپ Meta (کار امیرحسین) است؛ تا اون موقع از بافر استفاده می‌شه."], ["تیک‌تاک", "انتشار مستقیم نیاز به بررسی (audit) تیک‌تاک داره؛ تیک‌تاک FanCATstic و همراه هنوز در بافر نیستن. پلن رایگان بافر هر حساب ۳ کانال داره."], ["آپارات", "API آپلود نداره؛ فقط لینک و انتشار دستی."], ["یوتیوب", "رمز گوگل تایتان (amirmajidi1375) امروز عوض شد؛ در «تنظیمات» چک کنید پنج کانال هنوز «متصل ✓» باشن، وگرنه دوباره «اتصال» بزنید. ویدیوی صف تایتان منتظر تأیید شماست."], ["هویت", "جواب ۲۵ سؤال کیت‌ها و هندل اینستاگرام همراه (hamkargram یا hamrah.seller)."], ["امنیت", "رمزهایی که در چت تایپ شدن (فیسبوک و بافر PreTime) رو عوض کنید."]]]];
   function guideView() {
     var open = lsGet("sp_guide_open", "start");
     var html = topbar("راهنمای اپ");
@@ -3341,6 +3346,87 @@
     }
   }
 
+
+  // ============================================================= v20: «To do» (#/todo)
+  // Shared list for Negin + Amirhossein, encrypted like brain/gallery in vault/todo.enc.json.
+  // item: {id, title, kind: task|check|fix, by, created_at, done, done_at, done_by}
+  var TODO_KINDS = [["task", "کار"], ["check", "چک"], ["fix", "رفع ایراد"]];
+  var TODO_SEED = [
+    ["fix", "ساخت اپ Meta «Social Panel» برای اتصال رسمی اینستاگرام (امیرحسین)"],
+    ["check", "بعد از عوض شدن رمز گوگل تایتان: در «تنظیمات» چک کنیم ۵ کانال یوتیوب «متصل ✓» باشن"],
+    ["task", "جواب ۲۵ سؤال کیت‌های هویت (پالت، فونت، املای اسم‌ها…)"],
+    ["check", "هندل اینستاگرام همراه سلر: hamkargram یا hamrah.seller؟"],
+    ["task", "ساخت پروژه‌های Flow برای هر ۵ برند و گذاشتن لینکشون در «ابزارها»"],
+    ["task", "تأیید یا رد ویدیوی صف انتشار تایتان"],
+    ["fix", "وصل کردن تیک‌تاک FanCATstic و همراه سلر به بافر"],
+    ["fix", "کلید بافر PreTime"],
+    ["fix", "عوض کردن رمزهای تایپ‌شده در چت (فیسبوک، بافر PreTime)"]
+  ];
+  function todoWho() { return lsGet("sp_todo_who", "نگین"); }
+  function todoView() {
+    app.innerHTML = shell("To do", "#/", "صفحه‌ی اصلی") +
+      '<div class="v8head todohead"><span class="vi">' + ICON_TODO + '</span><div><h1>To do</h1><p>کارهایی که باید انجام بدیم، بخش‌هایی که باید چک کنیم و کم‌وکاستی‌ها</p></div></div>' +
+      '<div id="dgate"></div><div id="v8body"></div>';
+    bindShell();
+    withData(function () {
+      var body = document.getElementById("v8body"), my = viewSeq;
+      body.innerHTML = '<div class="muted-note pad">در حال بارگذاری…</div>';
+      dsRead("todo").then(function (d) {
+        if (!live(my)) return;
+        if (!d) return dsUpdate("todo", function (cur) {
+          if (cur && cur.items) return cur;
+          var now = new Date().toISOString();
+          return { items: TODO_SEED.map(function (s, i) { return { id: "t" + Date.now().toString(36) + i, title: s[1], kind: s[0], by: "هارک", created_at: now, done: false }; }) };
+        }, "data: todo (seed)").then(paint);
+        paint(d);
+      }).catch(function (e) { errBox("v8body", e); });
+      function save(mut, msg) {
+        return dsUpdate("todo", function (cur) { cur = cur || { items: [] }; cur.items = cur.items || []; mut(cur); return cur; }, msg).then(paint, function (e) { toast("ذخیره نشد: " + ghErrorFa(e)); });
+      }
+      function row(it) {
+        var k = TODO_KINDS.filter(function (x) { return x[0] === it.kind; })[0] || TODO_KINDS[0];
+        var meta = (it.by ? esc(it.by) : "") + (it.done && it.done_at ? " · انجام شد " + esc(new Date(it.done_at).toLocaleDateString("fa-IR")) + (it.done_by ? " (" + esc(it.done_by) + ")" : "") : "");
+        return '<li class="trow' + (it.done ? " done" : "") + '" data-id="' + esc(it.id) + '">' +
+          '<label class="tchk"><input type="checkbox"' + (it.done ? " checked" : "") + ' aria-label="انجام شد"><span></span></label>' +
+          '<div class="tt"><b>' + esc(it.title) + '</b><small><em class="tk tk-' + esc(k[0]) + '">' + esc(k[1]) + "</em>" + meta + "</small></div>" +
+          '<button class="tdel" aria-label="حذف" title="حذف">×</button></li>';
+      }
+      function paint(d) {
+        if (!live(my) || !document.getElementById("v8body")) return;
+        var items = (d && d.items) || [];
+        var open = items.filter(function (x) { return !x.done; });
+        var done = items.filter(function (x) { return x.done; }).sort(function (a, b) { return (b.done_at || "").localeCompare(a.done_at || ""); });
+        var who = todoWho();
+        body.innerHTML =
+          '<form class="tadd" id="tadd"><input id="tin" maxlength="200" placeholder="کار تازه، چیزی برای چک یا یه ایراد…" required>' +
+          '<select id="tkind" aria-label="نوع">' + TODO_KINDS.map(function (k) { return '<option value="' + k[0] + '">' + k[1] + "</option>"; }).join("") + "</select>" +
+          '<select id="twho" aria-label="ثبت توسط">' + ["نگین", "امیرحسین"].map(function (n) { return "<option" + (n === who ? " selected" : "") + ">" + n + "</option>"; }).join("") + "</select>" +
+          '<button class="go" type="submit">افزودن</button></form>' +
+          '<div class="tcols"><section class="tcol"><h2>To do <em>' + fa(open.length) + '</em></h2><ul>' + (open.map(row).join("") || '<li class="tempty">همه‌چی انجام شده 🎉</li>') + "</ul></section>" +
+          '<section class="tcol tdone"><h2>Done <em>' + fa(done.length) + '</em></h2><ul>' + (done.map(row).join("") || '<li class="tempty">هنوز چیزی تیک نخورده</li>') + "</ul></section></div>";
+        document.getElementById("twho").onchange = function () { lsSet("sp_todo_who", this.value); };
+        document.getElementById("tadd").onsubmit = function (ev) {
+          ev.preventDefault();
+          var t = document.getElementById("tin").value.trim(); if (!t) return;
+          var kind = document.getElementById("tkind").value, by = document.getElementById("twho").value;
+          lsSet("sp_todo_who", by); this.querySelector("button").disabled = true;
+          save(function (c) { c.items.unshift({ id: "t" + Date.now().toString(36), title: t, kind: kind, by: by, created_at: new Date().toISOString(), done: false }); }, "data: todo add");
+        };
+        Array.prototype.forEach.call(body.querySelectorAll(".trow"), function (li) {
+          var id = li.getAttribute("data-id");
+          li.querySelector("input").onchange = function () {
+            var v = this.checked; li.classList.add("busy");
+            save(function (c) { c.items.forEach(function (x) { if (x.id === id) { x.done = v; x.done_at = v ? new Date().toISOString() : null; x.done_by = v ? todoWho() : null; } }); }, "data: todo " + (v ? "done" : "reopen"));
+          };
+          li.querySelector(".tdel").onclick = function () {
+            if (!confirm("این مورد حذف بشه؟")) return;
+            li.classList.add("busy");
+            save(function (c) { c.items = c.items.filter(function (x) { return x.id !== id; }); }, "data: todo delete");
+          };
+        });
+      }
+    });
+  }
   // ============================================================= v8: «گالری محتوا» (#/gallery)
   function galleryHomeView() {
     app.innerHTML = shell("گالری محتوا", "#/", "صفحه‌ی اصلی") +
@@ -4016,6 +4102,7 @@
     else if ((gl = h.match(/^#\/gallery(?:\/([\w-]+))?(?:\/(\w+))?/))) { if (gl[1]) galleryWorkView(gl[1], gl[2]); else galleryHomeView(); }
     else if ((idr = h.match(/^#\/identity(?:\/([\w-]+))?/))) { if (idr[1]) identityView(idr[1]); else identityHomeView(); }
     else if (/^#\/tools/.test(h)) toolsView();
+    else if (/^#\/todo/.test(h)) todoView();
     else if (/^#\/guide/.test(h)) guideView();
     else if (/^#\/(channels|p\/)/.test(h)) channelsView();
     else homeView();
