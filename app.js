@@ -21,7 +21,7 @@
   var MEDIA_BRANCH = "media-upload";
   var MAX_UPLOAD = 70 * 1024 * 1024; // GitHub blob API limit is 100 MB after base64
 
-  var SP_VERSION = "v22";
+  var SP_VERSION = "v23";
   window.SP_VERSION = SP_VERSION;
   var state = { config: null, latest: null, history: null, postsHist: null, error: null, busy: false, progress: "", syncAvailable: false, encCreated: null, chOrder: null };
   var app = document.getElementById("app");
@@ -299,7 +299,7 @@
     if (pg) pg.parentNode.replaceChild(tmp.firstChild, pg);
     bindTopbar();
   }
-  function onFormPage() { return /^#\/(publish|settings|brain|gallery|identity|todo)/.test(location.hash); }
+  function onFormPage() { return /^#\/(publish|settings|brain|gallery|identity|todo|pipeline|today)/.test(location.hash); }
   function rerenderSafe() { if (onFormPage() && document.getElementById("topbar") && authed()) { redrawTopbar(); updateAccList(); } else render(); }
   function setProgress(msg) {
     state.progress = msg;
@@ -368,33 +368,41 @@
     html += '<a class="vault hb hb-1" href="' + VAULT_URL + '" rel="noopener">' +
       '<span class="vi">' + ICON_LOCK + '</span><span><div class="vt">پسوورد منیجر</div>' +
       '<div class="vs">باز کردن Vaultwarden</div></span><span class="arrow">↗</span></a>';
-    html += '<a class="chbox hb hb-2" href="#/channels">' +
+    html += '<a class="todaybox hb hb-2" href="#/today" id="todaybox">' +
+      '<span class="vi">' + ICON_TODAY + '</span><span><div class="vt">امروز</div>' +
+      '<div class="vs">فقط کارهایی که همین الان منتظرن</div></span>' +
+      '<span class="arrow">←</span></a>';
+    html += '<a class="chbox hb hb-3" href="#/channels">' +
       '<span class="vi">' + ICON_CHANNELS + '</span><span><div class="vt">کانال‌ها</div>' +
       '<div class="vs">' + fa(state.config.pages.length) + " کانال</div></span>" +
       (total ? '<span class="bell on">' + ICON_BELL + '<i>' + esc(compact(total)) + "</i></span>" : "") +
       '<span class="arrow">←</span></a>';
-    html += '<a class="brainbox hb hb-3" href="#/brain" id="brainbox">' +
+    html += '<a class="brainbox hb hb-4" href="#/brain" id="brainbox">' +
       '<span class="vi">' + ICON_BRAIN + '</span><span><div class="vt">مغز متفکر</div>' +
       '<div class="vs">ایده، سناریو و اسکریپت هر پیج</div></span>' +
       '<span class="arrow">←</span></a>';
-    html += '<a class="galbox hb hb-4" href="#/gallery" id="galbox">' +
+    html += '<a class="pipebox hb hb-5" href="#/pipeline" id="pipebox">' +
+      '<span class="vi">' + ICON_FLOW + '</span><span><div class="vt">خط تولید</div>' +
+      '<div class="vs">ایده › ساخت › تأیید دوگانه › انتشار › آنالیز</div></span>' +
+      '<span class="arrow">←</span></a>';
+    html += '<a class="galbox hb hb-6" href="#/gallery" id="galbox">' +
       '<span class="vi">' + ICON_GALLERY + '</span><span><div class="vt">گالری محتوا</div>' +
       '<div class="vs">اسلاید، ریل، استوری و ویدئوی آماده</div></span>' +
       '<span class="arrow">←</span></a>';
-    html += '<a class="pubbox hb hb-5" href="#/publish" id="pubbox">' +
+    html += '<a class="pubbox hb hb-7" href="#/publish" id="pubbox">' +
       '<span class="vi">' + ICON_SEND + '</span><span><div class="vt">انتشار محتوا</div>' +
       '<div class="vs">' + esc(ts.has ? "آپلود ویدیو یا عکس، انتشار و زمان‌بندی" : ts.locked ? "برای فعال‌سازی اتصال، رمز پنل را یک بار وارد کن" : "اول توکن گیت‌هاب را در تنظیمات بگذار") + "</div></span>" +
       '<span class="arrow">←</span></a>';
-    html += '<a class="toolbox hb hb-6" href="#/tools" id="toolbox">' +
+    html += '<a class="toolbox hb hb-8" href="#/tools" id="toolbox">' +
       '<span class="vi">' + ICON_TOOLS + '</span><span><div class="vt">ابزارها</div>' +
       '<div class="vs">هوش‌های مصنوعی برای نگین و امیرحسین</div></span>' +
       '<span class="arrow">←</span></a>';
-    html += '<a class="todobox hb hb-7" href="#/todo" id="todobox">' +
+    html += '<a class="todobox hb hb-9" href="#/todo" id="todobox">' +
       '<span class="vi">' + ICON_TODO + '</span><span><div class="vt">To do</div>' +
       '<div class="vs">کارها، چک‌ها و کم‌وکاستی‌هایی که باید رفع کنیم</div></span>' +
       '<span class="arrow">←</span></a>';
     html += "</div>";
-    html += '<a class="setrow hb-8" href="#/settings">' + ICON_GEAR + "<span>تنظیمات</span><em id=\"tok-pill\" data-state=\"" + ts.state + "\">" + esc(ts.label) + "</em></a>";
+    html += '<a class="setrow hb-10" href="#/settings">' + ICON_GEAR + "<span>تنظیمات</span><em id=\"tok-pill\" data-state=\"" + ts.state + "\">" + esc(ts.label) + "</em></a>";
     html += '<button class="logout" id="logout">خروج از پنل</button>';
     app.innerHTML = html;
     bindTopbar();
@@ -558,7 +566,7 @@
   }
 
   // -------------------------------------------------------------- guide (#/guide): what every part of the app is
-  var GUIDE = [["start", "شروع: این پنل چیه؟", [["چیه", "پنل مدیریت پنج پیج ما (Hamrah Seller، Titan Station، FanCATstic Four، Shode Dige، PreTime TV) روی چهار شبکه: یوتیوب، اینستاگرام، تیک‌تاک و آپارات. یه وب‌اپه که روی GitHub Pages اجرا می‌شه و روی گوشی هم مثل اپ نصب می‌شه (Add to Home screen)."], ["به چه دردمون می‌خوره", "آمار، ایده‌ها، اسکریپت‌ها، هویت برندها، محتوای ساخته‌شده و صف انتشار همه یه‌جا جمع‌اند تا هر دومون یه تصویر واحد داشته باشیم و کسی کار تکراری نکنه."], ["چطور کار می‌کنه", "داده‌ها رو ربات‌های GitHub (Actions) هر حدود یک ساعت از شبکه‌ها و بافر می‌خونن و توی مخزن negin1100mohammadi/social-panel ذخیره می‌کنن. اپ همون فایل‌ها رو نشون می‌ده؛ پس آمار «زنده‌ی لحظه‌ای» نیست، «تقریباً ساعتی»ه."]]], ["login", "ورود به پنل و رمز پنل", [["چیه", "صفحه‌ی ورود با کاربر admin و رمز پنل. دکمه‌ی چشم رمز رو نشون می‌ده."], ["چطور کار می‌کنه", "رمز هیچ‌جا به‌صورت متن ذخیره نمی‌شه؛ فقط یه هش ازش توی کد هست. همین رمز کلید باز کردن داده‌های رمزشده (توکن GitHub، هویت، مغز متفکر، گالری) روی هر دستگاهه، برای همین هر دستگاه جدید یه بار رمز رو می‌پرسه («باز کردن قفل»)."], ["نکته", "اگه رمز پنل عوض بشه، داده‌های رمزشده باید با رمز جدید دوباره قفل بشن؛ قبلش با هارک هماهنگ کنید."]]], ["topbar", "نوار بالای صفحه", [["دکمه‌ی بنفش چرخشی", "به‌روزرسانی همه‌ی کانال‌ها. اگه توکن GitHub روی دستگاه باز باشه، یه دور خوندن تازه رو همون لحظه راه می‌ندازه و بعد چند دقیقه داده‌ها رو دوباره می‌خونه؛ وگرنه فقط آخرین فایل‌ها رو دوباره بار می‌کنه. نوار پیشرفت زیرش وضعیت رو می‌گه."], ["راهنما", "همین صفحه."], ["ساعت", "بالا: ساعت الان تهران (زنده، هر چند ثانیه به‌روز می‌شه). پایین: آخرین باری که داده‌ها خونده شدن، مثلاً «داده: ۱۲ دقیقه پیش»."], ["هویت", "میان‌بر شناسنامه‌ی برندها (پایین‌تر توضیح داده شده)."], ["دارک / لایت", "تم تیره یا روشن؛ روی هر دستگاه جدا ذخیره می‌شه."]]], ["vault", "باکس مدیر رمز (Vaultwarden)", [["چیه", "باکس بنفش صفحه‌ی اصلی؛ فقط vault.vaultwarden.com رو باز می‌کنه."], ["به چه دردمون می‌خوره", "همه‌ی رمزهای پیج‌ها، گوگل‌ها، بافر و … اونجاست. خود پنل هیچ رمزی نگه نمی‌داره و نشون نمی‌ده."], ["کم‌وکاستی", "سه آیتم خالی (Gmail، GitHub، Social Panel) و رمز «Buffer — PreTime» و «گوگل — اصلی» باید توسط خودتون پر یا به‌روز بشن."]]], ["channels", "کانال‌ها (فهرست پیج‌ها)", [["چیه", "پنج باکس، یکی برای هر برند، با لوگو و اسم. ترتیبشون ثابته تا موقع زدن جابه‌جا نشن."], ["زنگوله", "تعداد لایک و کامنت‌های تازه از آخرین باری که همین دستگاه این صفحه رو باز کرده."], ["باز کردن (+)", "چهار ردیف شبکه باز می‌شه: اسم/هندل، لینک صفحه‌ی عمومی (در تب جدید) و آیکون نمودار برای آنالیتیکس همون شبکه."], ["به چه دردمون می‌خوره", "یه نگاه: کدوم پیج تازه پست داده، کدوم فعالیت تازه داره، و رفتن سریع به صفحه‌ی هر شبکه."]]], ["analytics", "آنالیتیکس هر شبکه", [["چیه", "با آیکون نمودار هر ردیف باز می‌شه: فالوور، بازدید، لایک، کامنت، اشتراک، ذخیره، نرخ تعامل، روند فالوور و فهرست پست‌ها (جدیدترین بالا) با رشد هر پست."], ["فیلترها", "بازه‌ی ۳ ساعت، ۲۴ ساعت، ۳۰ روز، ۹۰ روز و نمودار خطی یا میله‌ای. هر عدد درصد تغییرش رو هم داره."], ["منبع داده", "یوتیوب: API رسمی (کانال‌های متصل)؛ اینستاگرام و تیک‌تاک: بافر + صفحه‌ی عمومی؛ آپارات: صفحه‌ی عمومی."], ["محدودیت", "آمار اینستاگرام بافر حدوداً روزی یه بار تازه می‌شه، پس بازه‌ی ۳ ساعته اغلب تغییری نشون نمی‌ده. اشتراک/ذخیره/مدت تماشا فقط جایی هست که دسترسی مالک داریم."]]], ["brain", "مغز متفکر (ایده تا اسکریپت)", [["چیه", "برای هر برند یه میز کار با تب‌های: پیشنهاد هارک › پیشنهاد ما › غربال‌گری › اسکریپت نهایی › سناریوها › اسکریپت‌ها."], ["پیشنهاد هارک", "هارک هر روز ساعت ۹ صبح سه ایده برای هر پیج می‌ذاره، بر اساس هویت همون برند."], ["پیشنهاد ما", "ایده‌ی خودتون رو با اسم نویسنده (نگین/امیرحسین) ثبت کنید."], ["غربال‌گری و اسکریپت نهایی", "ایده رو برای هارک بفرستید تا امتیاز بده و اسکریپت وایرال (هوک، نگه‌داشت، CTA، کپشن، هشتگ) بنویسه. هارک ساعت‌های ۹، ۱۳، ۱۷ و ۲۱ صف رو بررسی می‌کنه. بعد ویرایش، کپی، تأیید و تاریخچه دارید."], ["ارسال برای ساخت", "اسکریپت تأییدشده رو برای ابزارهای ساخت (Claude، Gemini، AI Studio، ChatGPT، Flow…) می‌فرستید؛ لینک پروژه‌ی هر ابزار برای هر برند همین‌جا ذخیره می‌شه."], ["امنیت", "محتوای مغز متفکر رمزشده ذخیره می‌شه و فقط با رمز پنل باز می‌شه."]]], ["gallery", "گالری محتوا", [["چیه", "محتوای ساخته‌شده‌ی هر برند، خودکار دسته‌بندی‌شده: اسلاید، ریل، استوری، ویدیو."], ["به چه دردمون می‌خوره", "یه آرشیو مرتب از هر چی ساخته شده، تا راحت پیداش کنید و ازش استفاده کنید. ورودی خودکار (gallery-ingest) برای وقتی آماده‌ست که خط تولید ابزارها مستقیم فایل بفرسته."]]], ["publish", "انتشار و زمان‌بندی", [["چیه", "انتخاب از بین ۲۰ کانال (۵ برند × ۴ شبکه)، آپلود فایل (تا ۷۰ مگ)، کپشن، زمان‌بندی، تقویم و صف."], ["وضعیت‌ها", "در صف، منتشر شد، خطا. هر مورد ۳ بار خودکار تلاش می‌شه؛ بعدش «تلاش دوباره»، «انتشار دستی» یا «لغو». ربات انتشار هر ۱۵ دقیقه صف رو می‌خونه."], ["کدوم شبکه چطور", "یوتیوب با API رسمی؛ اینستاگرام و تیک‌تاک از طریق بافر؛ آپارات API آپلود نداره و دستیه."], ["قانون", "هیچ چیزی بدون زدن دکمه توسط خودتون منتشر نمی‌شه."]]], ["identity", "هویت برندها", [["چیه", "شناسنامه‌ی کامل هر برند در ۱۹–۲۰ بخش: معرفی، مخاطب، لحن، رنگ‌ها، فونت‌ها، کاراکترها، هشتگ‌ها، CTAها، رقبا، قوانین و پرامپت AI."], ["چطور کار می‌کنه", "کیت‌هایی که فرستادید (Pages.zip) وارد شده‌اند. پیشنهادهای هارک با برچسب «پیشنهاد هارک» میان و با «تأیید» قطعی می‌شن. «کپی کل شناسنامه برای ابزار AI» یه متن آماده برای ابزارها می‌ده."], ["به چه دردمون می‌خوره", "همه‌ی ایده‌ها، اسکریپت‌ها و تصویرها (چه هارک، چه ابزارها) باید از همین شناسنامه پیروی کنن تا هر پیج یه صدا و یه ظاهر ثابت داشته باشه."], ["کم‌وکاستی", "۲۵ سؤال باز درباره‌ی کیت‌ها (هندل اینستاگرام همراه، پالت و فونت‌ها، املای اسم‌ها، …) هنوز جواب نگرفته. یه بار «هویت» رو باز کنید و قفل رو بزنید تا کیت‌ها با داده‌ی رمزشده ادغام بشن."]]], ["tools", "ابزارها", [["پروژه‌های هر برند", "برای هر برند یه ردیف آیکون: Gemini (ایده/سناریو و کارگردان/پرامپت)، Claude (غربال و اسکریپت نهایی)، ChatGPT (کپشن و کامنت)، AI Studio (تصویر و کاور) و Flow (ویدیو). هر برند روی حساب گوگل خودش ساخته شده (همون ایمیل بافرش) و فایل‌های کیت داخلشه."], ["همه‌ی ابزارها", "لینک عمومی هر ابزار (Hark، Muse، Gemini، ChatGPT، Claude، AI Studio، Flow) با دکمه‌ی نگین و امیرحسین؛ لینک Muse رو خودتون وارد می‌کنید."], ["کم‌وکاستی", "Flow از سرورهای هارک در دسترس نیست؛ پروژه‌های Flow رو خودتون بسازید (آیکونش خاکستریه تا لینکش اضافه بشه). ابزارها خودشون کار نمی‌کنن، فقط آماده‌ی استفاده‌اند."]]], ["todo", "To do", [["چیه", "باکس یکی مونده به آخر، بالای تنظیمات: فهرست مشترک کارهایی که باید انجام بدیم، بخش‌هایی که باید چک کنیم و ایرادهایی که باید رفع بشن. هر مورد نوع (کار / چک / رفع ایراد) و صاحب (نگین، امیرحسین یا هر دو) داره. فیلتر بالا: «نگین» کارهای نگین + مشترک‌ها، «امیرحسین» کارهای امیرحسین + مشترک‌ها، «هر دو (همه)» کل لیست."], ["چطور کار می‌کنه", "تیک بزنید تا مورد به ستون Done روبه‌روش بره (با تاریخ و اسم)؛ تیک رو بردارید تا برگرده. داده رمزشده بین دستگاه‌ها و بین نگین و امیرحسین همگامه. چند مورد اولیه رو هارک از کم‌وکاستی‌های فعلی گذاشته."]]], ["settings", "تنظیمات", [["توکن GitHub", "برای دکمه‌ی به‌روزرسانی فوری و ذخیره‌ی داده‌ها؛ رمزشده بین دستگاه‌ها همگام می‌شه."], ["حساب‌های متصل", "جدول همه‌ی برندها × شبکه‌ها با وضعیت (متصل ✓، هندل فرق دارد، متصل نیست) و راه وصل شدن."], ["اتصال یوتیوب", "دکمه‌ی «اتصال» ورود رسمی گوگل رو باز می‌کنه. هر پنج کانال روی حساب amirmajidi1375 هستن."], ["نسخه", "پایین صفحه نسخه‌ی پنل نوشته شده؛ برای گزارش مشکل به هارک بگید."]]], ["behind", "پشت صحنه (برای ادامه‌ی توسعه)", [["مخزن", "github.com/negin1100mohammadi/social-panel؛ اپ: index.html، app.js، styles.css، config.json (هندل‌ها و لینک‌ها)."], ["ربات‌ها", "refresh (آمار، حدوداً ساعتی)، buffer-sync (بافر)، publish (هر ۱۵ دقیقه)، yt-connect و yt-reply (یوتیوب)، gallery-ingest (ورود محتوا)."], ["رمزنگاری", "توکن‌ها و داده‌های حساس با AES-GCM در پوشه‌های vault/ و config/ ذخیره می‌شن؛ کلیدهای API فقط در Secrets گیت‌هاب‌اند."], ["ارتباط با هارک", "یه کانال رمزشده (hark/requests و hark/out) که ایده، غربال و هویت رو بین پنل و هارک جابه‌جا می‌کنه."]]], ["gaps", "کم‌وکاستی‌ها و قدم‌های بعدی", [["اینستاگرام رسمی", "اتصال API رسمی منتظر اپ Meta (کار امیرحسین) است؛ تا اون موقع از بافر استفاده می‌شه."], ["تیک‌تاک", "انتشار مستقیم نیاز به بررسی (audit) تیک‌تاک داره؛ تیک‌تاک FanCATstic و همراه هنوز در بافر نیستن. پلن رایگان بافر هر حساب ۳ کانال داره."], ["آپارات", "API آپلود نداره؛ فقط لینک و انتشار دستی."], ["یوتیوب", "رمز گوگل تایتان (amirmajidi1375) امروز عوض شد؛ در «تنظیمات» چک کنید پنج کانال هنوز «متصل ✓» باشن، وگرنه دوباره «اتصال» بزنید. ویدیوی صف تایتان منتظر تأیید شماست."], ["هویت", "جواب ۲۵ سؤال کیت‌ها و هندل اینستاگرام همراه (hamkargram یا hamrah.seller)."], ["امنیت", "رمزهایی که در چت تایپ شدن (فیسبوک و بافر PreTime) رو عوض کنید."]]]];
+  var GUIDE = [["start", "شروع: این پنل چیه؟", [["چیه", "پنل مدیریت پنج پیج ما (Hamrah Seller، Titan Station، FanCATstic Four، Shode Dige، PreTime TV) روی چهار شبکه: یوتیوب، اینستاگرام، تیک‌تاک و آپارات. یه وب‌اپه که روی GitHub Pages اجرا می‌شه و روی گوشی هم مثل اپ نصب می‌شه (Add to Home screen)."], ["به چه دردمون می‌خوره", "آمار، ایده‌ها، اسکریپت‌ها، هویت برندها، محتوای ساخته‌شده و صف انتشار همه یه‌جا جمع‌اند تا هر دومون یه تصویر واحد داشته باشیم و کسی کار تکراری نکنه."], ["چطور کار می‌کنه", "داده‌ها رو ربات‌های GitHub (Actions) هر حدود یک ساعت از شبکه‌ها و بافر می‌خونن و توی مخزن negin1100mohammadi/social-panel ذخیره می‌کنن. اپ همون فایل‌ها رو نشون می‌ده؛ پس آمار «زنده‌ی لحظه‌ای» نیست، «تقریباً ساعتی»ه."]]], ["login", "ورود به پنل و رمز پنل", [["چیه", "صفحه‌ی ورود با کاربر admin و رمز پنل. دکمه‌ی چشم رمز رو نشون می‌ده."], ["چطور کار می‌کنه", "رمز هیچ‌جا به‌صورت متن ذخیره نمی‌شه؛ فقط یه هش ازش توی کد هست. همین رمز کلید باز کردن داده‌های رمزشده (توکن GitHub، هویت، مغز متفکر، گالری) روی هر دستگاهه، برای همین هر دستگاه جدید یه بار رمز رو می‌پرسه («باز کردن قفل»)."], ["نکته", "اگه رمز پنل عوض بشه، داده‌های رمزشده باید با رمز جدید دوباره قفل بشن؛ قبلش با هارک هماهنگ کنید."]]], ["topbar", "نوار بالای صفحه", [["دکمه‌ی بنفش چرخشی", "به‌روزرسانی همه‌ی کانال‌ها. اگه توکن GitHub روی دستگاه باز باشه، یه دور خوندن تازه رو همون لحظه راه می‌ندازه و بعد چند دقیقه داده‌ها رو دوباره می‌خونه؛ وگرنه فقط آخرین فایل‌ها رو دوباره بار می‌کنه. نوار پیشرفت زیرش وضعیت رو می‌گه."], ["راهنما", "همین صفحه."], ["ساعت", "بالا: ساعت الان تهران (زنده، هر چند ثانیه به‌روز می‌شه). پایین: آخرین باری که داده‌ها خونده شدن، مثلاً «داده: ۱۲ دقیقه پیش»."], ["هویت", "میان‌بر شناسنامه‌ی برندها (پایین‌تر توضیح داده شده)."], ["دارک / لایت", "تم تیره یا روشن؛ روی هر دستگاه جدا ذخیره می‌شه."]]], ["vault", "باکس مدیر رمز (Vaultwarden)", [["چیه", "باکس بنفش صفحه‌ی اصلی؛ فقط vault.vaultwarden.com رو باز می‌کنه."], ["به چه دردمون می‌خوره", "همه‌ی رمزهای پیج‌ها، گوگل‌ها، بافر و … اونجاست. خود پنل هیچ رمزی نگه نمی‌داره و نشون نمی‌ده."], ["کم‌وکاستی", "سه آیتم خالی (Gmail، GitHub، Social Panel) و رمز «Buffer — PreTime» و «گوگل — اصلی» باید توسط خودتون پر یا به‌روز بشن."]]], ["today", "امروز", [["چیه", "باکس دوم صفحه‌ی اصلی، درست بعد از مدیر رمز: فقط چیزهایی که همین الان کار دارن. هر ردیف رو بزنی، می‌ری همون جایی که باید کار انجام بشه."], ["چی توش میاد", "کارت‌های منتظر تأیید نهایی، انتشارهای خراب یا گیرکرده، کارت‌های عقب‌افتاده‌ی خط تولید، اسکریپت‌های آماده‌ی بررسی، ایده‌های تازه‌ی هارک، خطاهای ساخت، کامنت‌های بی‌جواب یوتیوب، کانال‌هایی که بیش از ۳ روز پست نذاشتن (شبکه‌های بی‌محتوا حساب نمی‌شن)، اتصال‌های خراب، جهش یا افت غیرعادی فالوور در ۲۴ ساعت، و To doهای باز."], ["فیلتر نفر", "«نگین»، «امیرحسین» یا «هر دو (همه)»؛ همون فیلتر To do و خط تولیده و روی هر دستگاه یادش می‌مونه."], ["نکته", "اگه چیزی نباشه، می‌گه «همه‌چی مرتبه». بخش‌های رمزشده (ایده‌ها، تأییدها، To do) بعد از باز کردن قفل با رمز پنل نشون داده می‌شن."]]], ["channels", "کانال‌ها (فهرست پیج‌ها)", [["چیه", "پنج باکس، یکی برای هر برند، با لوگو و اسم. ترتیبشون ثابته تا موقع زدن جابه‌جا نشن."], ["زنگوله", "تعداد لایک و کامنت‌های تازه از آخرین باری که همین دستگاه این صفحه رو باز کرده."], ["باز کردن (+)", "چهار ردیف شبکه باز می‌شه: اسم/هندل، لینک صفحه‌ی عمومی (در تب جدید) و آیکون نمودار برای آنالیتیکس همون شبکه."], ["به چه دردمون می‌خوره", "یه نگاه: کدوم پیج تازه پست داده، کدوم فعالیت تازه داره، و رفتن سریع به صفحه‌ی هر شبکه."]]], ["analytics", "آنالیتیکس هر شبکه", [["چیه", "با آیکون نمودار هر ردیف باز می‌شه: فالوور، بازدید، لایک، کامنت، اشتراک، ذخیره، نرخ تعامل، روند فالوور و فهرست پست‌ها (جدیدترین بالا) با رشد هر پست."], ["فیلترها", "بازه‌ی ۳ ساعت، ۲۴ ساعت، ۳۰ روز، ۹۰ روز و نمودار خطی یا میله‌ای. هر عدد درصد تغییرش رو هم داره."], ["منبع داده", "یوتیوب: API رسمی (کانال‌های متصل)؛ اینستاگرام و تیک‌تاک: بافر + صفحه‌ی عمومی؛ آپارات: صفحه‌ی عمومی."], ["محدودیت", "آمار اینستاگرام بافر حدوداً روزی یه بار تازه می‌شه، پس بازه‌ی ۳ ساعته اغلب تغییری نشون نمی‌ده. اشتراک/ذخیره/مدت تماشا فقط جایی هست که دسترسی مالک داریم."]]], ["brain", "مغز متفکر (ایده تا اسکریپت)", [["چیه", "برای هر برند یه میز کار با تب‌های: پیشنهاد هارک › پیشنهاد ما › غربال‌گری › اسکریپت نهایی › سناریوها › اسکریپت‌ها."], ["پیشنهاد هارک", "هارک هر روز ساعت ۹ صبح سه ایده برای هر پیج می‌ذاره، بر اساس هویت همون برند."], ["پیشنهاد ما", "ایده‌ی خودتون رو با اسم نویسنده (نگین/امیرحسین) ثبت کنید."], ["غربال‌گری و اسکریپت نهایی", "ایده رو برای هارک بفرستید تا امتیاز بده و اسکریپت وایرال (هوک، نگه‌داشت، CTA، کپشن، هشتگ) بنویسه. هارک ساعت‌های ۹، ۱۳، ۱۷ و ۲۱ صف رو بررسی می‌کنه. بعد ویرایش، کپی، تأیید و تاریخچه دارید."], ["ارسال برای ساخت", "اسکریپت تأییدشده رو برای ابزارهای ساخت (Claude، Gemini، AI Studio، ChatGPT، Flow…) می‌فرستید؛ لینک پروژه‌ی هر ابزار برای هر برند همین‌جا ذخیره می‌شه."], ["امنیت", "محتوای مغز متفکر رمزشده ذخیره می‌شه و فقط با رمز پنل باز می‌شه."]]], ["pipeline", "خط تولید", [["چیه", "برد کانبان کل مسیر هر محتوا: ایده › غربال › اسکریپت › ساخت › چک هویت › آماده › تأیید نهایی › زمان‌بندی › منتشر شد › آنالیز، و فلش بازخورد از آنالیز به ایده. نوار بالای صفحه رو بزنی، می‌پره به همون ستون."], ["کارت‌ها از کجا میان", "خودکار از «مغز متفکر» (ایده‌های هارک و ما، غربال، اسکریپت نهایی)، «گالری» و «انتشار» ساخته می‌شن و با پیشرفت کار خودشون جلو می‌رن. صاحب کار، مهلت، یادداشت، تیک‌های هویت، تأییدها و بازطراحی‌ها رمزشده در vault/pipeline ذخیره می‌شه."], ["فیلترها", "برند (همه یا یکی از ۵ برند) و نفر. «من:» بالای برد مشخص می‌کنه تأیید و تغییرها به اسم کی ثبت بشه (روی هر دستگاه یادش می‌مونه)."], ["کارت", "لوگو و اسم برند، عنوان، صاحب، مهلت (قرمز یعنی عقب افتاده)، دکمه‌ی کار بعدی که می‌بره همون صفحه، و دکمه‌های جلو / عقب."], ["چک هویت", "چک‌لیست از شناسنامه‌ی همون برند: پالت رنگ، لوگو، CTA، هشتگ‌ها، کلمات ممنوع و لحن. تا همه تیک نخورن، کارت به «آماده» نمی‌ره."], ["تأیید دوگانه", "قانون نگین: هیچ کارتی به «زمان‌بندی» یا «منتشر شد» نمی‌ره و صفحه‌ی انتشار هم آیتم گالری رو ثبت نمی‌کنه، تا وقتی نگین و امیرحسین هر دو «تأیید» زده باشن. هر تأیید با اسم و ساعت روی کارت دیده می‌شه."], ["ویرایش", "در همه‌ی مرحله‌ها: عنوان، یادداشت و تغییرات محتوا، صاحب و مهلت؛ هر تغییر در «تاریخچه»ی کارت ثبت می‌شه. متن کامل اسکریپت رو در مغز متفکر هم می‌شه ویرایش کرد."], ["درخواست بازطراحی / بازتولید", "در همه‌ی مرحله‌ها: دلیل اجباریه؛ کارت به مرحله‌ای که انتخاب می‌کنی برمی‌گرده، شمارنده‌ی بازطراحی بالا می‌ره، دلیل روی کارت دیده می‌شه و هر دو تأیید پاک می‌شن. در ایده، غربال و اسکریپت درخواست رمزشده برای هارک هم می‌ره تا دوباره انجامش بده."], ["آنالیز", "کارت‌های منتشرشده بعد از ۲۴ ساعت به «آنالیز» می‌رن و اگه پست منتشرشده با آمار جور بشه، بازدید و لایک و کامنتش روی کارت میاد."]]], ["gallery", "گالری محتوا", [["چیه", "محتوای ساخته‌شده‌ی هر برند، خودکار دسته‌بندی‌شده: اسلاید، ریل، استوری، ویدیو."], ["به چه دردمون می‌خوره", "یه آرشیو مرتب از هر چی ساخته شده، تا راحت پیداش کنید و ازش استفاده کنید. ورودی خودکار (gallery-ingest) برای وقتی آماده‌ست که خط تولید ابزارها مستقیم فایل بفرسته."]]], ["publish", "انتشار و زمان‌بندی", [["چیه", "انتخاب از بین ۲۰ کانال (۵ برند × ۴ شبکه)، آپلود فایل (تا ۷۰ مگ)، کپشن، زمان‌بندی، تقویم و صف."], ["وضعیت‌ها", "در صف، منتشر شد، خطا. هر مورد ۳ بار خودکار تلاش می‌شه؛ بعدش «تلاش دوباره»، «انتشار دستی» یا «لغو». ربات انتشار هر ۱۵ دقیقه صف رو می‌خونه."], ["کدوم شبکه چطور", "یوتیوب با API رسمی؛ اینستاگرام و تیک‌تاک از طریق بافر؛ آپارات API آپلود نداره و دستیه."], ["قانون", "هیچ چیزی بدون زدن دکمه توسط خودتون منتشر نمی‌شه. آیتمی که از گالری می‌فرستید باید اول در «خط تولید» تأیید هر دو (نگین و امیرحسین) رو گرفته باشه."]]], ["identity", "هویت برندها", [["چیه", "شناسنامه‌ی کامل هر برند در ۱۹–۲۰ بخش: معرفی، مخاطب، لحن، رنگ‌ها، فونت‌ها، کاراکترها، هشتگ‌ها، CTAها، رقبا، قوانین و پرامپت AI."], ["چطور کار می‌کنه", "کیت‌هایی که فرستادید (Pages.zip) وارد شده‌اند. پیشنهادهای هارک با برچسب «پیشنهاد هارک» میان و با «تأیید» قطعی می‌شن. «کپی کل شناسنامه برای ابزار AI» یه متن آماده برای ابزارها می‌ده."], ["به چه دردمون می‌خوره", "همه‌ی ایده‌ها، اسکریپت‌ها و تصویرها (چه هارک، چه ابزارها) باید از همین شناسنامه پیروی کنن تا هر پیج یه صدا و یه ظاهر ثابت داشته باشه."], ["کم‌وکاستی", "۲۵ سؤال باز درباره‌ی کیت‌ها (هندل اینستاگرام همراه، پالت و فونت‌ها، املای اسم‌ها، …) هنوز جواب نگرفته. یه بار «هویت» رو باز کنید و قفل رو بزنید تا کیت‌ها با داده‌ی رمزشده ادغام بشن."]]], ["tools", "ابزارها", [["پروژه‌های هر برند", "برای هر برند یه ردیف آیکون: Gemini (ایده/سناریو و کارگردان/پرامپت)، Claude (غربال و اسکریپت نهایی)، ChatGPT (کپشن و کامنت)، AI Studio (تصویر و کاور) و Flow (ویدیو). هر برند روی حساب گوگل خودش ساخته شده (همون ایمیل بافرش) و فایل‌های کیت داخلشه."], ["همه‌ی ابزارها", "لینک عمومی هر ابزار (Hark، Muse، Gemini، ChatGPT، Claude، AI Studio، Flow) با دکمه‌ی نگین و امیرحسین؛ لینک Muse رو خودتون وارد می‌کنید."], ["کم‌وکاستی", "Flow از سرورهای هارک در دسترس نیست؛ پروژه‌های Flow رو خودتون بسازید (آیکونش خاکستریه تا لینکش اضافه بشه). ابزارها خودشون کار نمی‌کنن، فقط آماده‌ی استفاده‌اند."]]], ["todo", "To do", [["چیه", "باکس یکی مونده به آخر، بالای تنظیمات: فهرست مشترک کارهایی که باید انجام بدیم، بخش‌هایی که باید چک کنیم و ایرادهایی که باید رفع بشن. هر مورد نوع (کار / چک / رفع ایراد) و صاحب (نگین، امیرحسین یا هر دو) داره. فیلتر بالا: «نگین» کارهای نگین + مشترک‌ها، «امیرحسین» کارهای امیرحسین + مشترک‌ها، «هر دو (همه)» کل لیست."], ["چطور کار می‌کنه", "تیک بزنید تا مورد به ستون Done روبه‌روش بره (با تاریخ و اسم)؛ تیک رو بردارید تا برگرده. داده رمزشده بین دستگاه‌ها و بین نگین و امیرحسین همگامه. چند مورد اولیه رو هارک از کم‌وکاستی‌های فعلی گذاشته."]]], ["settings", "تنظیمات", [["توکن GitHub", "برای دکمه‌ی به‌روزرسانی فوری و ذخیره‌ی داده‌ها؛ رمزشده بین دستگاه‌ها همگام می‌شه."], ["حساب‌های متصل", "جدول همه‌ی برندها × شبکه‌ها با وضعیت (متصل ✓، هندل فرق دارد، متصل نیست) و راه وصل شدن."], ["اتصال یوتیوب", "دکمه‌ی «اتصال» ورود رسمی گوگل رو باز می‌کنه. هر پنج کانال روی حساب amirmajidi1375 هستن."], ["نسخه", "پایین صفحه نسخه‌ی پنل نوشته شده؛ برای گزارش مشکل به هارک بگید."]]], ["behind", "پشت صحنه (برای ادامه‌ی توسعه)", [["مخزن", "github.com/negin1100mohammadi/social-panel؛ اپ: index.html، app.js، styles.css، config.json (هندل‌ها و لینک‌ها)."], ["ربات‌ها", "refresh (آمار، حدوداً ساعتی)، buffer-sync (بافر)، publish (هر ۱۵ دقیقه)، yt-connect و yt-reply (یوتیوب)، gallery-ingest (ورود محتوا)."], ["رمزنگاری", "توکن‌ها و داده‌های حساس با AES-GCM در پوشه‌های vault/ و config/ ذخیره می‌شن؛ کلیدهای API فقط در Secrets گیت‌هاب‌اند."], ["ارتباط با هارک", "یه کانال رمزشده (hark/requests و hark/out) که ایده، غربال و هویت رو بین پنل و هارک جابه‌جا می‌کنه."]]], ["gaps", "کم‌وکاستی‌ها و قدم‌های بعدی", [["اینستاگرام رسمی", "اتصال API رسمی منتظر اپ Meta (کار امیرحسین) است؛ تا اون موقع از بافر استفاده می‌شه."], ["تیک‌تاک", "انتشار مستقیم نیاز به بررسی (audit) تیک‌تاک داره؛ تیک‌تاک FanCATstic و همراه هنوز در بافر نیستن. پلن رایگان بافر هر حساب ۳ کانال داره."], ["آپارات", "API آپلود نداره؛ فقط لینک و انتشار دستی."], ["یوتیوب", "رمز گوگل تایتان (amirmajidi1375) امروز عوض شد؛ در «تنظیمات» چک کنید پنج کانال هنوز «متصل ✓» باشن، وگرنه دوباره «اتصال» بزنید. ویدیوی صف تایتان منتظر تأیید شماست."], ["هویت", "جواب ۲۵ سؤال کیت‌ها و هندل اینستاگرام همراه (hamkargram یا hamrah.seller)."], ["امنیت", "رمزهایی که در چت تایپ شدن (فیسبوک و بافر PreTime) رو عوض کنید."]]]];
   function guideView() {
     var open = lsGet("sp_guide_open", "start");
     var html = topbar("راهنمای اپ");
@@ -3438,6 +3446,433 @@
     });
   }
 
+  // ============================================================= v23: «امروز» (#/today) + «خط تولید» (#/pipeline)
+  // Overlay store: vault/pipeline.enc.json = { cards: { <key>: { title, notes, owner, due, stage, forced, forced_auto, ticks{}, approvals{نگین:{at},امیرحسین:{at}},
+  //   revisions[{at,by,stage,reason}], rev_count, history[{at,by,what}] } } }. Cards themselves are derived from brain/gallery/publish.
+  var ICON_TODAY = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path d="M9 15l2 2 4-4"/></svg>';
+  var ICON_FLOW = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg>';
+  var PSTAGES = [["idea", "ایده"], ["screen", "غربال"], ["script", "اسکریپت"], ["make", "ساخت"], ["idcheck", "چک هویت"], ["ready", "آماده"], ["approve", "تأیید نهایی"], ["schedule", "زمان‌بندی"], ["published", "منتشر شد"], ["analysis", "آنالیز"]];
+  var PST_FA = {}; PSTAGES.forEach(function (s) { PST_FA[s[0]] = s[1]; });
+  var HARK_STAGE = { idea: 1, screen: 1, script: 1 };
+  var PEOPLE = ["نگین", "امیرحسین"];
+  var APPROVER_LS = "sp_approver", PIPE_BRAND_LS = "sp_pipe_brand";
+  var ID_CHECKS = [["colors", "پالت رنگ برند", ["colors"]], ["logo", "لوگو درست و در جای درست", ["logos"]], ["cta", "CTA برند", ["ctas"]], ["hashtags", "هشتگ‌های برند", ["hashtags"]], ["banned", "هیچ کلمه‌ی ممنوعی نیست", ["banned", "donts"]], ["tone", "لحن برند", ["tone"]]];
+  function pstIdx(k) { for (var i = 0; i < PSTAGES.length; i++) if (PSTAGES[i][0] === k) return i; return 0; }
+  function personFilter() { var f = lsGet("sp_todo_filter", "هر دو"); return TODO_FOR.indexOf(f) < 0 ? "هر دو" : f; }
+  function approverOf() { var a = lsGet(APPROVER_LS, ""); if (PEOPLE.indexOf(a) >= 0) return a; var f = personFilter(); if (PEOPLE.indexOf(f) >= 0) return f; return editorOf() === "amirhossein" ? "امیرحسین" : "نگین"; }
+  function pdoc(d) { d = d || {}; d.cards = d.cards || {}; return d; }
+  function pov(o) { o = o || {}; o.ticks = o.ticks || {}; o.approvals = o.approvals || {}; o.revisions = o.revisions || []; o.history = o.history || []; return o; }
+  function bothApproved(o) { return !!(o && o.approvals && o.approvals["نگین"] && o.approvals["امیرحسین"]); }
+  function ticksDone(o) { return ID_CHECKS.every(function (c) { return o && o.ticks && o.ticks[c[0]]; }); }
+  function dayEnd(d) { return d ? Date.parse(d + "T23:59:59+03:30") : null; }
+  function phPosts(pid, pl) { var c = state.postsHist && state.postsHist.channels && state.postsHist.channels[pid + "/" + pl]; return (c && c.posts) || {}; }
+  // cards of one brand: one card per chain (idea → screen → final → gallery → publish)
+  function pipeCards(pid, b, gal, recs, jobs, now, running) {
+    b = bdoc(b); var gitems = (gal && gal.items) || [], R = (recs && recs.items) || {};
+    var st = syncStatuses({ brain: b.items, gallery: gitems, records: R, jobs: jobs }, now, running);
+    var out = [], usedSrc = {}, usedG = {};
+    var RANK = { error: 0, queued: 1, scheduled: 2, publishing: 3, published: 4 };
+    function pubFor(gids) {
+      var best = null;
+      Object.keys(R).forEach(function (id) {
+        var r = R[id]; if (gids.indexOf(r.gallery_id) < 0) return;
+        var s = st.pub[id] || "queued", j = jobs[id];
+        if (!best || RANK[s] > RANK[best.s]) best = { s: s, job: j, id: id };
+      });
+      return best;
+    }
+    function tail(c, gids) { // gallery + publish part of a chain
+      c.gids = gids;
+      if (gids.length) { c.auto = "idcheck"; c.href = "#/gallery/" + pid + "?focus=" + gids[0]; }
+      var p = gids.length ? pubFor(gids) : null;
+      if (p) {
+        c.pub = p;
+        if (p.s === "published") {
+          c.auto = "published"; c.href = "#/publish";
+          var fin = p.job && (tsOf(p.job.finished_at) || tsOf(p.job.publish_at));
+          c.pubAt = fin || null;
+          if (fin && now - fin > DAY) c.auto = "analysis";
+        } else if (p.s !== "error") { c.auto = "schedule"; c.href = "#/publish"; }
+        else c.pubErr = true;
+      }
+    }
+    b.screen.forEach(function (s) {
+      var key = s.source && s.source.id ? s.source.kind + ":" + s.source.id : "s:" + s.id;
+      if (s.source && s.source.id) usedSrc[key] = 1;
+      var c = { key: pid + "|" + key, pid: pid, title: (s.script && s.script.title) || s.title || "(بدون عنوان)", body: s.body || "", from: s.source && s.source.kind === "hark" ? "هارک" : (AUTHORS[s.author] || ""), created: s.requested_at, screen: s, refs: { screen_id: s.id } };
+      var stt = s.state || "queued";
+      c.auto = stt === "queued" ? "screen" : stt === "ready" ? "script" : "make";
+      c.href = "#/brain/" + pid + "/screen?focus=" + s.id;
+      var f = (s.final_id && findBy(b.final, "id", s.final_id)) || findBy(b.final, "screen_id", s.id);
+      if (f) {
+        c.final = f; c.refs.final_id = f.id; c.title = f.title || c.title; c.href = "#/brain/" + pid + "/final?focus=" + f.id;
+        var gids = gitems.filter(function (g) { return g.brain_id === f.id; }).map(function (g) { usedG[g.id] = 1; return g.id; });
+        var jdone = Object.keys(f.jobs || {}).some(function (t) { return f.jobs[t].state === "done"; });
+        if (jdone && !gids.length) c.auto = "idcheck";
+        tail(c, gids);
+      }
+      out.push(c);
+    });
+    b.hark.forEach(function (h) {
+      var key = "hark:" + h.id; if (usedSrc[key] || h.screen_id || b.hark_gone[h.id]) return;
+      if (now - (tsOf(h.created_at) || now) > 14 * DAY) return; // older unsent ideas stay in «مغز متفکر» only
+      out.push({ key: pid + "|" + key, pid: pid, title: h.title, body: h.body || "", from: "هارک", created: h.created_at, auto: "idea", href: "#/brain/" + pid + "/hark?focus=" + h.id, hark: h, refs: { hark_id: h.id } });
+    });
+    var hasChild = {}; b.items.forEach(function (x) { if (x.parent_id) hasChild[x.parent_id] = 1; });
+    b.items.forEach(function (x) {
+      var key = "idea:" + x.id; if (usedSrc[key] || x.screen_id || hasChild[x.id]) return;
+      out.push({ key: pid + "|" + key, pid: pid, title: x.title || "(بدون عنوان)", body: x.body || "", from: AUTHORS[x.author] || "", created: x.created_at, auto: "idea", href: "#/brain/" + pid + "/" + (x.type === "idea" || !x.type ? "idea" : x.type) + "?focus=" + x.id, item: x, refs: { item_id: x.id } });
+    });
+    gitems.forEach(function (g) {
+      if (usedG[g.id]) return;
+      var c = { key: pid + "|g:" + g.id, pid: pid, title: g.title || (KIND_FA[g.kind] || "محتوا"), body: g.caption || "", from: "", created: g.created_at, auto: "idcheck", gallery: g, refs: { gallery_id: g.id } };
+      tail(c, [g.id]);
+      out.push(c);
+    });
+    return out;
+  }
+  function stageOf(c, o) {
+    var a = c.auto; if (a === "idcheck" && o && ticksDone(o)) a = "ready";
+    if (!o || !o.stage) return a;
+    if (o.forced) { if (o.forced_auto !== c.auto && pstIdx(c.auto) > pstIdx(o.stage)) return a; return o.stage; } // a redo stays put until the work really moves on
+    return pstIdx(o.stage) > pstIdx(a) ? o.stage : a;
+  }
+  function nextAction(c, s) {
+    var p = c.pid;
+    if (s === "idea") return c.hark ? ["بفرست برای غربال‌گری", "#/brain/" + p + "/hark?focus=" + c.hark.id] : ["باز کردن در مغز متفکر", c.href];
+    if (s === "screen") return ["دیدن در غربال‌گری", "#/brain/" + p + "/screen" + (c.screen ? "?focus=" + c.screen.id : "")];
+    if (s === "script") return ["بررسی و تأیید اسکریپت", "#/brain/" + p + "/screen" + (c.screen ? "?focus=" + c.screen.id : "")];
+    if (s === "make") return ["ارسال برای ابزارهای ساخت", "#/brain/" + p + "/final" + (c.final ? "?focus=" + c.final.id : "")];
+    if (s === "idcheck") return [c.gids && c.gids.length ? "دیدن محتوا در گالری" : "شناسنامه‌ی برند", c.gids && c.gids.length ? "#/gallery/" + p + "?focus=" + c.gids[0] : "#/identity/" + p];
+    if (s === "ready" || s === "approve") return [c.gids && c.gids.length ? "دیدن محتوا" : "گالری", c.gids && c.gids.length ? "#/gallery/" + p + "?focus=" + c.gids[0] : "#/gallery/" + p];
+    if (s === "schedule") return ["رفتن به انتشار", "#/publish"];
+    return ["آنالیتیکس", "#/channels"];
+  }
+  // metrics of a published card (posts_history), matched by the published post id/url
+  function cardMetrics(c) {
+    var j = c.pub && c.pub.job; if (!j || !j.results) return null;
+    var res = [];
+    Object.keys(j.results).forEach(function (k) {
+      var r = j.results[k] || {}; if (r.status !== "published") return;
+      var pr = k.split("/"), posts = phPosts(pr[0], pr[1]), id = r.remote_id && posts[r.remote_id] ? r.remote_id : postKey(r.url);
+      var e = id && posts[id]; if (!e || !e.s || !e.s.length) { res.push({ pl: pr[1], url: r.url || "", none: true }); return; }
+      var last = e.s[e.s.length - 1];
+      res.push({ pl: pr[1], url: r.url || "", v: num(last[1]), l: num(last[2]), cm: num(last[3]) });
+    });
+    return res.length ? res : null;
+  }
+  function loadPipeAll(pids) {
+    return Promise.all([dsRead("pipeline").catch(function () { return null; }), dsRead("publish").catch(function () { return null; }), loadQueue().catch(function () { return []; }), publishRunning()].concat(
+      pids.map(function (pid) {
+        return mergeHarkOut(pid).catch(function () { return 0; }).then(function () {
+          return Promise.all([dsRead("brain-" + pid).catch(function () { return null; }), dsRead("gallery-" + pid).catch(function () { return null; }), dsRead("identity-" + pid).catch(function () { return null; })]);
+        });
+      }))).then(function (r) {
+      var ctx = { pipe: pdoc(r[0]), recs: r[1], jobsList: r[2], jobs: jobsMap(r[2]), running: r[3], brands: {}, cards: [] }, now = Date.now();
+      pids.forEach(function (pid, i) {
+        var x = r[4 + i];
+        ctx.brands[pid] = { brain: bdoc(x[0]), gallery: x[1], identity: x[2] };
+        ctx.cards = ctx.cards.concat(pipeCards(pid, x[0], x[1], r[1], ctx.jobs, now, r[3]));
+      });
+      ctx.cards.forEach(function (c) { c.o = pov(ctx.pipe.cards[c.key]); c.stage = stageOf(c, ctx.pipe.cards[c.key]); });
+      return ctx;
+    });
+  }
+  function pipeSave(key, mut, msg) {
+    return dsUpdate("pipeline", function (d) { d = pdoc(d); var o = pov(d.cards[key]); mut(o); o.history = o.history.slice(-30); d.cards[key] = o; return d; }, msg || "data: pipeline");
+  }
+  function hist(o, what) { o.history.push({ at: new Date().toISOString(), by: approverOf(), what: what }); }
+
+  // ---------- «خط تولید»
+  function pipelineView() {
+    var q = hashQuery();
+    app.innerHTML = shell("خط تولید", "#/", "صفحه‌ی اصلی") +
+      '<div class="v8head pipehead"><span class="vi">' + ICON_FLOW + '</span><div><h1>خط تولید</h1><p>هر محتوا از ایده تا آنالیز، با تأیید نگین و امیرحسین قبل از انتشار</p></div></div>' +
+      '<div class="pflow" aria-label="مسیر تولید">' + PSTAGES.map(function (s, i) { return '<a href="#/pipeline" data-jump-col="' + s[0] + '" class="pf-st' + (s[0] === "approve" ? " pf-gate" : "") + '"><i>' + fa(i + 1) + "</i>" + esc(s[1]) + "</a>" + (i < PSTAGES.length - 1 ? '<span class="pf-ar">‹</span>' : ""); }).join("") +
+      '<span class="pf-back" title="آنالیز به ایده‌های بعدی خوراک می‌دهد">↺ بازخورد آنالیز ← ایده</span></div>' +
+      '<div id="dgate"></div><div id="v8body"></div>';
+    bindShell();
+    Array.prototype.forEach.call(app.querySelectorAll("[data-jump-col]"), function (a) {
+      a.onclick = function (e) { e.preventDefault(); var t = document.getElementById("col-" + a.getAttribute("data-jump-col")); if (t) t.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" }); };
+    });
+    withData(function () {
+      var body = document.getElementById("v8body"), my = viewSeq, ctx = null;
+      body.innerHTML = '<div class="muted-note pad">در حال جمع کردن کارت‌ها از مغز متفکر، گالری و انتشار…</div>';
+      var pids = state.config.pages.map(function (p) { return p.id; });
+      loadPipeAll(pids).then(function (c) { if (!live(my)) return; ctx = c; paint(); }).catch(function (e) { errBox("v8body", e); });
+      function reload() { return loadPipeAll(pids).then(function (c) { if (!live(my)) return; ctx = c; paint(); }); }
+      function paint() {
+        if (!document.getElementById("v8body")) return;
+        var brand = lsGet(PIPE_BRAND_LS, "all"); if (brand !== "all" && !cpById(brand)) brand = "all";
+        var per = personFilter(), now = Date.now();
+        var cards = ctx.cards.filter(function (c) {
+          if (brand !== "all" && c.pid !== brand) return false;
+          if (per !== "هر دو") { var ow = c.o.owner || "هر دو"; if (ow !== per && ow !== "هر دو") return false; }
+          return true;
+        });
+        var h = '<div class="pfilters"><div class="sfilter" role="group" aria-label="برند"><button data-brand="all" class="' + (brand === "all" ? "on" : "") + '">همه‌ی برندها</button>' +
+          state.config.pages.map(function (cp) { return '<button data-brand="' + cp.id + '" class="' + (brand === cp.id ? "on" : "") + '" dir="ltr">' + esc(cp.name) + "</button>"; }).join("") + "</div>" +
+          '<div class="sfilter tfilter" role="group" aria-label="نفر">' + TODO_FOR.map(function (p) { return '<button data-per="' + p + '" class="' + (p === per ? "on" : "") + '">' + (p === "هر دو" ? "هر دو (همه)" : p) + "</button>"; }).join("") + "</div>" +
+          '<label class="papprover">من: <select id="pappr">' + PEOPLE.map(function (p) { return "<option" + (p === approverOf() ? " selected" : "") + ">" + p + "</option>"; }).join("") + "</select></label></div>";
+        h += '<div class="kanban">' + PSTAGES.map(function (s) {
+          var list = cards.filter(function (c) { return c.stage === s[0]; }).sort(function (a, b) { return String(b.created || "").localeCompare(String(a.created || "")); });
+          var lim = s[0] === "idea" && !q.all ? 12 : 999;
+          return '<section class="kcol" id="col-' + s[0] + '"><h2>' + esc(s[1]) + " <em>" + fa(list.length) + "</em></h2>" +
+            (list.slice(0, lim).map(function (c) { return cardHTML(c, now); }).join("") || '<div class="kempty">—</div>') +
+            (list.length > lim ? '<a class="kmore" href="#/pipeline?all=1">' + fa(list.length - lim) + " ایده‌ی دیگر…</a>" : "") + "</section>";
+        }).join("") + "</div>";
+        h += '<p class="footnote privacy">کارت‌ها از «مغز متفکر»، «گالری» و «انتشار» ساخته می‌شوند؛ صاحب، مهلت، یادداشت، چک هویت، تأییدها و درخواست‌های بازطراحی رمزگذاری‌شده در vault/pipeline ذخیره می‌شوند.</p>';
+        body.innerHTML = h;
+        if (q.focus) { var fc = document.querySelector('.pcard[data-key="' + q.focus.replace(/"/g, "") + '"]'); if (fc) { fc.classList.add("focus"); fc.scrollIntoView({ block: "center" }); } q.focus = null; }
+        Array.prototype.forEach.call(body.querySelectorAll("[data-brand]"), function (b) { b.onclick = function () { lsSet(PIPE_BRAND_LS, b.getAttribute("data-brand")); paint(); }; });
+        Array.prototype.forEach.call(body.querySelectorAll("[data-per]"), function (b) { b.onclick = function () { lsSet("sp_todo_filter", b.getAttribute("data-per")); paint(); }; });
+        document.getElementById("pappr").onchange = function () { lsSet(APPROVER_LS, this.value); };
+        body.onclick = function (e) {
+          var b = e.target.closest("button[data-pa]"); if (!b) return;
+          var card = b.closest(".pcard"), key = card && card.getAttribute("data-key"), c = ctx.cards.filter(function (x) { return x.key === key; })[0];
+          if (!c) return;
+          act(c, b.getAttribute("data-pa"), b);
+        };
+        body.onchange = function (e) {
+          var t = e.target; if (!t.matches || !t.matches("input[data-tick]")) return;
+          var card = t.closest(".pcard"), key = card.getAttribute("data-key"), k = t.getAttribute("data-tick"), v = t.checked;
+          t.disabled = true;
+          pipeSave(key, function (o) { o.ticks[k] = v ? new Date().toISOString() : null; hist(o, (v ? "تیک هویت: " : "برداشتن تیک: ") + k); }).then(reload, function (er) { toast("ذخیره نشد: " + ghErrorFa(er)); t.disabled = false; t.checked = !v; });
+        };
+      }
+      function cardHTML(c, now) {
+        var cp = cpById(c.pid), o = c.o, s = c.stage, i = pstIdx(s);
+        var due = o.due ? dayEnd(o.due) : null, late = due && due < now && i < pstIdx("published");
+        var gatePassed = i >= pstIdx("schedule");
+        var h = '<article class="pcard' + (late ? " late" : "") + '" data-key="' + esc(c.key) + '">' +
+          '<div class="pc-h">' + (cp ? logoHTML(cp, pageData(cp), "plogo") : "") + '<span class="pc-b" dir="ltr">' + esc(cp ? cp.name : c.pid) + "</span>" + (c.from ? '<span class="pc-from">' + esc(c.from) + "</span>" : "") + "</div>" +
+          '<b class="pc-t">' + esc(o.title || c.title) + "</b>" +
+          '<div class="pc-m"><span>👤 ' + esc(o.owner || "هر دو") + "</span>" + (o.due ? '<span class="pc-due' + (late ? " bad" : "") + '">⏰ ' + esc(fmtFmt(due, { month: "short", day: "numeric" })) + (late ? " · عقب افتاده" : "") + "</span>" : "") +
+          (o.rev_count ? '<span class="pc-rev">↺ ' + fa(o.rev_count) + " بازطراحی</span>" : "") + "</div>";
+        if (o.forced && o.revisions.length) { var lr = o.revisions[o.revisions.length - 1]; h += '<p class="pc-reason">دلیل بازطراحی (' + esc(lr.by) + "): " + esc(lr.reason) + "</p>"; }
+        if (o.notes) h += '<p class="pc-notes">' + esc(o.notes) + "</p>";
+        if (c.pubErr) h += '<p class="pc-warn">✗ انتشار خطا خورده — در «انتشار» بررسی کن</p>';
+        if (gatePassed && !bothApproved(o)) h += '<p class="pc-warn">⚠ بدون تأیید دوگانه به انتشار رفته</p>';
+        if (s === "idcheck" || s === "ready") {
+          var idd = ctx.brands[c.pid] && ctx.brands[c.pid].identity, fl = (idd && idd.fields) || {};
+          h += '<div class="pc-ticks">' + ID_CHECKS.map(function (k) {
+            var val = k[2].map(function (f) { var x = fl[f]; return x && !idEmpty(x.v) ? idValText(ID_TYPE[f], x.v) : ""; }).filter(Boolean).join("\n");
+            return '<label class="pc-tick"><input type="checkbox" data-tick="' + k[0] + '"' + (o.ticks[k[0]] ? " checked" : "") + "><span>" + esc(k[1]) + "</span>" +
+              (val ? '<details><summary>از شناسنامه</summary><pre>' + esc(val.slice(0, 600)) + "</pre></details>" : "") + "</label>";
+          }).join("") + "</div>";
+        }
+        if (i >= pstIdx("ready")) {
+          h += '<div class="pc-appr">' + PEOPLE.map(function (p) { var a = o.approvals[p]; return '<span class="achip' + (a ? " ok" : "") + '">' + (a ? "✓ " : "○ ") + esc(p) + (a ? " · " + esc(fmtShort(a.at)) : "") + "</span>"; }).join("") + "</div>";
+        }
+        if (s === "published" || s === "analysis") {
+          var m = cardMetrics(c);
+          if (m) h += '<div class="pc-met">' + m.map(function (x) { return "<span>" + picon(x.pl) + (x.none ? "هنوز آماری نیامده" : [x.v != null ? fa(x.v) + " بازدید" : "", x.l != null ? fa(x.l) + " لایک" : "", x.cm != null ? fa(x.cm) + " کامنت" : ""].filter(Boolean).join(" · ") || "—") + "</span>"; }).join("") + "</div>";
+          else if (s === "analysis") h += '<p class="muted-note">آمار این پست هنوز با پست‌های منتشرشده جور نشده.</p>';
+        }
+        var na = nextAction(c, s);
+        h += '<div class="pc-a"><a class="go sm" href="' + esc(na[1]) + '">' + esc(na[0]) + "</a>";
+        if (i >= pstIdx("ready") && i <= pstIdx("approve")) { var me = approverOf(), mine = o.approvals[me]; h += '<button class="' + (mine ? "ghost" : "go") + ' sm" data-pa="approve">' + (mine ? "پس گرفتن تأیید " + esc(me) : "تأیید " + esc(me)) + "</button>"; }
+        h += "</div>" +
+          '<div class="pc-a2">' + (i > 0 ? '<button class="ghost xs" data-pa="back" title="یک مرحله عقب">→ عقب</button>' : "") +
+          (i < PSTAGES.length - 1 ? '<button class="ghost xs" data-pa="fwd" title="یک مرحله جلو">جلو ←</button>' : "") +
+          '<button class="ghost xs" data-pa="edit">ویرایش</button><button class="ghost xs warnb" data-pa="redo">درخواست بازطراحی / بازتولید</button></div>';
+        if (o.history.length) h += '<details class="pc-hist"><summary>تاریخچه</summary><ul>' + o.history.slice(-6).reverse().map(function (x) { return "<li>" + esc(fmtShort(x.at)) + " · " + esc(x.by || "") + ": " + esc(x.what) + "</li>"; }).join("") + "</ul></details>";
+        return h + "</article>";
+      }
+      function act(c, a, btn) {
+        var o = c.o, s = c.stage, i = pstIdx(s);
+        if (a === "fwd") {
+          var to = PSTAGES[i + 1][0];
+          if (pstIdx(to) > pstIdx("idcheck") && !ticksDone(o)) { toast("اول همه‌ی موارد «چک هویت» رو تیک بزن."); return; }
+          if (pstIdx(to) >= pstIdx("schedule") && !bothApproved(o)) { toast("تا نگین و امیرحسین هر دو تأیید نکنن، به زمان‌بندی نمی‌ره."); return; }
+          btn.disabled = true;
+          return pipeSave(c.key, function (x) { x.stage = to; x.forced = false; x.forced_auto = null; hist(x, "جلو → " + PST_FA[to]); }).then(reload, fail);
+        }
+        if (a === "back") {
+          var tb = PSTAGES[i - 1][0]; btn.disabled = true;
+          return pipeSave(c.key, function (x) { x.stage = tb; x.forced = true; x.forced_auto = c.auto; if (pstIdx(tb) < pstIdx("schedule")) x.approvals = {}; hist(x, "عقب → " + PST_FA[tb]); }).then(reload, fail);
+        }
+        if (a === "approve") {
+          var me = approverOf(); btn.disabled = true;
+          return pipeSave(c.key, function (x) { if (x.approvals[me]) { delete x.approvals[me]; hist(x, "پس گرفتن تأیید"); } else { x.approvals[me] = { at: new Date().toISOString() }; hist(x, "تأیید نهایی"); if (pstIdx(x.stage || c.auto) < pstIdx("approve")) { x.stage = "approve"; x.forced = false; } } }).then(reload, fail);
+        }
+        if (a === "edit") return editModal(c);
+        if (a === "redo") return redoModal(c);
+      }
+      function fail(e) { toast("ذخیره نشد: " + ghErrorFa(e)); paint(); }
+      function overlay(html) {
+        var ov = document.createElement("div"); ov.className = "ovl"; ov.innerHTML = '<div class="ovl-card pmodal">' + html + "</div>";
+        document.body.appendChild(ov); ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
+        return ov;
+      }
+      function editModal(c) {
+        var o = c.o, ov = overlay('<b>ویرایش کارت · ' + esc(PST_FA[c.stage]) + "</b>" +
+          '<label>عنوان</label><input id="pe-t" value="' + esc(o.title || c.title) + '">' +
+          '<label>یادداشت / تغییرات محتوا</label><textarea id="pe-n" rows="5">' + esc(o.notes || "") + "</textarea>" +
+          '<label>صاحب کار</label><select id="pe-o">' + TODO_FOR.map(function (p) { return "<option" + ((o.owner || "هر دو") === p ? " selected" : "") + ">" + p + "</option>"; }).join("") + "</select>" +
+          '<label>مهلت</label><input id="pe-d" type="date" value="' + esc(o.due || "") + '">' +
+          '<p class="muted-note">متن کامل اسکریپت/ایده رو در «' + esc(nextAction(c, c.stage)[0]) + '» هم می‌تونی ویرایش کنی.</p>' +
+          '<div class="row-btns"><button class="go" id="pe-s">ذخیره</button><button class="ghost" id="pe-c">بستن</button></div><div class="msg" id="pe-m"></div>');
+        ov.querySelector("#pe-c").onclick = function () { ov.remove(); };
+        ov.querySelector("#pe-s").onclick = function () {
+          var t = ov.querySelector("#pe-t").value.trim(), n = ov.querySelector("#pe-n").value.trim(), ow = ov.querySelector("#pe-o").value, d = ov.querySelector("#pe-d").value;
+          this.disabled = true; ov.querySelector("#pe-m").textContent = "در حال ذخیره…";
+          pipeSave(c.key, function (x) {
+            var ch = [];
+            if (t && t !== (x.title || c.title)) { x.title = t; ch.push("عنوان"); }
+            if (n !== (x.notes || "")) { x.notes = n; ch.push("یادداشت"); }
+            if (ow !== (x.owner || "هر دو")) { x.owner = ow; ch.push("صاحب: " + ow); }
+            if (d !== (x.due || "")) { x.due = d; ch.push("مهلت"); }
+            hist(x, "ویرایش (" + (ch.join("، ") || "بدون تغییر") + ")");
+          }).then(function () { ov.remove(); return reload(); }, function (e) { ov.querySelector("#pe-m").textContent = "✗ " + ghErrorFa(e); });
+        };
+      }
+      function redoModal(c) {
+        var i = pstIdx(c.stage), ov = overlay('<b>درخواست بازطراحی / بازتولید</b>' +
+          '<p class="muted-note">کارت به مرحله‌ی انتخاب‌شده برمی‌گرده و هر دو تأیید پاک می‌شن.' + " در مرحله‌های ایده، غربال و اسکریپت درخواست برای هارک هم فرستاده می‌شه تا دوباره انجامش بده.</p>" +
+          '<label>برگرده به مرحله‌ی</label><select id="pr-s">' + PSTAGES.slice(0, i + 1).map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === c.stage ? " selected" : "") + ">" + s[1] + "</option>"; }).join("") + "</select>" +
+          '<label>دلیل (اجباری)</label><textarea id="pr-r" rows="4" required placeholder="چی باید عوض بشه؟"></textarea>' +
+          '<div class="row-btns"><button class="go" id="pr-go">ثبت درخواست</button><button class="ghost" id="pr-c">بستن</button></div><div class="msg" id="pr-m"></div>');
+        ov.querySelector("#pr-c").onclick = function () { ov.remove(); };
+        ov.querySelector("#pr-go").onclick = function () {
+          var to = ov.querySelector("#pr-s").value, reason = ov.querySelector("#pr-r").value.trim(), m = ov.querySelector("#pr-m"), go = this;
+          if (reason.length < 3) { m.textContent = "دلیل بازطراحی رو بنویس."; return; }
+          go.disabled = true; m.textContent = "در حال ثبت…";
+          var hp = HARK_STAGE[to] ? harkRedo(c, to, reason).then(function () { return true; }) : Promise.resolve(false);
+          hp.then(function (sent) {
+            return pipeSave(c.key, function (x) {
+              x.stage = to; x.forced = true; x.forced_auto = c.auto; x.approvals = {};
+              if (pstIdx(to) <= pstIdx("idcheck")) x.ticks = {};
+              x.rev_count = (x.rev_count || 0) + 1;
+              x.revisions.push({ at: new Date().toISOString(), by: approverOf(), stage: to, reason: reason, hark: sent });
+              x.revisions = x.revisions.slice(-20);
+              hist(x, "درخواست بازطراحی → " + PST_FA[to] + (sent ? " (برای هارک فرستاده شد)" : ""));
+            });
+          }).then(function () { ov.remove(); toast(HARK_STAGE[to] ? "درخواست برای هارک فرستاده شد ✓" : "کارت برگشت به «" + PST_FA[to] + "» ✓"); return reload(); },
+            function (e) { go.disabled = false; m.textContent = "✗ " + ghErrorFa(e); });
+        };
+      }
+      // Hark stages: a screen redo re-uses the same screen_id (Hark's answer replaces the script); an idea redo is a «redo» request
+      function harkRedo(c, to, reason) {
+        var cp = cpById(c.pid), rid = newId("r"), now = new Date().toISOString(), s = c.screen;
+        if ((to === "screen" || to === "script") && s) {
+          var payload = { type: "screen", id: rid, page: c.pid, page_name: cp.name, topic: cp.topic_fa || "", screen_id: s.id, source: s.source ? s.source.kind : "idea", source_id: s.source ? s.source.id : "",
+            title: s.title || c.title, body: s.body || "", author: AUTHORS[s.author] || "", networks: [], format: "", redo: true, reason: reason, previous: screenText(s),
+            brief: SCREEN_BRIEF + "\n\nدرخواست بازطراحی از " + approverOf() + ": " + reason + "\nنسخه‌ی قبلی پایین آمده؛ همان را مطابق این دلیل از نو بنویس.", created_at: now };
+          return sendHarkRequest(payload).then(function () {
+            return dsUpdate("brain-" + c.pid, function (x) { x = bdoc(x); var cs = findBy(x.screen, "id", s.id); if (cs) { cs.state = "queued"; cs.request_id = rid; cs.redo_reason = reason; cs.redo_at = now; } return x; }, "data: brain " + c.pid + " (redo)");
+          });
+        }
+        return sendHarkRequest({ type: "redo", id: rid, stage: to, page: c.pid, page_name: cp.name, topic: cp.topic_fa || "", card: c.key, title: c.o.title || c.title, body: c.body || "",
+          hark_id: c.refs.hark_id || "", item_id: c.refs.item_id || "", reason: reason, by: approverOf(), created_at: now });
+      }
+    });
+  }
+  // publish view guard: a gallery item that belongs to a pipeline card needs both approvals
+  function pipeGateFor(it) {
+    if (!it) return Promise.resolve(null);
+    return dsRead("pipeline").catch(function () { return null; }).then(function (d) {
+      d = pdoc(d);
+      var key = null;
+      Object.keys(d.cards).forEach(function (k) {
+        if (k === it.page + "|g:" + it.id) key = k;
+      });
+      return dsRead("brain-" + it.page).catch(function () { return null; }).then(function (b) {
+        b = bdoc(b);
+        if (it.brain_id) {
+          var f = findBy(b.final, "id", it.brain_id), s = f && findBy(b.screen, "id", f.screen_id);
+          if (s) key = it.page + "|" + (s.source && s.source.id ? s.source.kind + ":" + s.source.id : "s:" + s.id);
+        }
+        if (!key) key = it.page + "|g:" + it.id;
+        var o = d.cards[key];
+        return bothApproved(o) ? null : { key: key, o: pov(o) };
+      });
+    });
+  }
+
+  // ---------- «امروز»
+  function todayView() {
+    var per = personFilter();
+    app.innerHTML = shell("امروز", "#/", "صفحه‌ی اصلی") +
+      '<div class="v8head todayhead"><span class="vi">' + ICON_TODAY + '</span><div><h1>امروز</h1><p>فقط چیزهایی که همین الان کار دارن؛ هر کدوم رو بزنی می‌ره همون‌جا</p></div></div>' +
+      '<div class="sfilter tfilter" id="tdper" role="group" aria-label="نفر">' + TODO_FOR.map(function (p) { return '<button data-per="' + p + '" class="' + (p === per ? "on" : "") + '">' + (p === "هر دو" ? "هر دو (همه)" : p) + "</button>"; }).join("") + "</div>" +
+      '<div id="td-pub"></div><div id="dgate"></div><div id="v8body"></div>';
+    bindShell();
+    Array.prototype.forEach.call(app.querySelectorAll("#tdper [data-per]"), function (b) { b.onclick = function () { lsSet("sp_todo_filter", b.getAttribute("data-per")); render(); }; });
+    var now = Date.now();
+    function sec(title, rows, cls) {
+      if (!rows.length) return "";
+      return '<section class="tdsec ' + (cls || "") + '"><h2>' + esc(title) + " <em>" + fa(rows.length) + '</em></h2><ul class="tdlist">' + rows.map(function (r) {
+        return '<li><a href="' + esc(r[0]) + '"' + (/^https?:/.test(r[0]) ? ' target="_blank" rel="noopener"' : "") + "><b>" + esc(r[1]) + "</b>" + (r[2] ? "<small>" + esc(r[2]) + "</small>" : "") + '<span class="arrow">←</span></a></li>';
+      }).join("") + "</ul></section>";
+    }
+    // public part: comments, silent channels, broken connections, unusual 24h moves
+    var com = [], silent = [], broken = [], jumps = [];
+    state.config.pages.forEach(function (cp) {
+      var pg = pageData(cp), T = threadsOf(cp.id), chId = T.meta && T.meta.channel_id;
+      var open = T.threads.filter(function (t) { return t.can_reply !== false && !(t.replies || []).some(function (r) { return r.author_channel_id && r.author_channel_id === chId; }); });
+      if (open.length) com.push(["#/a/" + cp.id + "/youtube", cp.name + " · " + fa(open.length) + " کامنت بی‌جواب یوتیوب", "آخرینش: «" + String(open[0].text || "").slice(0, 60) + "» · " + ago(open[0].published)]);
+      PLATFORMS.forEach(function (pl) {
+        var r = pg.platforms[pl]; if (!(cp.accounts || {})[pl] && !r) return;
+        if (r && r.error && !hasData(r)) { broken.push(["#/settings", cp.name + " · " + PNAME[pl], "خوندن داده ممکن نشد: " + String(r.error).slice(0, 80)]); return; }
+        if (!hasData(r) || !(r.posts > 0)) return; // networks with no content are skipped
+        var a = platformActivity(cp.id, pl, r);
+        if (a && now - a.t > 3 * DAY) silent.push(["#/a/" + cp.id + "/" + pl, cp.name + " · " + PNAME[pl], "آخرین پست " + ago(new Date(a.t).toISOString())]);
+        var s = seriesOf(cp.id, pl).filter(function (p) { return p.f != null; });
+        if (s.length > 1) {
+          var last = s[s.length - 1], prev = null;
+          for (var k = s.length - 1; k >= 0; k--) if (last.t - s[k].t >= 20 * HOUR) { prev = s[k]; break; }
+          if (prev && prev.f > 0) {
+            var d = last.f - prev.f, rel = d / prev.f;
+            if (Math.abs(d) >= 5 && Math.abs(rel) >= 0.1) jumps.push(["#/a/" + cp.id + "/" + pl, cp.name + " · " + PNAME[pl] + (d > 0 ? " · جهش " : " · افت ") + FOLLOW_LABEL[pl], signed(d) + " (" + pct(Math.round(rel * 1000) / 10) + ") در ۲۴ ساعت"]);
+          }
+        }
+      });
+    });
+    var pubHTML = sec("کامنت‌های بی‌جواب", com) + sec("اتصال‌های خراب", broken, "bad") + sec("کانال‌های ساکت (بیش از ۳ روز بدون پست)", silent) + sec("تغییر غیرعادی ۲۴ ساعت", jumps);
+    document.getElementById("td-pub").innerHTML = pubHTML;
+    withData(function () {
+      var body = document.getElementById("v8body"), my = viewSeq;
+      body.innerHTML = '<div class="muted-note pad">در حال بررسی ایده‌ها، اسکریپت‌ها، انتشار و To do…</div>';
+      var pids = state.config.pages.map(function (p) { return p.id; });
+      Promise.all([loadPipeAll(pids), dsRead("todo").catch(function () { return null; })]).then(function (r) {
+        if (!live(my) || !document.getElementById("v8body")) return;
+        var ctx = r[0], todo = r[1], me = per === "هر دو" ? null : per;
+        var mine = function (c) { if (!me) return true; var ow = c.o.owner || "هر دو"; return ow === me || ow === "هر دو"; };
+        var hark = [], ready = [], made = [], appr = [], late = [], pubBad = [];
+        pids.forEach(function (pid) {
+          var cp = cpById(pid), b = ctx.brands[pid].brain;
+          var nh = b.hark.filter(function (h) { return !h.screen_id && !b.hark_gone[h.id] && now - (tsOf(h.created_at) || 0) < 3 * DAY; }).length;
+          if (nh) hark.push(["#/brain/" + pid + "/hark", cp.name + " · " + fa(nh) + " ایده‌ی هارک منتظر نظرت", "بفرست برای غربال یا حذف کن"]);
+          b.screen.filter(function (s) { return s.state === "ready"; }).forEach(function (s) { ready.push(["#/brain/" + pid + "/screen?focus=" + s.id, cp.name + " · " + ((s.script && s.script.title) || s.title), "اسکریپت هارک آماده‌ی تأییده"]); });
+          b.final.forEach(function (f) { Object.keys(f.jobs || {}).forEach(function (t) { var j = f.jobs[t]; if (j.state === "error") made.push(["#/brain/" + pid + "/final?focus=" + f.id, cp.name + " · " + (f.title || "") + " · " + (PROD_NAME[t] || t), "ساخت خطا خورد: " + (j.reason || "")]); }); });
+        });
+        ctx.cards.forEach(function (c) {
+          var cp = cpById(c.pid), nm = (cp ? cp.name : c.pid) + " · " + (c.o.title || c.title), i = pstIdx(c.stage);
+          var href = "#/pipeline?focus=" + encodeURIComponent(c.key);
+          if (i >= pstIdx("ready") && i <= pstIdx("approve")) {
+            var need = PEOPLE.filter(function (p) { return !c.o.approvals[p] && (!me || p === me); });
+            if (need.length) appr.push([href, nm, "منتظر تأیید " + need.join(" و ")]);
+          }
+          if (c.o.due && dayEnd(c.o.due) < now && i < pstIdx("published") && mine(c)) late.push([href, nm, "مهلت گذشته · مرحله‌ی " + PST_FA[c.stage]]);
+        });
+        ctx.jobsList.forEach(function (j) {
+          var st = pubStatusOf(j, now, ctx.running), names = (j.targets || []).map(targetName).join("، ");
+          var stuck = (st === "queued" || st === "publishing") && (tsOf(j.publish_at) || 0) < now - 2 * HOUR;
+          var need = (j.targets || []).some(function (t) { return targetState(j, t) === "manual"; });
+          if (j.status !== "cancelled" && (st === "error" || stuck || need)) pubBad.push(["#/publish", (j.title || j.id) + " · " + names, st === "error" ? "انتشار ناموفق" : need ? "نیاز به اقدام" : "گیر کرده در صف"]);
+        });
+        var td = ((todo && todo.items) || []).filter(function (x) { if (x.done) return false; if (!me) return true; var f = todoFor(x); return f === me || f === "هر دو"; })
+          .map(function (x) { return ["#/todo", x.title, (TODO_KINDS.filter(function (k) { return k[0] === x.kind; })[0] || TODO_KINDS[0])[1] + " · " + todoFor(x)]; });
+        var h = sec("منتظر تأیید نهایی" + (me ? " تو" : ""), appr, "accent") + sec("انتشارهای خراب یا گیرکرده", pubBad, "bad") + sec("کارت‌های عقب‌افتاده", late, "bad") +
+          sec("اسکریپت‌های آماده‌ی بررسی", ready) + sec("ایده‌های هارک", hark) + sec("خطای ساخت", made, "bad") + sec("To do" + (me ? " " + me : ""), td);
+        var any = h || pubHTML;
+        body.innerHTML = h || (any ? "" : '<div class="card empty-today"><b>همه‌چی مرتبه 🎉</b><p>الان هیچ کاری منتظر نیست.</p></div>');
+      }).catch(function (e) { errBox("v8body", e); });
+    });
+  }
+  window.__spPipe = { pipeCards: pipeCards, stageOf: stageOf, PSTAGES: PSTAGES, bothApproved: bothApproved, ticksDone: ticksDone };
+
   // ============================================================= v8: «گالری محتوا» (#/gallery)
   function galleryHomeView() {
     app.innerHTML = shell("گالری محتوا", "#/", "صفحه‌ی اصلی") +
@@ -3834,6 +4269,7 @@
       Array.prototype.forEach.call(document.querySelectorAll(".whenseg button"), function (x) { x.className = x === b ? "on" : ""; });
       document.getElementById("schedbox").hidden = when !== "sched";
     };
+    var gateOkId = null;
     document.getElementById("pub-go").onclick = function () {
       var targets = selectedTargets(sel), title = document.getElementById("pt").value.trim(), caption = document.getElementById("pc").value.trim(), at = null;
       if (when === "sched") {
@@ -3851,6 +4287,15 @@
       } else {
         it = (galItems || []).filter(function (x) { return x.id === galPick; })[0];
         if (!it) { msg.textContent = "یک آیتم از گالری انتخاب کن."; return; }
+        if (gateOkId !== it.id) { // v23: Negin's rule — a pipeline item needs both approvals before it can be queued
+          var goBtn = this; goBtn.disabled = true; msg.textContent = "در حال چک تأیید دوگانه در «خط تولید»…";
+          pipeGateFor(it).then(function (g) {
+            goBtn.disabled = false;
+            if (g) { msg.innerHTML = "✗ این محتوا هنوز تأیید هر دو (نگین و امیرحسین) رو در «خط تولید» نگرفته" + (Object.keys(g.o.approvals).length ? " (فقط " + esc(Object.keys(g.o.approvals).join("، ")) + " تأیید کرده)" : "") + '. <a href="#/pipeline?focus=' + encodeURIComponent(g.key) + '">رفتن به کارت</a>'; return; }
+            gateOkId = it.id; goBtn.click();
+          }, function () { goBtn.disabled = false; msg.textContent = "✗ چک تأیید ممکن نشد؛ دوباره امتحان کن."; });
+          return;
+        }
       }
       var man = targets.filter(function (t) { return t.manual; });
       var whenTxt = at ? "در " + fmtDateTime(at) : "همین حالا";
@@ -4114,6 +4559,8 @@
     else if ((idr = h.match(/^#\/identity(?:\/([\w-]+))?/))) { if (idr[1]) identityView(idr[1]); else identityHomeView(); }
     else if (/^#\/tools/.test(h)) toolsView();
     else if (/^#\/todo/.test(h)) todoView();
+    else if (/^#\/pipeline/.test(h)) pipelineView();
+    else if (/^#\/today/.test(h)) todayView();
     else if (/^#\/guide/.test(h)) guideView();
     else if (/^#\/(channels|p\/)/.test(h)) channelsView();
     else homeView();
