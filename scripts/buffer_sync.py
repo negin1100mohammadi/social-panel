@@ -18,16 +18,26 @@ def gql(key, q, v=None):
 Q_ORG = "query { account { email organizations { id name } } }"
 Q_CH = "query($o:OrganizationId!){ channels(input:{organizationId:$o}){ id name displayName service avatar isQueuePaused } }"
 Q_POSTS = """query($o:OrganizationId!){ posts(first:30, input:{organizationId:$o, filter:{status:[sent]}}){
- edges{ node{ id text dueAt channelId metrics{ type name value unit } metricsUpdatedAt } } } }"""
+ edges{ node{ id text dueAt channelId externalLink metrics{ type name value unit } metricsUpdatedAt } } } }"""
+
+
+def clean_key(raw):
+    """HTTP headers are latin-1: a key pasted with a bullet, NBSP, zero-width or Persian character made urllib fail
+    ('latin-1' codec can't encode…). Keep only printable ASCII; report how many characters were dropped (never the key)."""
+    raw = raw or ""
+    key = "".join(c for c in raw if 33 <= ord(c) < 127)
+    return key, len(raw.strip()) - len(key)
 def main():
     cfg = json.load(open("config.json"))
     out = {"updated": datetime.datetime.now(datetime.timezone.utc).isoformat(), "pages": {}}
     ok = 0
     for p in cfg["pages"]:
         env = "BUFFER_KEY_" + p["id"].upper().replace("-", "_")
-        key = os.environ.get(env, "").strip()
+        key, dropped = clean_key(os.environ.get(env, ""))
         if not key:
             out["pages"][p["id"]] = {"status": "no_key"}; continue
+        if dropped:
+            print(p["id"], "key: dropped %d non-ASCII/space character(s); re-copy the key into %s if this keeps failing" % (dropped, env), file=sys.stderr)
         try:
             a = gql(key, Q_ORG)["account"]
             org = a["organizations"][0]["id"]
@@ -39,7 +49,7 @@ def main():
             out["pages"][p["id"]] = {"status": "ok", "account": a.get("email"), "channels": ch, "posts": posts}
             print(p["id"], "ok", a.get("email"), a["organizations"][0].get("name"), len(ch), "channels", len(posts), "posts"); ok += 1
         except Exception as e:
-            out["pages"][p["id"]] = {"status": "error", "error": str(e)[:200]}
+            out["pages"][p["id"]] = {"status": "error", "error": str(e)[:200] + (" (key had %d non-ASCII chars removed)" % dropped if dropped else "")}
             print(p["id"], "ERROR", e, file=sys.stderr)
         time.sleep(1)
     os.makedirs("data", exist_ok=True)

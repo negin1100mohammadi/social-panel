@@ -62,6 +62,12 @@ jobs:
           APARAT_USER_PRETIME_TV: ${{ secrets.APARAT_USER_PRETIME_TV }}
           APARAT_PASS_PRETIME_TV: ${{ secrets.APARAT_PASS_PRETIME_TV }}
           TIKTOK_ACCESS_TOKEN_PRETIME_TV: ${{ secrets.TIKTOK_ACCESS_TOKEN_PRETIME_TV }}
+          # Buffer route for Instagram/TikTok (pages whose channels data/buffer.json lists); same keys as buffer-sync.yml
+          BUFFER_KEY_HAMRAH_SELLER: ${{ secrets.BUFFER_KEY_HAMRAH_SELLER }}
+          BUFFER_KEY_TITAN_STATION: ${{ secrets.BUFFER_KEY_TITAN_STATION }}
+          BUFFER_KEY_FANCATSTIC_FOUR: ${{ secrets.BUFFER_KEY_FANCATSTIC_FOUR }}
+          BUFFER_KEY_SHODE_DIGE: ${{ secrets.BUFFER_KEY_SHODE_DIGE }}
+          BUFFER_KEY_PRETIME_TV: ${{ secrets.BUFFER_KEY_PRETIME_TV }}
         run: python scripts/publish.py
 
       - name: Commit job status

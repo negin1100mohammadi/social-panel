@@ -951,6 +951,63 @@ def update_posts_history(ph, latest, run_at):
     return ph
 
 
+BUFFER_PATH = os.path.join(DATA_DIR, "buffer.json")
+BUFFER_EXTRA = ("reach", "shares", "saves", "totalTimeWatched", "averageTimeWatched", "engagementRate")
+
+
+def merge_buffer_history(ph, run_at, path=None):
+    """Buffer metrics snapshots (data/buffer.json, written by buffer_sync.py) -> posts_history channels
+    "<page>/<instagram|tiktok>@buffer", same shape as the other channels, so the panel's 3h/24h/30d/90d gains work.
+    A row's time is the post's metricsUpdatedAt (when Buffer read the numbers), stored only when a number changed.
+    "x" keeps reach/shares/saves/watch time/engagement rate the same way. Buffer post ids are not Instagram ids,
+    hence the separate "@buffer" channel."""
+    try:
+        with open(path or BUFFER_PATH, encoding="utf-8") as f:
+            buf = json.load(f)
+    except (OSError, ValueError):
+        return ph
+    chans = ph.setdefault("channels", {})
+    synced = parse_ts(buf.get("updated")) or run_at
+    for pid, pb in (buf.get("pages") or {}).items():
+        if pb.get("status") != "ok":
+            continue
+        svc = {c.get("id"): c.get("service") for c in pb.get("channels") or []}
+        touched = set()
+        for x in pb.get("posts") or []:
+            plat = svc.get(x.get("channelId"))
+            if plat not in ("instagram", "tiktok") or not x.get("id"):
+                continue
+            m = {q.get("type"): q.get("value") for q in x.get("metrics") or [] if q.get("type")}
+            if not m:
+                continue
+            key = f"{pid}/{plat}@buffer"
+            ch = chans.setdefault(key, {"runs": [], "posts": {}, "source": "buffer"})
+            t = parse_ts(x.get("metricsUpdatedAt")) or synced
+            ts = iso(t)
+            if key not in touched:
+                touched.add(key)
+                st = iso(synced)
+                if st not in ch["runs"]:
+                    ch["runs"].append(st)
+            e = ch["posts"].setdefault(str(x["id"]), {"s": [], "x": []})
+            e["title"] = ((x.get("text") or "").strip().split("\n")[0])[:120]
+            e["url"] = x.get("externalLink") or None
+            if x.get("dueAt"):
+                e["published"] = iso(parse_ts(x["dueAt"]) or t)
+            e.setdefault("first", ts)
+            if parse_ts(e.get("last")) is None or parse_ts(e["last"]) < synced:
+                e["last"] = iso(synced)
+            vals = [to_int(m.get("views")), to_int(m.get("reactions")), to_int(m.get("comments"))]
+            if not e["s"] or (e["s"][-1][1:] != vals and parse_ts(e["s"][-1][0]) <= t):
+                e["s"].append([ts] + vals)
+            ex = [m.get(k) for k in BUFFER_EXTRA]
+            e.setdefault("x", [])
+            if not e["x"] or (e["x"][-1][1:] != ex and parse_ts(e["x"][-1][0]) <= t):
+                e["x"].append([ts] + ex)
+            e["mt"] = ts
+    return ph
+
+
 def prune_posts_history(ph, now):
     for key, ch in ph.get("channels", {}).items():
         ch["runs"] = prune_times(ch.get("runs", []), now, parse_ts)
@@ -960,6 +1017,8 @@ def prune_posts_history(ph, now):
             if last is None or now - last > timedelta(days=POSTS_KEEP_DAYS):
                 continue
             e["s"] = prune_times(e.get("s", []), now, lambda q: parse_ts(q[0]), keep_first=True)
+            if e.get("x"):
+                e["x"] = prune_times(e["x"], now, lambda q: parse_ts(q[0]), keep_first=True)
             if e["s"]:
                 e["first"] = min(e.get("first") or e["s"][0][0], e["s"][0][0], key=lambda v: parse_ts(v))
             posts[post_id] = e
@@ -1149,6 +1208,7 @@ def main():
     # ---- per-post history (views/likes/comments of every listed post, per run)
     ph = load_json(POSTS_HISTORY_PATH, {"v": 1, "channels": {}})
     update_posts_history(ph, latest, run_at)
+    merge_buffer_history(ph, run_at)
     prune_posts_history(ph, run_at)
     write_compact(POSTS_HISTORY_PATH, ph)
 

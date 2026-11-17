@@ -30,6 +30,8 @@ os.makedirs(out)
 for f in ["index.html", "oauth.html", "app.js", "styles.css", "sw.js", "manifest.json", "config.json", "favicon.png"]:
     shutil.copy(os.path.join(ROOT, f), out)
 shutil.copytree(os.path.join(ROOT, "icons"), os.path.join(out, "icons"))
+if os.path.isdir(os.path.join(ROOT, "vendor")):
+    shutil.copytree(os.path.join(ROOT, "vendor"), os.path.join(out, "vendor"))
 os.makedirs(os.path.join(out, "data"))
 
 rnd = random.Random(42)

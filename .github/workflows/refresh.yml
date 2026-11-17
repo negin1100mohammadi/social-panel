@@ -77,7 +77,7 @@ jobs:
       - name: Build site folder
         run: |
           mkdir -p _site
-          cp -r index.html oauth.html app.js styles.css sw.js manifest.json config.json favicon.png icons data _site/
+          cp -r index.html oauth.html app.js styles.css sw.js manifest.json config.json favicon.png icons vendor data _site/
           touch _site/.nojekyll
 
       - uses: actions/configure-pages@v5

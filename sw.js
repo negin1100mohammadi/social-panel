@@ -1,9 +1,9 @@
 /* Service worker: network-first for everything (fresh data, avatars and app code),
    falling back to the last cached copy only when offline. */
-const VERSION = "v9";
+const VERSION = "v10";
 const SHELL = `shell-${VERSION}`;
 const DATA = `data-${VERSION}`;
-const SHELL_FILES = ["./", "index.html", "styles.css", "app.js", "styles.css?v=9", "app.js?v=9", "manifest.json",
+const SHELL_FILES = ["./", "index.html", "styles.css", "app.js", "styles.css?v=10", "app.js?v=10", "vendor/fflate.js?v=0.8.3", "manifest.json",
   "icons/icon.svg", "icons/icon-192.png", "icons/apple-touch-icon.png"];
 
 self.addEventListener("install", (e) => {

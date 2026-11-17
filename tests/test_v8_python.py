@@ -59,9 +59,9 @@ class Publish(unittest.TestCase):
                   open(os.path.join(self.tmp, "config", "yt_tokens.enc.json"), "w"))
         publish.main()
         out = json.load(open(os.path.join(publish.QUEUE, "j1.json")))
-        self.assertEqual(out["status"], "manual")
+        self.assertEqual(out["status"], "needs_action")  # v10: an unresolved channel waits for the panel (no final status yet)
         self.assertEqual({r["status"] for r in out["results"].values()}, {"manual"})
-        self.assertIn("انتشار دستی", out["results"]["titan-station/aparat"]["reason"])
+        self.assertIn("وصل نبود", out["results"]["titan-station/aparat"]["reason"])
         caps = json.load(open(os.path.join(self.tmp, "config", "publish_caps.json"), encoding="utf-8"))
         ch = caps["channels"]
         self.assertEqual(len(ch), 20)
@@ -79,9 +79,15 @@ class Publish(unittest.TestCase):
 
     def test_aggregate(self):
         t = [{"page": "a", "platform": "youtube"}, {"page": "a", "platform": "aparat"}]
-        self.assertEqual(publish.aggregate({"targets": t, "results": {"a/youtube": {"status": "published"}, "a/aparat": {"status": "manual"}}}), "partial")
-        self.assertEqual(publish.aggregate({"targets": t, "results": {"a/youtube": {"status": "needs_setup"}, "a/aparat": {"status": "manual"}}}), "needs_setup")
-        self.assertEqual(publish.aggregate({"targets": t, "results": {"a/youtube": {"status": "manual"}, "a/aparat": {"status": "manual"}}}), "manual")
+        A = lambda y, a: publish.aggregate({"targets": t, "results": {"a/youtube": {"status": y}, "a/aparat": {"status": a}}})
+        # v10: unresolved channels keep the job in needs_action; once all are resolved the status is final
+        self.assertEqual(A("published", "manual"), "needs_action")
+        self.assertEqual(A("needs_setup", "manual"), "needs_action")
+        self.assertEqual(A("published", "failed"), "partial")
+        self.assertEqual(A("published", "published"), "published")
+        self.assertEqual(A("failed", "skipped"), "failed")
+        self.assertEqual(A("retry", "published"), "pending")
+        self.assertEqual(A("queued", "failed"), "pending")
 
     def test_gallery_move_and_branch_cleanup(self):
         calls = {"uploads": [], "patch": []}

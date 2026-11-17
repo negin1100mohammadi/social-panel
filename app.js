@@ -21,7 +21,7 @@
   var MEDIA_BRANCH = "media-upload";
   var MAX_UPLOAD = 70 * 1024 * 1024; // GitHub blob API limit is 100 MB after base64
 
-  var SP_VERSION = "v9";
+  var SP_VERSION = "v10";
   window.SP_VERSION = SP_VERSION;
   var state = { config: null, latest: null, history: null, postsHist: null, error: null, busy: false, progress: "", syncAvailable: false, encCreated: null, chOrder: null };
   var app = document.getElementById("app");
@@ -98,7 +98,23 @@
 
   // ------------------------------------------------------------ platform info
   // "ورود" opens the account's owner/admin area (sign-in first when needed), not the public page
+  // v10: on a phone «ورود» opens the native app on that account (desktop keeps the web dashboards)
+  function isMobileUA() {
+    var ua = navigator.userAgent || "";
+    return /iPhone|iPad|iPod|Android/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }
+  function appLinks(cp, pl, r) {
+    var h = String((cp.accounts || {})[pl] || "").replace(/^@/, "");
+    if (pl === "instagram" && h) return [{ label: "ورود", long: "اپ اینستاگرام روی @" + h, url: "instagram://user?username=" + encodeURIComponent(h), fallback: "https://www.instagram.com/" + encodeURIComponent(h) + "/", app: true }];
+    if (pl === "tiktok" && h) return [{ label: "ورود", long: "اپ تیک‌تاک روی @" + h, url: "https://www.tiktok.com/@" + encodeURIComponent(h), app: true }];
+    if (pl === "youtube") {
+      var cid = r && /^UC[\w-]{22}$/.test(r.channel_id || "") ? r.channel_id : "";
+      return [{ label: "ورود", long: "اپ YouTube Studio", url: "https://studio.youtube.com/" + (cid ? "channel/" + cid : ""), app: true }];
+    }
+    return null;
+  }
   function adminLinks(cp, pl, r) {
+    var m = isMobileUA() && appLinks(cp, pl, r); if (m) return m;
     if (pl === "instagram") return [
       { label: "ورود", long: "داشبورد حرفه‌ای اینستاگرام", url: "https://www.instagram.com/accounts/login/?next=%2Faccounts%2Fprofessional_dashboard%2F" },
       { label: "Meta", long: "Meta Business Suite", url: "https://business.facebook.com/latest/home" }];
@@ -112,6 +128,14 @@
     return [];
   }
   var NO_ACCESS = "فقط با دسترسی به خود اکانت";
+  var APP_NOTE = "اپ‌ها روی همون حسابی باز می‌شن که الان فعاله؛ اگه حساب دیگه بود، یه بار از منوی اکانت اپ عوضش کن (اینستا تا ۵ اکانت رو با هم نگه می‌داره)";
+  // instagram://… opens the app; when the app is not installed the page stays visible -> the web profile instead
+  document.addEventListener("click", function (e) {
+    var a = e.target && e.target.closest ? e.target.closest("a[data-fallback]") : null; if (!a) return;
+    var fb = a.getAttribute("data-fallback"), left = false;
+    var onHide = function () { left = true; }; document.addEventListener("visibilitychange", onHide, { once: true }); window.addEventListener("pagehide", onHide, { once: true });
+    setTimeout(function () { if (!left && document.visibilityState === "visible") location.href = fb; }, 1600);
+  });
   var PICON = {
     instagram: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="16.9" cy="7.1" r="1" fill="#fff" stroke="none"/></svg>',
     youtube: '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M10 8.5v7l6-3.5z" fill="#fff"/></svg>',
@@ -124,6 +148,7 @@
   var ICON_REFRESH = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>';
   var ICON_SUN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
   var ICON_MOON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>';
+  var ICON_IDCARD = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16.2c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4M14.5 10h4M14.5 13.5h3"/></svg>';
   var ICON_CLOCK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
   var ICON_CHANNELS = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2.5"/><path d="M8 21h8M12 17v4"/><path d="M10 8.5v5l4-2.5z" fill="currentColor"/></svg>';
   var ICON_BELL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>';
@@ -269,6 +294,7 @@
       '<button class="refresh-btn' + (state.busy ? " spin" : "") + '" id="refresh" aria-label="به‌روزرسانی همه‌ی کانال‌ها" title="به‌روزرسانی همه‌ی کانال‌ها">' + ICON_REFRESH + "</button>" +
       '<div class="brand"><b>' + esc(title) + "</b></div>" +
       '<div class="tbox" title="آخرین به‌روزرسانی پنل">' + ICON_CLOCK + '<span class="ul"><b>' + esc(fmtShort(L && L.updated_at)) + "</b><span>" + esc(ago(L && L.updated_at)) + "</span></span></div>" +
+      '<a class="tbox idbtn" id="idbtn" href="#/identity" aria-label="هویت برند" title="هویت برند (شناسنامه‌ی هر برند)">' + ICON_IDCARD + '<span>هویت</span></a>' +
       '<button class="tbox" id="theme" aria-label="تغییر تم">' + (dark ? ICON_SUN : ICON_MOON) + '<span class="tlabel">' + (dark ? "لایت" : "دارک") + "</span></button>" +
       "</header>" +
       '<div class="progress' + (state.busy ? " on" : "") + '" id="prog" role="status"><span class="bar"></span><span class="pt" id="progtext">' + esc(state.progress || "در حال به‌روزرسانی…") + "</span></div>";
@@ -288,7 +314,7 @@
     if (pg) pg.parentNode.replaceChild(tmp.firstChild, pg);
     bindTopbar();
   }
-  function onFormPage() { return /^#\/(publish|settings|brain|gallery)/.test(location.hash); }
+  function onFormPage() { return /^#\/(publish|settings|brain|gallery|identity)/.test(location.hash); }
   function rerenderSafe() { if (onFormPage() && document.getElementById("topbar") && authed()) redrawTopbar(); else render(); }
   function setProgress(msg) {
     state.progress = msg;
@@ -415,7 +441,8 @@
         '<span class="cn"><span class="cname">' + esc(cp.name) + '</span><span class="csub">' + esc(sub) + "</span></span>" +
         '<span class="bell' + (nc ? " on" : "") + '" title="' + (nc ? "لایک یا کامنت جدید" : "چیز جدیدی نیست") + '">' + ICON_BELL + (nc ? "<i>" + esc(compact(nc)) + "</i>" : "") + "</span>" +
         '<span class="pm">' + (open ? "−" : "+") + "</span></button>" +
-        '<a class="pubmini" href="#/publish/' + esc(cp.id) + '" title="انتشار در ' + esc(cp.name) + '" aria-label="انتشار در ' + esc(cp.name) + '">' + ICON_SEND_SM + "</a></div>";
+        '<a class="pubmini" href="#/publish/' + esc(cp.id) + '" title="انتشار در ' + esc(cp.name) + '" aria-label="انتشار در ' + esc(cp.name) + '">' + ICON_SEND_SM + "</a></div>" +
+        '<p class="app-note">' + esc(APP_NOTE) + "</p>";
       if (open) {
         html += '<div class="branches">';
         PLATFORMS.forEach(function (pl) {
@@ -428,12 +455,16 @@
             '<a class="bnet" href="' + esc(url) + '" target="_blank" rel="noopener" title="صفحه‌ی عمومی ' + PNAME[pl] + '">' + picon(pl) +
             '<span class="bt"><b>' + PNAME[pl] + '</b><span class="bh">' + esc(shown) + "</span></span></a>" +
             adminLinks(cp, pl, r).map(function (x, i) {
-              return '<a class="bbtn adm' + (i ? " alt" : "") + '" data-admin="' + pl + '" href="' + esc(x.url) + '" target="_blank" rel="noopener" title="' + esc(x.long) + '">' + (i ? "" : ICON_LOGIN) + "<span>" + esc(x.label) + "</span></a>";
+              return '<a class="bbtn adm' + (i ? " alt" : "") + '" data-admin="' + pl + '" href="' + esc(x.url) + '"' + (/^https?:/.test(x.url) && !x.app ? ' target="_blank"' : "") +
+                (x.fallback ? ' data-fallback="' + esc(x.fallback) + '"' : "") + (x.app ? ' data-app="1"' : "") + ' rel="noopener" title="' + esc(x.long) + '">' + (i ? "" : ICON_LOGIN) + "<span>" + esc(x.label) + "</span></a>";
             }).join("") +
             (pl === "youtube" ? ytBtnHTML(cp.id) : "") +
+            ((pl === "instagram" || pl === "tiktok") && bufferCh(cp.id, pl) ? '<span class="bbtn ytc bufok" data-st="ok" title="از طریق بافر وصل است: آمار و انتشار از طریق بافر">متصل (بافر) ✓</span>' : "") +
             '<a class="bbtn chartbtn" data-route="' + esc(route.slice(2)) + '" href="' + esc(route) + '" title="آمار ' + PNAME[pl] + " " + esc(cp.name) + '" aria-label="آمار ' + PNAME[pl] + " " + esc(cp.name) + '">' + ICON_CHART + "</a>" +
             "</div>";
         });
+        var bufPl = ["instagram", "tiktok"].filter(function (pl) { return (cp.accounts || {})[pl] && bufferCh(cp.id, pl); });
+        if (bufPl.length) html += '<p class="adm-note buf-note">«متصل (بافر) ✓»: ' + bufPl.map(function (pl) { return PNAME[pl]; }).join(" و ") + " این پیج از طریق بافر وصل است — آمار و انتشار از طریق بافر.</p>";
         html += '<p class="adm-note">«ورود» بخش مدیریت همان اکانت را باز می‌کند. اگر در آن مرورگر چند اکانت وارد شده‌اند، بعد از باز شدن از منوی همان سایت اکانت درست را انتخاب کن.</p>';
         html += "</div>";
       }
@@ -672,8 +703,8 @@
   }
   function saveViewPref(p) { lsSet(VIEW_KEY, { r: p.r, m: p.m, type: p.type }); }
 
-  function loadPH(pid, pl) {
-    var c = (((state.postsHist || {}).channels) || {})[pid + "/" + pl];
+  function loadPH(pid, pl, sfx) {
+    var c = (((state.postsHist || {}).channels) || {})[pid + "/" + pl + (sfx || "")];
     if (!c) return null;
     var runs = (c.runs || []).map(tsOf).filter(function (t) { return t != null; }).sort(function (a, b) { return a - b; });
     var posts = Object.keys(c.posts || {}).map(function (id) {
@@ -900,11 +931,40 @@
   window.__spChart = { tsOf: function (v) { return tsOf(v); }, computeLevelDelta: computeLevelDelta, buckets: buckets, RANGES: RANGES, comparable: comparable,
     loadPH: loadPH, valAt: valAt, postGain: postGain, computeWindow: computeWindow, computeTimeline: computeTimeline };
 
+  // ---- v10: Instagram/TikTok metrics from Buffer (data/buffer.json; snapshots in posts_history "<page>/<pl>@buffer")
+  function bufferStats(pid, pl) {
+    var ch = (pl === "instagram" || pl === "tiktok") && bufferCh(pid, pl); if (!ch) return null;
+    var pg = state.buffer.pages[pid], posts = [], upd = null;
+    (pg.posts || []).forEach(function (x) {
+      if (x.channelId !== ch.id) return;
+      var m = {}; (x.metrics || []).forEach(function (q) { if (q && q.type) m[q.type] = num(q.value); });
+      var mt = tsOf(x.metricsUpdatedAt); if (mt != null && (upd == null || mt > upd)) upd = mt;
+      posts.push({ id: String(x.id), title: String(x.text || "").trim().split("\n")[0].slice(0, 120), url: x.externalLink || "", published: tsOf(x.dueAt), mt: mt, m: m });
+    });
+    var sum = function (k) { var h = posts.filter(function (p) { return p.m[k] != null; }); return h.length ? h.reduce(function (a, p) { return a + p.m[k]; }, 0) : null; };
+    var er = posts.filter(function (p) { return p.m.engagementRate != null; });
+    return { ch: ch, posts: posts, n: posts.length, updated: upd != null ? upd : tsOf(state.buffer.updated),
+      t: { views: sum("views"), reach: sum("reach"), shares: sum("shares"), saves: sum("saves"), watch: sum("totalTimeWatched"), reactions: sum("reactions"), comments: sum("comments"),
+        er: er.length ? er.reduce(function (a, p) { return a + p.m.engagementRate; }, 0) / er.length : null } };
+  }
+  // per-post history for a Buffer channel: the stored snapshots, or (until the first refresh stored them) one reading per post
+  function bufferPH(pid, pl, B) {
+    var ph = loadPH(pid, pl, "@buffer");
+    if (ph && ph.posts.length) return ph;
+    var t0 = B.updated != null ? B.updated : Date.now();
+    var posts = B.posts.map(function (p) {
+      var t = p.mt != null ? p.mt : t0;
+      return { id: p.id, title: p.title, url: p.url, thumb: "", published: p.published, first: t, last: t, pts: [{ t: t, v: p.m.views, l: p.m.reactions, c: p.m.comments }] };
+    });
+    return { runs: [t0], posts: posts };
+  }
+  function bufNote(B) { return "(از بافر، به‌روز: " + (B.updated != null ? fmtShort(new Date(B.updated).toISOString()) : "—") + ")"; }
   function analyticsView(pid, pl, nowArg) {
     var cp = cpById(pid);
     if (!cp || PLATFORMS.indexOf(pl) < 0) { location.hash = "#/channels"; return; }
     var page = pageData(cp), r = page.platforms[pl] || {};
-    var ok = hasData(r);
+    var B = bufferStats(pid, pl);
+    var ok = hasData(r) || !!B;
     var handle = r.handle || (cp.accounts || {})[pl] || "";
     var html = topbar(cp.name);
     html += '<button class="back" id="back">→ کانال‌ها</button>';
@@ -943,7 +1003,7 @@
     bindTopbar();
     document.getElementById("back").onclick = function () { location.hash = "#/channels"; };
 
-    var ph = loadPH(pid, pl);
+    var ph = B ? bufferPH(pid, pl, B) : loadPH(pid, pl);
     var hasPostLists = ph && ph.posts.length;
     var A = { ph: ph, noPosts: null };
     if (!hasPostLists && r.posts === 0 && pl !== "tiktok") A.noPosts = "هنوز " + POSTS_LABEL[pl] + "ی در این کانال منتشر نشده.";
@@ -952,11 +1012,22 @@
     function draw() {
       var now = nowArg || Date.now(), rg = rangeById(pref.r);
       A.W = computeWindow(ph, rg, now);
-      var b = '<div class="kpis three">' +
+      var b;
+      if (B) {
+        var bn = bufNote(B), T = B.t, f1 = function (v) { return v == null ? "—" : fa(Math.round(v * 10) / 10); };
+        b = '<div class="kpis three" id="bufkpis" data-views="' + dataAttr(T.views) + '">' +
+          kpi(FOLLOW_LABEL[pl], fa(r.followers)) +
+          kpi("کل " + POSTS_LABEL[pl] + "‌ها", fa(r.posts != null ? r.posts : B.n)) +
+          kpi("کل بازدیدها", fa(T.views), "", "جمع " + fa(B.n) + " " + POSTS_LABEL[pl] + "ِ آخر " + bn) + "</div>" +
+          '<div class="kpis bufx" id="bufx">' + kpi("دسترسی (Reach)", fa(T.reach)) + kpi("اشتراک‌گذاری", fa(T.shares)) +
+          (pl === "instagram" ? kpi("ذخیره", fa(T.saves)) : kpi("لایک", fa(T.reactions))) +
+          kpi("زمان تماشا", T.watch == null ? "—" : fa(Math.round(T.watch)) + " دقیقه") + kpi("نرخ تعامل", T.er == null ? "—" : f1(T.er) + "٪", "", "میانگین پست‌ها") +
+          '<p class="bufsrc">' + esc(bn + " · جمع " + fa(B.n) + " " + POSTS_LABEL[pl] + "ی که بافر برگرداند") + "</p></div>";
+      } else b = '<div class="kpis three">' +
         kpi(FOLLOW_LABEL[pl], fa(r.followers)) +
         kpi("کل " + POSTS_LABEL[pl] + "‌ها", fa(r.posts)) +
         kpi(pl === "tiktok" ? "کل لایک‌ها" : "کل بازدیدها", fa(pl === "tiktok" ? r.total_likes : r.total_views), "", (pl === "tiktok" ? r.total_likes : r.total_views) == null ? NO_ACCESS : "") + "</div>";
-      b += summaryHTML(A, pl, rg, A.W, channelTotalHTML(series, pl, r, rg, now));
+      b += summaryHTML(A, pl, rg, A.W, B ? '<div class="chan-total bufsrc" id="buf-sum">' + esc("بازدید تازه از اندازه‌گیری‌های بافر " + bufNote(B) + (A.ph.runs.length < 2 ? " — تا دو اندازه‌گیری ثبت نشده، برای پست‌های منتشرشده در این بازه کل بازدیدشان حساب می‌شود." : "")) + "</div>" : channelTotalHTML(series, pl, r, rg, now));
       if (!A.noPosts) { // without per-post data the summary already says so; no empty chart/list boxes
         b += trendHTML(A, pl, rg, pref, now);
         b += "<h3 id=\"plist-h\">" + esc(POSTS_LABEL[pl] + "‌ها در " + rg.label + " — به ترتیب " + KNAME[A.W.sortKey] + " تازه") + "</h3>";
@@ -1516,7 +1587,7 @@
     return [{ page: cp.id, platform: p[1] }];
   }
   function targetName(t) { var cp = cpById(t.page); return (cp ? cp.name : t.page) + " · " + (PNAME[t.platform] || t.platform); }
-  var ST_FA = { pending: "در انتظار", scheduled: "زمان‌بندی‌شده", processing: "در حال انتشار", published: "منتشر شد", partial: "بخشی منتشر شد", failed: "ناموفق", needs_setup: "نیاز به راه‌اندازی", cancelled: "لغو شد", skipped: "رد شد" };
+  var ST_FA = { pending: "در انتظار", scheduled: "زمان‌بندی‌شده", processing: "در حال انتشار", published: "منتشر شد", partial: "بخشی منتشر شد", failed: "ناموفق", needs_setup: "اتصال برقرار نیست", needs_action: "نیاز به اقدام", cancelled: "لغو شد", skipped: "رد شد" };
   var ST_CLS = { published: "good", partial: "warn", failed: "bad", needs_setup: "warn", cancelled: "", pending: "accent", scheduled: "accent", processing: "accent", skipped: "" };
   function stPill(st) { return '<span class="pill ' + (ST_CLS[st] || "") + '">' + esc(ST_FA[st] || st) + "</span>"; }
 
@@ -1553,8 +1624,9 @@
   }
   // put the uploaded blob on the media-upload branch (the workflow moves it to the
   // "media-queue" release and clears the branch); retried once if the branch moved
-  function stageOnBranch(path, sha, attempt) {
-    return gh("/git/ref/heads/" + MEDIA_BRANCH).catch(function (e) { if (e.status === 404) return null; throw e; }).then(function (ref) {
+  function stageOnBranch(path, sha, attempt) { return stageOn(MEDIA_BRANCH, path, sha, "media: " + path, attempt); }
+  function stageOn(branch, path, sha, msg, attempt) {
+    return gh("/git/ref/heads/" + branch).catch(function (e) { if (e.status === 404) return null; throw e; }).then(function (ref) {
       var parent = ref && ref.object && ref.object.sha;
       var base = parent ? gh("/git/commits/" + parent).then(function (c) { return c.tree.sha; }) : Promise.resolve(null);
       return base.then(function (baseTree) {
@@ -1562,13 +1634,13 @@
         if (baseTree) body.base_tree = baseTree;
         return gh("/git/trees", { method: "POST", body: body });
       }).then(function (tree) {
-        return gh("/git/commits", { method: "POST", body: { message: "media: " + path, tree: tree.sha, parents: parent ? [parent] : [] } });
+        return gh("/git/commits", { method: "POST", body: { message: msg, tree: tree.sha, parents: parent ? [parent] : [] } });
       }).then(function (commit) {
-        if (parent) return gh("/git/refs/heads/" + MEDIA_BRANCH, { method: "PATCH", body: { sha: commit.sha, force: false } });
-        return gh("/git/refs", { method: "POST", body: { ref: "refs/heads/" + MEDIA_BRANCH, sha: commit.sha } });
+        if (parent) return gh("/git/refs/heads/" + branch, { method: "PATCH", body: { sha: commit.sha, force: false } });
+        return gh("/git/refs", { method: "POST", body: { ref: "refs/heads/" + branch, sha: commit.sha } });
       });
     }).catch(function (e) {
-      if (!attempt && (e.status === 422 || e.status === 409)) return sleep(1500).then(function () { return stageOnBranch(path, sha, 1); });
+      if (!attempt && (e.status === 422 || e.status === 409)) return sleep(1500).then(function () { return stageOn(branch, path, sha, msg, 1); });
       throw e;
     });
   }
@@ -1810,12 +1882,24 @@
   }
   function maxSt(area, a, b) { return stIndex(area, a) >= stIndex(area, b) ? a : b; }
   // one target of a queue job: published | manual | error | pending
+  // v10: manual = «اتصال برقرار نیست» (unresolved: needs تلاش دوباره / دستی منتشر کردم / لغو); error = final failure
   function targetState(job, t) {
     var r = (job.results || {})[t.page + "/" + t.platform] || {};
     if (r.status === "published") return "published";
-    if (r.status === "manual" || (!r.status && t.manual)) return "manual";
-    if (r.status === "failed" || r.status === "needs_setup" || r.status === "skipped" || r.status === "cancelled") return "error";
-    return "pending";
+    if (r.status === "manual" || r.status === "needs_setup") return job.status === "cancelled" ? "error" : "manual";
+    if (r.status === "failed" || r.status === "skipped" || r.status === "cancelled") return "error";
+    if (job.status === "cancelled") return "error";
+    return "pending"; // no result yet, queued (تلاش دوباره) or an automatic retry
+  }
+  // the job's own status from its channels (mirrors aggregate() in scripts/publish.py)
+  function finalizeJob(job) {
+    var sts = (job.targets || []).map(function (t) { return ((job.results || {})[t.page + "/" + t.platform] || {}).status; });
+    var fin = ["published", "failed", "skipped", "cancelled", "needs_setup", "manual"];
+    if (sts.some(function (x) { return fin.indexOf(x) < 0; })) { job.status = "pending"; delete job.finished_at; return job; }
+    if (sts.some(function (x) { return x === "needs_setup" || x === "manual"; })) { job.status = "needs_action"; delete job.finished_at; return job; }
+    job.status = sts.every(function (x) { return x === "published"; }) ? "published" : sts.some(function (x) { return x === "published"; }) ? "partial" : "failed";
+    job.finished_at = new Date().toISOString();
+    return job;
   }
   // publish status of a queue job (plain queue/<id>.json, written back by publish.py)
   function pubStatusOf(job, now, running) {
@@ -1828,8 +1912,7 @@
       if (running || Object.keys(job.results || {}).length) return "publishing";
       return "queued";
     }
-    if (c.published) return "published"; // manual reminders stay visible per target
-    if (c.manual) return due > now + 60000 ? "scheduled" : "queued";
+    if (c.published) return "published"; // unresolved channels stay visible per target («نیاز به اقدام»)
     return "error";
   }
   // statuses flow downstream -> upstream through the link ids:
@@ -1904,6 +1987,11 @@
   window.__spV9 = {
     mergeHarkOut: function (p) { return mergeHarkOut(p); }, scriptText: function (s, t) { return scriptText(s, t); }, applyHarkOut: function (d, m, p) { return applyHarkOut(d, m, p, "2026-01-01T00:00:00Z"); },
     harkSeal: function (pub, id, payload) { return harkSeal(pub, id, payload); }, harkOpen: function (env, aad) { return harkOpen(env, aad); }, tools: function () { return PROD_TOOLS; }
+  };
+  window.__spV10 = {
+    applyEdit: function (c, e, k) { return applyEdit(c, e, k, "2026-11-17T10:00:00+03:30"); }, screenText: function (s) { return screenText(s); },
+    applyIdentityOut: function (d, m, now) { return applyIdentityOut(d, m, now || "2026-11-17T10:00:00+03:30"); }, identityBrief: function (cp, d) { return identityBrief(cp, d); },
+    sections: function () { return ID_SECTIONS; }, idNorm: function (t, v) { return idNorm(t, v); }
   };
 
   // ============================================================= v8: shared view helpers
@@ -2203,15 +2291,16 @@
     });
   }
   // encrypt a request for Hark (only the private key in Hark's sandbox opens it)
-  function harkSeal(pub, id, payload) {
+  function harkSeal(pub, id, payload, info, aad) {
+    info = info || HREQ; aad = aad || HREQ + "|" + id;
     var EC = { name: "ECDH", namedCurve: "P-256" };
     return crypto.subtle.generateKey(EC, true, ["deriveBits"]).then(function (eph) {
       return crypto.subtle.importKey("jwk", { kty: "EC", crv: "P-256", x: pub.jwk.x, y: pub.jwk.y }, EC, false, [])
         .then(function (pk) { return crypto.subtle.deriveBits({ name: "ECDH", public: pk }, eph.privateKey, 256); })
-        .then(function (bits) { return hkdfAes(bits, HREQ, ["encrypt"]); })
-        .then(function (k) { return Promise.all([aesEnc(k, payload, HREQ + "|" + id), crypto.subtle.exportKey("jwk", eph.publicKey)]); })
+        .then(function (bits) { return hkdfAes(bits, info, ["encrypt"]); })
+        .then(function (k) { return Promise.all([aesEnc(k, payload, aad), crypto.subtle.exportKey("jwk", eph.publicKey)]); })
         .then(function (r) {
-          return { v: 1, id: id, kid: pub.kid, alg: ECIES_ALG, info: HREQ, epk: { kty: "EC", crv: "P-256", x: r[1].x, y: r[1].y }, iv: r[0].iv, ct: r[0].ct, created_at: new Date().toISOString() };
+          return { v: 1, id: id, kid: pub.kid, alg: ECIES_ALG, info: info, epk: { kty: "EC", crv: "P-256", x: r[1].x, y: r[1].y }, iv: r[0].iv, ct: r[0].ct, created_at: new Date().toISOString() };
         });
     });
   }
@@ -2251,6 +2340,9 @@
     } else if (m.type === "script") {
       var s = (m.screen_id && findBy(d.screen, "id", m.screen_id)) || (m.request_id && findBy(d.screen, "request_id", m.request_id));
       if (!s) { s = { id: m.screen_id || newId("s"), page: pid, title: (m.script && m.script.title) || "اسکریپت هارک", body: "", author: "", source: null, request_id: m.request_id || "", state: "queued", requested_at: m.created_at || now }; d.screen.push(s); }
+      if (s.script && s.edited_at) {
+        s.revisions = (s.revisions || []).concat([{ at: now, by: "hark", note: "نسخه‌ی تازه‌ی هارک جایگزین نسخه‌ی ویرایش‌شده شد", prev_text: screenText(s), prev: { title: s.title, body: s.body, script: s.script } }]).slice(-REV_MAX);
+      }
       s.script = m.script || {}; s.ready_at = m.created_at || now;
       if (s.state !== "approved") s.state = "ready";
     } else if (m.type === "job_result") {
@@ -2280,7 +2372,7 @@
           return harkOpen(r.obj, HOUT + "|" + pid + "/" + id).then(function (m) { m.id = id; return { name: f.name, sha: r.sha, msg: m }; });
         }).catch(function () { return null; }); // unreadable/tampered: left in place, never merged
       })).then(function (rows) {
-        rows = rows.filter(Boolean);
+        rows = rows.filter(function (x) { return x && x.msg && x.msg.type !== "identity"; }); // «هویت» messages are merged by the identity page
         if (!rows.length) return 0;
         rows.sort(function (a, b) { return String(a.msg.created_at || "").localeCompare(String(b.msg.created_at || "")); });
         return dsUpdate("brain-" + pid, function (d) {
@@ -2299,12 +2391,29 @@
     if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t).catch(function () { return legacy(); });
     return Promise.resolve(legacy());
     function legacy() {
-      var ta = document.createElement("textarea"); ta.value = t; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.top = "-1000px";
-      document.body.appendChild(ta); ta.select(); try { ta.setSelectionRange(0, t.length); } catch (e) {}
+      // iOS Safari: an editable (not readonly) textarea selected through a Range + setSelectionRange, font ≥ 16px (no zoom)
+      var ta = document.createElement("textarea"); ta.value = t; ta.contentEditable = "true"; ta.readOnly = false;
+      ta.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0";
+      document.body.appendChild(ta);
+      try { var rg = document.createRange(); rg.selectNodeContents(ta); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(rg); } catch (e) {}
+      ta.focus(); ta.select(); try { ta.setSelectionRange(0, t.length); } catch (e) {}
       var ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
       document.body.removeChild(ta);
       if (!ok) throw new Error("copy failed");
     }
+  }
+  // last resort when the clipboard is refused: the text pre-selected in a sheet, for a manual long-press «Copy»
+  function copyBox(t) {
+    var old = document.getElementById("copybox"); if (old) old.remove();
+    var d = document.createElement("div"); d.id = "copybox"; d.className = "ovl";
+    d.innerHTML = '<div class="ovl-card"><b>کپی خودکار ممکن نشد؛ متن انتخاب شده — نگه دار و «Copy» را بزن.</b><textarea dir="auto" rows="12"></textarea><button class="go" type="button">بستن</button></div>';
+    d.querySelector("textarea").value = t; document.body.appendChild(d);
+    d.querySelector("button").onclick = function () { d.remove(); };
+    d.onclick = function (e) { if (e.target === d) d.remove(); };
+    var ta = d.querySelector("textarea"); ta.focus(); ta.select(); try { ta.setSelectionRange(0, t.length); } catch (e) {}
+  }
+  function copyWithToast(t) {
+    return copyText(t).then(function () { toast("کپی شد ✓"); }, function () { copyBox(t); });
   }
   var PLAT_LEN = [["reels", "Instagram Reels"], ["shorts", "YouTube Shorts"], ["tiktok", "TikTok"]];
   function beatsOf(sc) {
@@ -2348,6 +2457,81 @@
     if (sc.trend || sc.notes) h += '<div class="scr-sec"><b>ترند / نکته</b><p>' + esc(sc.trend || sc.notes) + "</p></div>";
     return '<div class="scr">' + (h || '<p class="muted-note">اسکریپت خالی است.</p>') + "</div>";
   }
+
+  // ---- v10: edit + copy + revision history for «غربال‌گری» and «اسکریپت نهایی»
+  var REV_MAX = 30;
+  function screenText(s) { return s && s.script ? scriptText(s.script, s.title) : [s && s.title || "", s && s.body || ""].filter(Boolean).join("\n\n"); }
+  function finalText(f) { return f.text || scriptText(f.script, f.title); }
+  function editorOf() { var a = lsGet(AUTHOR_LS, "negin"); return a === "amirhossein" ? a : "negin"; }
+  function lastEditHTML(x) {
+    if (!x.edited_at) return "";
+    return '<p class="edmeta">✎ آخرین اصلاح: <b>' + esc(AUTHORS[x.edited_by] || x.edited_by || "") + "</b> · " + esc(fmtShort(x.edited_at)) + (x.edit_note ? '<span class="enote">نظر/اصلاحیه: ' + esc(x.edit_note) + "</span>" : "") + "</p>";
+  }
+  function editBtnsHTML(x) {
+    var n = (x.revisions || []).length;
+    return '<button class="ghost sm" data-act="edit">ویرایش</button><button class="ghost sm" data-act="copy">کپی</button>' +
+      (n ? '<button class="ghost sm" data-act="hist">تاریخچه (' + fa(n) + ")</button>" : "");
+  }
+  function revsHTML(x) {
+    var r = (x.revisions || []).slice().reverse();
+    if (!r.length) return "";
+    return '<div class="revs" hidden><b class="rt">تاریخچه‌ی اصلاحات</b>' + r.map(function (v) {
+      return '<div class="rev"><div class="rh"><span class="atag a-' + esc(v.by) + '">' + esc(AUTHORS[v.by] || v.by || "؟") + "</span> " + esc(fmtShort(v.at)) + "</div>" +
+        (v.note ? '<p class="rnote">نظر/اصلاحیه: ' + esc(v.note) + "</p>" : "") +
+        '<details><summary>متن پیش از این اصلاح</summary><div class="ibody">' + esc(v.prev_text || "") + "</div></details></div>";
+    }).join("") + "</div>";
+  }
+  function beatsLines(sc) { return beatsOf(sc || {}).map(function (b) { return (b.t ? b.t + " | " : "") + b.text; }).join("\n"); }
+  function parseBeats(txt) {
+    return String(txt || "").split("\n").map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) {
+      var m = /^([^|]{1,12})\s*\|\s*(.+)$/.exec(l); return m ? { t: m[1].trim(), text: m[2].trim() } : { t: "", text: l };
+    });
+  }
+  // the inline editor; withScript = edit the script fields, otherwise the idea (title + text) of a queued item
+  function editFormHTML(x, withScript) {
+    var me = editorOf(), uid = esc(x.id), sc = (withScript && x.script) || {}, ls = sc.platforms || sc.lengths || {};
+    var fld = function (f, label, val, rows, ltr) {
+      return "<label>" + label + "</label>" + (rows ? '<textarea data-f="' + f + '" rows="' + rows + '" dir="auto">' + esc(val || "") + "</textarea>"
+        : '<input type="text" data-f="' + f + '"' + (ltr ? ' dir="auto"' : "") + ' value="' + esc(val || "") + '">');
+    };
+    var h = '<div class="form edform"><div class="edh">ویرایش ' + (withScript ? "اسکریپت" : "ایده") + "</div>" +
+      '<label>ویرایش‌کننده</label><div class="nets" role="radiogroup">' + ["negin", "amirhossein"].map(function (a) {
+        return '<label class="chk"><input type="radio" name="ed-au-' + uid + '" value="' + a + '"' + (me === a ? " checked" : "") + ">" + AUTHORS[a] + "</label>"; }).join("") + "</div>";
+    if (withScript) {
+      h += fld("title", "عنوان", sc.title || x.title) + fld("hook", "هوک (۰ تا ۳ ثانیه‌ی اول)", sc.hook, 2) +
+        fld("beats", "بیت‌های نگه‌داشت (هر بیت یک خط؛ زمان اختیاری: «0:03 | متن»)", beatsLines(sc), 4) + fld("cta", "CTA", sc.cta, 2) +
+        fld("text", "متن کامل اسکریپت", sc.text, 8) + fld("caption", "کپشن", sc.caption, 3) + fld("hashtags", "هشتگ‌ها (با فاصله یا خط جدا)", tagsOf(sc).join(" "), 2) +
+        '<div class="plen3">' + PLAT_LEN.map(function (p) { return '<div><label dir="ltr">' + p[1] + '</label><input type="text" data-f="len-' + p[0] + '" value="' + esc(lenOf(ls[p[0]])) + '"></div>'; }).join("") + "</div>" +
+        fld("trend", "ترند / نکته", sc.trend || sc.notes, 2);
+    } else h += fld("title", "عنوان", x.title) + fld("body", "متن ایده", x.body, 7);
+    return h + fld("note", "نظر / اصلاحیه (اختیاری)", "", 2) +
+      '<div class="row-btns"><button class="go sm" type="button" data-act="esave">ثبت اصلاحات</button><button class="ghost sm" type="button" data-act="ecancel">انصراف</button></div><div class="msg"></div></div>';
+  }
+  function readEditForm(box, x, withScript) {
+    var v = function (f) { var e = box.querySelector('[data-f="' + f + '"]'); return e ? e.value.replace(/\r\n/g, "\n").trim() : ""; };
+    var au = box.querySelector('input[type="radio"]:checked');
+    var ed = { author: au ? au.value : editorOf(), note: v("note") };
+    if (withScript) {
+      var sc = JSON.parse(JSON.stringify(x.script || {}));
+      sc.title = v("title"); sc.hook = v("hook"); sc.beats = parseBeats(v("beats")); sc.cta = v("cta"); sc.text = v("text"); sc.caption = v("caption");
+      sc.hashtags = v("hashtags").split(/[\s,،]+/).filter(Boolean).map(function (t) { return t.charAt(0) === "#" ? t : "#" + t; });
+      var pl = {}; PLAT_LEN.forEach(function (p) { var l = v("len-" + p[0]); if (l) pl[p[0]] = l; }); sc.platforms = pl; delete sc.lengths;
+      sc.trend = v("trend"); delete sc.notes;
+      ed.script = sc; ed.title = sc.title;
+    } else { ed.title = v("title"); ed.body = v("body"); }
+    return ed;
+  }
+  // apply an edit to a screening (kind "screen") or final (kind "final") item, keeping the previous version in .revisions
+  function applyEdit(cur, ed, kind, now) {
+    var prevText = kind === "final" ? finalText(cur) : screenText(cur);
+    var prev = kind === "final" ? { title: cur.title, script: cur.script || {}, text: cur.text || "" } : { title: cur.title, body: cur.body || "", script: cur.script || null };
+    cur.revisions = (cur.revisions || []).concat([{ at: now, by: ed.author, note: ed.note || "", prev_text: prevText, prev: prev }]).slice(-REV_MAX);
+    if (ed.script) { cur.script = ed.script; if (kind === "final") cur.title = ed.script.title || cur.title; }
+    else { cur.title = ed.title; cur.body = ed.body; }
+    if (kind === "final") cur.text = scriptText(cur.script, cur.title);
+    cur.edited_at = now; cur.edited_by = ed.author; cur.edit_note = ed.note || "";
+    return cur;
+  }
   function authorTag(a) { return AUTHORS[a] ? '<span class="atag a-' + esc(a) + '">' + esc(AUTHORS[a]) + "</span>" : ""; }
   function v9Body(text) {
     var long = text.length > 320 || (text.match(/\n/g) || []).length > 6;
@@ -2374,7 +2558,9 @@
       (s.body ? '<details class="orig"><summary>ایده‌ی اصلی</summary>' + v9Body(s.body) + "</details>" : "") +
       (st === "queued" ? '<p class="muted-note">هارک این ایده را به یک اسکریپت وایرال تبدیل می‌کند: هوک ۱ تا ۳ ثانیه‌ی اول، بیت‌های نگه‌داشت، CTA، کپشن و هشتگ، و مدت مناسب Reels / Shorts / TikTok.</p>' : scriptHTML(s.script)) +
       (s.final_id ? '<div class="ilinks"><a class="lchip pub" href="#/brain/' + esc(s.page) + "/final?focus=" + esc(s.final_id) + '">✓ در اسکریپت نهایی</a></div>' : "") +
-      '<div class="iact"><button class="go sm" data-act="approve"' + (st === "ready" ? "" : " disabled") + ">تأیید و انتقال به اسکریپت نهایی</button></div></article>";
+      lastEditHTML(s) +
+      '<div class="iact"><button class="go sm" data-act="approve"' + (st === "ready" ? "" : " disabled") + ">تأیید و انتقال به اسکریپت نهایی</button>" + editBtnsHTML(s) + "</div>" +
+      '<div class="editwrap"></div>' + revsHTML(s) + "</article>";
   }
   function jobChipHTML(j, pid) {
     if (!j) return "";
@@ -2396,8 +2582,9 @@
     }).join("");
     return '<article class="bitem fitem" id="b-' + esc(f.id) + '" data-id="' + esc(f.id) + '">' +
       '<div class="ih"><b class="it">' + esc(f.title || "(بدون عنوان)") + '</b><span class="schip v9-approved">آماده‌ی ساخت</span></div>' +
-      '<div class="im"><span class="when">' + esc(fmtShort(f.created_at)) + "</span></div>" + v9Body(f.text || "") +
-      '<div class="iact"><button class="ghost sm" data-act="copy">کپی متن</button><button class="go sm" data-act="sendall">ارسال به همه</button></div>' +
+      '<div class="im"><span class="when">' + esc(fmtShort(f.created_at)) + "</span></div>" + v9Body(f.text || "") + lastEditHTML(f) +
+      '<div class="iact"><button class="go sm" data-act="sendall">ارسال به همه</button>' + editBtnsHTML(f) + "</div>" +
+      '<div class="editwrap"></div>' + revsHTML(f) +
       '<div class="ptools" aria-label="ابزارهای ساخت">' + rows + "</div></article>";
   }
   function toolLinksHTML(cp, links) {
@@ -2443,6 +2630,31 @@
       var b = e.target.closest("[data-act]"); if (!b || b.disabled) return;
       var card = b.closest(".bitem"), id = card && card.getAttribute("data-id"), act = b.getAttribute("data-act");
       if (act === "more") { var ib = b.parentNode.querySelector(".ibody"); ib.classList.toggle("clamp"); b.textContent = ib.classList.contains("clamp") ? "نمایش کامل" : "بستن"; return; }
+      if (tab === "screen" || tab === "final") {
+        var list = tab === "screen" ? d.screen : d.final, it = findBy(list, "id", id), wrap = card.querySelector(".editwrap");
+        var withScript = tab === "final" || !!(it && it.script);
+        if (it && act === "copy") { copyWithToast(tab === "final" ? finalText(it) : screenText(it)); return; }
+        if (it && act === "hist") { var rv = card.querySelector(".revs"); if (rv) { rv.hidden = !rv.hidden; b.classList.toggle("on", !rv.hidden); } return; }
+        if (it && act === "edit") {
+          if (wrap.firstChild) { wrap.innerHTML = ""; return; }
+          wrap.innerHTML = editFormHTML(it, withScript);
+          var f0 = wrap.querySelector('[data-f="title"]'); wrap.scrollIntoView({ block: "nearest" }); try { f0.focus({ preventScroll: true }); } catch (e3) {}
+          return;
+        }
+        if (act === "ecancel") { wrap.innerHTML = ""; return; }
+        if (it && act === "esave") {
+          var ed = readEditForm(wrap, it, withScript), em = wrap.querySelector(".msg");
+          if (!ed.title) { em.textContent = "عنوان را بنویس."; return; }
+          lsSet(AUTHOR_LS, ed.author);
+          b.disabled = true; em.textContent = "در حال ذخیره (رمزگذاری‌شده)…";
+          var nowE = new Date().toISOString();
+          save(function (x) {
+            var cur = findBy(tab === "screen" ? x.screen : x.final, "id", id); if (!cur) throw new Error("این آیتم دیگر وجود ندارد");
+            applyEdit(cur, ed, tab, nowE); return x;
+          }).then(function () { toast("اصلاحات ثبت شد ✓"); redraw(); }, function (e2) { b.disabled = false; em.textContent = "✗ " + ghErrorFa(e2); });
+          return;
+        }
+      }
       if (tab === "hark") {
         var h = findBy(d.hark, "id", id); if (!h) return;
         if (act === "screen") { b.disabled = true; sendToScreening(pid, cp, { kind: "hark", id: h.id, title: h.title, body: h.body, author: "hark", networks: h.networks, format: h.format }, ctx).then(function () { toast("برای غربال‌گری فرستاده شد ✓ (در صف هارک)"); redraw(); }, function (e2) { b.disabled = false; toast("✗ " + ghErrorFa(e2), 5000); }); }
@@ -2473,8 +2685,7 @@
         }).then(function () { toast("به «اسکریپت نهایی» منتقل شد ✓"); location.hash = "#/brain/" + pid + "/final?focus=" + fid; }, function (e2) { b.disabled = false; toast("✗ " + ghErrorFa(e2), 5000); });
       } else if (tab === "final") {
         var f = findBy(d.final, "id", id); if (!f) return;
-        if (act === "copy") copyText(f.text || "").then(function () { toast("متن کپی شد ✓"); }, function () { toast("کپی ممکن نشد؛ متن را دستی انتخاب کن", 4000); });
-        else if (act === "send") { b.disabled = true; produce(pid, cp, f, [b.getAttribute("data-tool")], save).then(function (r) { reportProduce(r); redraw(); }, function (e2) { b.disabled = false; toast("✗ " + ghErrorFa(e2), 5000); }); }
+        if (act === "send") { b.disabled = true; produce(pid, cp, f, [b.getAttribute("data-tool")], save).then(function (r) { reportProduce(r); redraw(); }, function (e2) { b.disabled = false; toast("✗ " + ghErrorFa(e2), 5000); }); }
         else if (act === "sendall") {
           var tools = PROD_TOOLS.map(function (t) { return t[0]; }).filter(function (t) { return !(f.jobs && f.jobs[t] && f.jobs[t].state === "queued"); });
           if (!tools.length) { toast("همه‌ی ابزارها همین حالا در صف ساخت‌اند"); return; }
@@ -2521,6 +2732,489 @@
       if (!sent.length) { var e = new Error("ارسال به هارک ممکن نشد"); throw e; }
       return save(function (x) { var cf = findBy(x.final, "id", f.id); if (cf) { cf.jobs = cf.jobs || {}; for (var t in ok) cf.jobs[t] = ok[t]; } return x; });
     }).then(function () { return { sent: sent, failed: failed }; });
+  }
+
+
+  // ============================================================= v10: «هویت» — brand identity (#/identity, #/identity/<page>)
+  // Store : vault/identity-<page>.enc.json, AES-256-GCM with the data key (same as brain), keys: fields{}, assets[], hark_seen{}.
+  //         fields[key] = { v, at (ISO, per-field updated_at), by: negin|amirhossein|hark, src: user|hark, draft, from_hark }
+  // Mirror: every save also writes hark/identity/<page>.json, ECIES to config/hark_pub.json (HKDF info "sp-hark-id-v1",
+  //         AAD "sp-hark-id-v1|hark/identity/<page>.json"), so Hark can read the identity (hark_bridge.py get-identity).
+  // Hark  : writes hark/out/<page>/<id>.json with type "identity"; merged field by field, a field the team edited later is never overwritten.
+  // Assets: each file encrypted with its own random AES-256-GCM key (AAD "sp-idasset-v1|<page>/<id>"), uploaded as a git blob and
+  //         committed to the branch "identity-assets" (<page>/<id>.bin). The key lives only inside the encrypted identity file
+  //         (and in Hark's encrypted mirror). ZIP contents are listed with fflate (vendor/fflate.js, loaded on demand).
+  var HID = "sp-hark-id-v1", HARK_ID_DIR = "hark/identity", IDASSET_BRANCH = "identity-assets", IDA_AAD = "sp-idasset-v1";
+  var ID_SECTIONS = [
+    { k: "card", t: "شناسنامه", f: [["brand_name", "نام برند", "line"], ["handles", "هندل‌ها", "list", "هر هندل یک خط، مثلاً: اینستاگرام: @…"], ["start_date", "تاریخ شروع", "line"], ["owner", "صاحب / تیم", "text"]] },
+    { k: "domain", t: "حوزه فعالیت", f: [["domain", "حوزه فعالیت", "text"]] },
+    { k: "nature", t: "ماهیت برند", f: [["nature", "ماهیت برند", "text"]] },
+    { k: "audience", t: "مخاطب هدف (پرسونا)", f: [["audience", "پرسونا", "text"]] },
+    { k: "goal", t: "هدف محتوایی", f: [["content_goal", "هدف محتوایی", "text"]] },
+    { k: "pillars", t: "چارچوب / ستون‌های محتوا", f: [["pillars", "ستون‌های محتوا", "list", "هر ستون یک خط"]] },
+    { k: "formats", t: "فرمت‌ها و طول‌ها", f: [["formats", "فرمت‌ها و طول‌ها", "list", "مثلاً: ریل ۲۰ تا ۳۵ ثانیه"]] },
+    { k: "tone", t: "لحن و زبان برند", f: [["tone", "لحن", "text"], ["dos", "باید‌ها", "list"], ["donts", "نباید‌ها", "list"], ["keywords", "کلمات کلیدی", "list"], ["banned", "کلمات ممنوع", "list"]] },
+    { k: "colors", t: "رنگ سازمانی", f: [["colors", "رنگ‌ها", "colors"]] },
+    { k: "slogan", t: "اسلوگان", f: [["slogan", "اسلوگان", "text"]] },
+    { k: "characters", t: "کاراکترها", f: [["characters", "کاراکترها", "chars"]] },
+    { k: "names", t: "اسامی", f: [["names", "اسامی (اسم سری‌ها، بخش‌ها، شخصیت‌ها…)", "list"]] },
+    { k: "fonts", t: "فونت‌ها", f: [["fonts", "فونت‌ها", "list", "اسم فونت و کاربردش، هر کدام یک خط"]] },
+    { k: "logos", t: "لوگوها", f: [["logos", "توضیح لوگوها (فایل‌ها را پایین صفحه آپلود کن)", "text"]] },
+    { k: "visual", t: "فضاسازی / سبک بصری", f: [["mood", "Mood", "text"], ["light", "نور", "text"], ["framing", "قاب", "text"], ["base_prompt", "پرامپت پایه‌ی تصویر / ویدیو", "text"]] },
+    { k: "hashtags", t: "هشتگ‌ها", f: [["hashtags", "هشتگ‌ها", "list"]] },
+    { k: "ctas", t: "CTAها", f: [["ctas", "CTAها", "list"]] },
+    { k: "refs", t: "رقبا / مرجع‌ها", f: [["competitors", "رقبا / مرجع‌ها", "list"]] },
+    { k: "ai", t: "نکات برای ابزارهای AI", f: [["ai_notes", "System prompt آماده‌ی کپی", "text"]] }
+  ];
+  var ID_TYPE = {}, ID_LABEL = {};
+  ID_SECTIONS.forEach(function (s) { s.f.forEach(function (f) { ID_TYPE[f[0]] = f[2]; ID_LABEL[f[0]] = f[1]; }); });
+  var IDA_KIND = { logo: "لوگو", font: "فونت", image: "تصویر", zip: "ZIP", other: "فایل" };
+  var ICON_FILE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
+  var v10ui = { open: {} };
+
+  function idoc(d) { d = d || {}; d.fields = d.fields || {}; d.assets = d.assets || []; d.hark_seen = d.hark_seen || {}; return d; }
+  function hexNorm(h) {
+    h = String(h || "").trim(); if (h && h.charAt(0) !== "#") h = "#" + h;
+    if (/^#[0-9a-f]{3}$/i.test(h)) h = "#" + h[1] + h[1] + h[2] + h[2] + h[3] + h[3];
+    return /^#[0-9a-f]{6}$/i.test(h) ? h.toLowerCase() : "";
+  }
+  function idStr(v) { return String(v == null ? "" : v).replace(/\r\n/g, "\n").trim(); }
+  function idNorm(type, v) {
+    if (type === "list") { if (typeof v === "string") v = v.split("\n"); return (Array.isArray(v) ? v : []).map(idStr).filter(Boolean).slice(0, 300); }
+    if (type === "colors") return (Array.isArray(v) ? v : []).map(function (c) { return typeof c === "string" ? { name: "", hex: hexNorm(c) } : { name: idStr(c && c.name), hex: hexNorm(c && c.hex) }; }).filter(function (c) { return c.hex; }).slice(0, 40);
+    if (type === "chars") return (Array.isArray(v) ? v : []).map(function (c) { c = c || {}; return { name: idStr(c.name), look: idStr(c.look), personality: idStr(c.personality), prompt: idStr(c.prompt) }; })
+      .filter(function (c) { return c.name || c.look || c.personality || c.prompt; }).slice(0, 30);
+    return idStr(v);
+  }
+  function idEmpty(v) { return v == null || (Array.isArray(v) ? !v.length : !String(v).trim()); }
+  function idBlank(type) { return type === "line" || type === "text" ? "" : []; }
+  // one Hark -> panel identity message, field by field (idempotent). A field the team edited later than Hark's value is kept.
+  function applyIdentityOut(d, m, now) {
+    d = idoc(d);
+    if (!m || !m.id || d.hark_seen[m.id]) return d;
+    d.hark_seen[m.id] = now;
+    var seen = Object.keys(d.hark_seen); if (seen.length > 300) seen.sort(function (a, b) { return String(d.hark_seen[a]).localeCompare(String(d.hark_seen[b])); }).slice(0, seen.length - 300).forEach(function (k) { delete d.hark_seen[k]; });
+    var fs = m.fields || {};
+    Object.keys(fs).forEach(function (k) {
+      var type = ID_TYPE[k]; if (!type) return;
+      var raw = fs[k], wrapped = !!(raw && typeof raw === "object" && !Array.isArray(raw) && ("v" in raw || "value" in raw));
+      var val = idNorm(type, wrapped ? ("v" in raw ? raw.v : raw.value) : raw);
+      if (idEmpty(val)) return;
+      var at = (wrapped && raw.at) || m.created_at || now, cur = d.fields[k];
+      if (cur && !idEmpty(cur.v) && (tsOf(cur.at) || 0) >= (tsOf(at) || 0)) return;
+      d.fields[k] = { v: val, at: at, by: "hark", src: "hark", draft: !(wrapped && raw.draft === false), label: String(m.label || "پیشنهاد هارک — تأیید کن"), note: wrapped && raw.note ? String(raw.note) : "" };
+    });
+    return d;
+  }
+  function idValText(type, v) {
+    if (type === "list") return v.map(function (x) { return "- " + x; }).join("\n");
+    if (type === "colors") return v.map(function (c) { return "- " + (c.name ? c.name + ": " : "") + c.hex; }).join("\n");
+    if (type === "chars") return v.map(function (c) {
+      return ["- " + (c.name || "کاراکتر"), c.look && "  ظاهر: " + c.look, c.personality && "  شخصیت: " + c.personality, c.prompt && "  پرامپت تصویر: " + c.prompt].filter(Boolean).join("\n");
+    }).join("\n");
+    return String(v);
+  }
+  // the clean Persian brief for ChatGPT / Gemini / Claude… (empty fields are left out)
+  function identityBrief(cp, d) {
+    d = idoc(d);
+    var out = ["شناسنامه‌ی برند «" + cp.name + "»", "این بریف هویت ثابت این برند است. هر محتوایی برای این برند می‌سازی (ایده، اسکریپت، کپشن، تصویر، ویدیو) باید با آن هماهنگ باشد."];
+    ID_SECTIONS.forEach(function (s) {
+      var parts = [];
+      s.f.forEach(function (f) {
+        var x = d.fields[f[0]]; if (!x || idEmpty(x.v)) return;
+        var t = idValText(f[2], x.v);
+        if (s.f.length === 1) parts.push(t);
+        else parts.push(f[1] + ":" + (t.indexOf("\n") >= 0 || f[2] === "list" ? "\n" + t : " " + t));
+      });
+      if (parts.length) out.push("", "## " + s.t, parts.join("\n"));
+    });
+    var files = d.assets.map(function (a) { return "- " + (IDA_KIND[a.kind] || "فایل") + ": " + a.name; });
+    if (files.length) out.push("", "## فایل‌های برند (در پنل)", files.join("\n"));
+    return out.join("\n").trim();
+  }
+  function idFilled(d) { d = idoc(d); return ID_SECTIONS.filter(function (s) { return s.f.some(function (f) { var x = d.fields[f[0]]; return x && !idEmpty(x.v); }); }).length; }
+  function idHarkCount(d) { d = idoc(d); return Object.keys(d.fields).filter(function (k) { var x = d.fields[k]; return x && x.src === "hark" && !idEmpty(x.v); }).length; }
+  // encrypted copy for Hark (hark/identity/<page>.json); includes each asset's key so Hark can open the files
+  function identityMirror(cp, d) {
+    d = idoc(d);
+    var path = HARK_ID_DIR + "/" + cp.id + ".json";
+    var payload = { type: "identity", page: cp.id, page_name: cp.name, topic: cp.topic_fa || "", updated_at: d.updated_at || new Date().toISOString(), fields: d.fields,
+      sections: ID_SECTIONS.map(function (s) { return { k: s.k, t: s.t, f: s.f.map(function (f) { return { k: f[0], label: f[1], type: f[2] }; }) }; }),
+      assets: d.assets.map(function (a) { return { id: a.id, name: a.name, type: a.type, size: a.size, kind: a.kind, sha: a.sha, iv: a.iv, k: a.k, aad: IDA_AAD + "|" + cp.id + "/" + a.id, branch: a.branch, path: a.path, zip: a.zip || null, at: a.at, by: a.by }; }),
+      brief: identityBrief(cp, d) };
+    return harkPub().then(function (pub) { return harkSeal(pub, cp.id, payload, HID, HID + "|" + path); })
+      .then(function (env) { env.page = cp.id; return putJSONFile(path, env, "hark: identity mirror " + cp.id); });
+  }
+  // save the identity doc, then refresh Hark's mirror (a mirror failure never loses the save)
+  function idSave(cp, mutate) {
+    return dsUpdate("identity-" + cp.id, function (d) { return mutate(idoc(d)); }, "data: identity " + cp.id).then(function (d) {
+      return identityMirror(cp, d).then(function () { return { doc: idoc(d), mirror: true }; }, function (e) { return { doc: idoc(d), mirror: false, err: e }; });
+    });
+  }
+  var idBusy = {};
+  function mergeIdentityOut(pid) {
+    if (idBusy[pid]) return idBusy[pid];
+    var cp = cpById(pid), dir = HARK_OUT_DIR + "/" + pid;
+    var p = gh("/contents/" + dir + "?ref=" + GH_BRANCH + "&t=" + Date.now()).catch(function (e) { if (e.status === 404) return []; throw e; }).then(function (files) {
+      files = (Array.isArray(files) ? files : []).filter(function (f) { return /\.json$/.test(f.name); });
+      if (!files.length) return 0;
+      return Promise.all(files.map(function (f) {
+        var id = f.name.replace(/\.json$/, "");
+        return readRepoFile(dir + "/" + f.name).then(function (r) {
+          if (!r.obj || !r.obj.epk || (r.obj.kid && r.obj.kid !== DS.kid)) return null;
+          return harkOpen(r.obj, HOUT + "|" + pid + "/" + id).then(function (m) { m.id = id; return { name: f.name, sha: r.sha, msg: m }; });
+        }).catch(function () { return null; });
+      })).then(function (rows) {
+        rows = rows.filter(function (x) { return x && x.msg && x.msg.type === "identity"; });
+        if (!rows.length) return 0;
+        rows.sort(function (a, b) { return String(a.msg.created_at || "").localeCompare(String(b.msg.created_at || "")); });
+        return idSave(cp, function (d) { var now = new Date().toISOString(); rows.forEach(function (x) { d = applyIdentityOut(d, x.msg, now); }); return d; }).then(function () {
+          return Promise.all(rows.map(function (x) {
+            return gh("/contents/" + dir + "/" + x.name, { method: "DELETE", body: { message: "hark: merged identity " + x.name, sha: x.sha, branch: GH_BRANCH } }).catch(function () {});
+          }));
+        }).then(function () { return rows.length; });
+      });
+    });
+    idBusy[pid] = p.then(function (n) { idBusy[pid] = null; return n; }, function (e) { idBusy[pid] = null; throw e; });
+    return idBusy[pid];
+  }
+
+  // ---- fflate (vendored, loaded only when a ZIP is uploaded or opened)
+  var fflateP = null;
+  function loadFflate() {
+    if (window.fflate) return Promise.resolve(window.fflate);
+    if (fflateP) return fflateP;
+    fflateP = new Promise(function (res, rej) {
+      var sc = document.createElement("script"); sc.src = "vendor/fflate.js?v=0.8.3";
+      sc.onload = function () { window.fflate ? res(window.fflate) : rej(new Error("fflate")); };
+      sc.onerror = function () { fflateP = null; rej(new Error("بارگذاری ابزار ZIP ممکن نشد")); };
+      document.head.appendChild(sc);
+    });
+    return fflateP;
+  }
+  function isZipName(n, t) { return /\.zip$/i.test(n || "") || /zip/.test(t || ""); }
+  var IMG_EXT = /\.(png|jpe?g|gif|webp|svg|avif|bmp)$/i;
+  function zipList(ff, u8) {
+    var list = [];
+    ff.unzipSync(u8, { filter: function (f) { if (list.length < 2000 && !/\/$/.test(f.name) && !/(^|\/)(__MACOSX|\.DS_Store)/.test(f.name)) list.push({ n: f.name, s: f.originalSize }); return false; } });
+    return list;
+  }
+  function guessKind(f, pick) {
+    if (pick && pick !== "auto") return pick;
+    if (isZipName(f.name, f.type)) return "zip";
+    if (/\.(ttf|otf|woff2?|eot)$/i.test(f.name) || /font/.test(f.type)) return "font";
+    if (/^image\//.test(f.type) || IMG_EXT.test(f.name)) return /logo|لوگو/i.test(f.name) ? "logo" : "image";
+    return "other";
+  }
+  function imgThumb(blob) {
+    return new Promise(function (res) {
+      var u = URL.createObjectURL(blob), im = new Image();
+      im.onload = function () {
+        try {
+          var w = im.naturalWidth || 160, h = im.naturalHeight || 160, sc = Math.min(1, 160 / Math.max(w, h));
+          var c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w * sc)); c.height = Math.max(1, Math.round(h * sc));
+          c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL("image/png"));
+        } catch (e) { res(""); }
+        URL.revokeObjectURL(u);
+      };
+      im.onerror = function () { URL.revokeObjectURL(u); res(""); };
+      im.src = u;
+    });
+  }
+  function blobB64(blob) {
+    return new Promise(function (res, rej) {
+      var fr = new FileReader();
+      fr.onload = function () { var s = String(fr.result); res(s.slice(s.indexOf(",") + 1)); };
+      fr.onerror = function () { rej(new Error("خواندن فایل ممکن نشد")); };
+      fr.readAsDataURL(blob);
+    });
+  }
+  function idUpload(cp, file, pick, by, say) {
+    if (file.size > MAX_UPLOAD) return Promise.reject(new Error(file.name + ": بیشتر از ۷۰ مگابایت"));
+    var aid = newId("a"), kind = guessKind(file, pick), now = new Date().toISOString(), meta = {};
+    say("در حال خواندن " + file.name + "…");
+    return file.arrayBuffer().then(function (buf) {
+      var u8 = new Uint8Array(buf), m;
+      if (isZipName(file.name, file.type)) m = loadFflate().then(function (ff) { meta.zip = zipList(ff, u8); }, function () {}).catch(function () { meta.zip_error = true; });
+      else if (/^image\//.test(file.type) || IMG_EXT.test(file.name)) m = imgThumb(file).then(function (t) { meta.thumb = t; });
+      else m = Promise.resolve();
+      return m.then(function () {
+        say("در حال رمزگذاری " + file.name + "…");
+        var kraw = rnd(32), iv = rnd(12);
+        return crypto.subtle.importKey("raw", kraw, "AES-GCM", false, ["encrypt"])
+          .then(function (k) { return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv, additionalData: TE.encode(IDA_AAD + "|" + cp.id + "/" + aid) }, k, u8); })
+          .then(function (ct) { return blobB64(new Blob([ct])); })
+          .then(function (b64) { say("در حال آپلود " + file.name + "… ۰٪"); return uploadBlob(b64, function (p) { say("در حال آپلود " + file.name + "… " + fa(p) + "٪"); }); })
+          .then(function (sha) {
+            say("در حال ثبت " + file.name + "…");
+            var path = cp.id + "/" + aid + ".bin";
+            return stageOn(IDASSET_BRANCH, path, sha, "identity: " + cp.id + " asset").then(function () {
+              return { id: aid, name: file.name, type: file.type || "", size: file.size, kind: kind, sha: sha, iv: u8b64(iv), k: u8b64(kraw), branch: IDASSET_BRANCH, path: path,
+                thumb: meta.thumb || "", zip: meta.zip || null, zip_error: !!meta.zip_error, at: now, by: by };
+            });
+          });
+      });
+    });
+  }
+  // download + decrypt one asset -> Blob
+  function idFetchAsset(pid, a) {
+    return fetch("https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/git/blobs/" + a.sha, { headers: ghHeaders({ Accept: "application/vnd.github.raw+json" }), cache: "no-store" }).then(function (r) {
+      if (!r.ok) { var e = new Error("HTTP " + r.status); e.status = r.status; throw e; }
+      var ct = r.headers.get("content-type") || "";
+      if (/json/.test(ct) && !/raw/.test(ct)) return r.json().then(function (j) { return b64u8(String(j.content || "").replace(/\s/g, "")); });
+      return r.arrayBuffer().then(function (b) { return new Uint8Array(b); });
+    }).then(function (ct) {
+      return crypto.subtle.importKey("raw", b64u8(a.k), "AES-GCM", false, ["decrypt"]).then(function (k) {
+        return crypto.subtle.decrypt({ name: "AES-GCM", iv: b64u8(a.iv), additionalData: TE.encode(IDA_AAD + "|" + pid + "/" + a.id) }, k, ct);
+      });
+    }).then(function (pt) { return new Blob([pt], { type: a.type || "application/octet-stream" }); });
+  }
+  function mimeOf(n) { var e = (String(n).match(/\.(\w+)$/) || [, ""])[1].toLowerCase(); return { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", svg: "image/svg+xml", avif: "image/avif", bmp: "image/bmp" }[e] || "application/octet-stream"; }
+  function saveBlob(blob, name) {
+    var u = URL.createObjectURL(blob), a = document.createElement("a"); a.href = u; a.download = name || "file"; a.rel = "noopener";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 60000);
+  }
+  function showImage(blob, name) {
+    var u = URL.createObjectURL(blob), old = document.getElementById("imgview"); if (old) old.remove();
+    var d = document.createElement("div"); d.id = "imgview"; d.className = "ovl";
+    d.innerHTML = '<div class="ovl-card img"><b dir="auto">' + esc(name || "") + '</b><img alt="" src="' + u + '"><div class="row-btns"><button class="ghost sm" data-x="dl">دانلود</button><button class="go sm" data-x="close">بستن</button></div></div>';
+    document.body.appendChild(d);
+    var close = function () { d.remove(); URL.revokeObjectURL(u); };
+    d.onclick = function (e) { var x = e.target.closest("[data-x]"); if (e.target === d || (x && x.getAttribute("data-x") === "close")) close(); else if (x) saveBlob(blob, name); };
+  }
+
+  // ---- views
+  function idOrder() { return channelOrder().map(cpById).filter(Boolean); }
+  function identityHomeView() {
+    app.innerHTML = shell("هویت برند", "#/", "صفحه‌ی اصلی") +
+      '<div class="v8head idhead"><span class="vi">' + ICON_IDCARD + '</span><div><h1>هویت برند</h1><p>شناسنامه، لحن، رنگ، کاراکترها و فایل‌های هر برند</p></div></div>' +
+      '<div id="dgate"></div><div id="v8body"></div>';
+    bindShell();
+    withData(function () {
+      var body = document.getElementById("v8body"); body.innerHTML = '<div class="muted-note pad">در حال بارگذاری…</div>';
+      var my = viewSeq, list = idOrder();
+      Promise.all(list.map(function (cp) { return mergeIdentityOut(cp.id).catch(function () { return 0; }).then(function () { return dsRead("identity-" + cp.id).catch(function () { return null; }); }); })).then(function (res) {
+        if (!live(my) || !document.getElementById("v8body")) return;
+        body.innerHTML = '<div class="domlist" id="id-domains">' + list.map(function (cp, i) {
+          var d = idoc(res[i]), hk = idHarkCount(d);
+          return '<a class="dombox idb" href="#/identity/' + esc(cp.id) + '" data-page="' + esc(cp.id) + '">' + logoHTML(cp, pageData(cp), "dlogo") +
+            '<span class="dn"><b>' + esc(cp.name) + "</b><span>" + esc(cp.topic_fa || "") + "</span></span>" +
+            '<span class="dc">' + fa(idFilled(d)) + " از " + fa(ID_SECTIONS.length) + " بخش" + (hk ? ' · <i class="hkc">' + fa(hk) + " پیشنهاد هارک برای تأیید</i>" : "") + " · " + fa(d.assets.length) + " فایل</span></a>";
+        }).join("") + "</div>" + '<p class="footnote privacy">' + esc(PRIVACY_NOTE) + "</p>";
+      }).catch(function (e) { errBox("v8body", e); });
+    });
+  }
+  function idFieldHTML(f, x) {
+    var k = f[0], type = f[2], v = x ? x.v : idBlank(type), hint = f[3] || "", h = "";
+    var lab = '<div class="idf-h"><label for="idf-' + k + '">' + esc(f[1]) + "</label>" +
+      (x && x.src === "hark" ? '<span class="hkbadge">' + esc(x.label || "پیشنهاد هارک — تأیید کن") + (x.draft ? " · پیش‌نویس" : "") + '</span><button class="go xs" type="button" data-act="approve" data-ak="' + k + '">تأیید</button>' : "") + "</div>";
+    if (type === "line") h = '<input id="idf-' + k + '" type="text" data-k="' + k + '" dir="auto" value="' + esc(v || "") + '">';
+    else if (type === "text") h = '<textarea id="idf-' + k + '" data-k="' + k + '" dir="auto" rows="' + (k === "ai_notes" || k === "base_prompt" ? 7 : 4) + '">' + esc(v || "") + "</textarea>";
+    else if (type === "list") h = '<textarea id="idf-' + k + '" data-k="' + k + '" dir="auto" rows="5" placeholder="' + esc(hint || "هر مورد یک خط") + '">' + esc((v || []).join("\n")) + "</textarea>";
+    else if (type === "colors") {
+      h = '<div class="swatches">' + (v || []).map(function (c) { return '<span style="background:' + esc(c.hex) + '" title="' + esc(c.name || c.hex) + '"></span>'; }).join("") + "</div>" +
+        '<div class="colors" data-k="' + k + '">' + (v || []).map(colorRowHTML).join("") + "</div>" +
+        '<button class="ghost sm" type="button" data-act="cadd" data-k="' + k + '">+ افزودن رنگ</button>';
+    } else if (type === "chars") {
+      h = '<div class="chars" data-k="' + k + '">' + (v || []).map(charHTML).join("") + "</div>" + '<button class="ghost sm" type="button" data-act="chadd" data-k="' + k + '">+ افزودن کاراکتر</button>';
+    }
+    var meta = x && x.at ? '<p class="idmeta">' + (x.src === "hark" ? "هارک" : esc(AUTHORS[x.by] || x.by || "")) + " · " + esc(fmtShort(x.at)) + (x.from_hark ? " · از پیشنهاد هارک" : "") + (x.note ? " · " + esc(x.note) : "") + "</p>" : "";
+    return '<div class="idf' + (x && x.src === "hark" ? " hk" : "") + '" data-fk="' + k + '">' + lab + h + meta + "</div>";
+  }
+  function colorRowHTML(c) {
+    c = c || { name: "", hex: "#7c3aed" };
+    return '<div class="crow"><input type="color" value="' + esc(c.hex) + '" aria-label="انتخاب رنگ"><input type="text" class="hex" dir="ltr" maxlength="7" value="' + esc(c.hex) + '" aria-label="کد hex">' +
+      '<input type="text" class="cname" dir="auto" placeholder="نام / کاربرد" value="' + esc(c.name || "") + '" aria-label="نام رنگ"><button class="ghost sm danger" type="button" data-act="crm" aria-label="حذف رنگ">×</button></div>';
+  }
+  function charHTML(c) {
+    c = c || {};
+    return '<div class="charb"><input type="text" class="c-name" dir="auto" placeholder="نام کاراکتر" value="' + esc(c.name || "") + '" aria-label="نام کاراکتر">' +
+      '<textarea class="c-look" dir="auto" rows="2" placeholder="توصیف ظاهر" aria-label="توصیف ظاهر">' + esc(c.look || "") + "</textarea>" +
+      '<textarea class="c-personality" dir="auto" rows="2" placeholder="شخصیت" aria-label="شخصیت">' + esc(c.personality || "") + "</textarea>" +
+      '<textarea class="c-prompt" dir="auto" rows="3" placeholder="پرامپت تصویر (برای ابزار ساخت تصویر)" aria-label="پرامپت تصویر">' + esc(c.prompt || "") + "</textarea>" +
+      '<button class="ghost sm danger" type="button" data-act="chrm">حذف کاراکتر</button></div>';
+  }
+  function readField(box, k) {
+    var type = ID_TYPE[k], el;
+    if (type === "colors") { el = box.querySelector('.colors[data-k="' + k + '"]'); return idNorm(type, Array.prototype.map.call(el.querySelectorAll(".crow"), function (r) { return { hex: r.querySelector(".hex").value, name: r.querySelector(".cname").value }; })); }
+    if (type === "chars") { el = box.querySelector('.chars[data-k="' + k + '"]'); return idNorm(type, Array.prototype.map.call(el.querySelectorAll(".charb"), function (r) { return { name: r.querySelector(".c-name").value, look: r.querySelector(".c-look").value, personality: r.querySelector(".c-personality").value, prompt: r.querySelector(".c-prompt").value }; })); }
+    el = box.querySelector('textarea[data-k="' + k + '"], input[data-k="' + k + '"]'); return idNorm(type, el ? el.value : "");
+  }
+  function idSectionHTML(s, d, open) {
+    var hk = s.f.filter(function (f) { var x = d.fields[f[0]]; return x && x.src === "hark"; }).length;
+    var filled = s.f.some(function (f) { var x = d.fields[f[0]]; return x && !idEmpty(x.v); });
+    return '<details class="card form idsec" data-sec="' + s.k + '" id="sec-' + s.k + '"' + (open ? " open" : "") + "><summary><b>" + esc(s.t) + "</b>" +
+      (hk ? '<span class="hkchip">پیشنهاد هارک</span>' : filled ? '<span class="okchip">پر شده</span>' : '<span class="emchip">خالی</span>') + "</summary>" +
+      s.f.map(function (f) { return idFieldHTML(f, d.fields[f[0]]); }).join("") +
+      '<div class="row-btns"><button class="go sm" type="button" data-act="save" data-sec="' + s.k + '">ذخیره‌ی این بخش</button>' +
+      (s.k === "ai" ? '<button class="ghost sm" type="button" data-act="copyai">کپی System prompt</button>' : "") + "</div><div class=\"msg\"></div></details>";
+  }
+  function idAssetHTML(a) {
+    var img = a.kind === "logo" || a.kind === "image";
+    return '<div class="asset" data-aid="' + esc(a.id) + '">' +
+      (a.thumb ? '<img class="athumb" alt="" src="' + esc(a.thumb) + '">' : '<span class="athumb ic">' + (a.kind === "zip" ? "ZIP" : a.kind === "font" ? "Aa" : ICON_FILE) + "</span>") +
+      '<div class="ainfo"><b dir="auto">' + esc(a.name) + "</b><small>" + esc(IDA_KIND[a.kind] || "فایل") + " · " + esc(mb(a.size)) + " · " + esc(AUTHORS[a.by] || "") + " " + esc(fmtShort(a.at)) +
+      (a.zip ? " · " + fa(a.zip.length) + " فایل داخل ZIP" : "") + "</small>" +
+      '<div class="iact">' + (img ? '<button class="ghost sm" data-act="aview">نمایش</button>' : "") + (a.kind === "zip" || a.zip ? '<button class="ghost sm" data-act="azip">محتوای ZIP</button>' : "") +
+      '<button class="ghost sm" data-act="adl">دانلود</button><button class="ghost sm danger" data-act="adel">حذف</button></div></div>' +
+      '<div class="zipbox" hidden></div></div>';
+  }
+  function idAssetsHTML(d) {
+    var list = d.assets.slice().sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
+    return '<section class="card form idassets" id="idassets"><h2>فایل‌ها: لوگو، فونت، تصویر، ZIP</h2>' +
+      '<p class="help">هر فایل قبل از آپلود روی همین دستگاه رمزگذاری می‌شود (حداکثر ۷۰ مگابایت). از ZIP فهرست فایل‌ها نشان داده می‌شود و عکس‌هایش را می‌توانی ببینی.</p>' +
+      '<label for="ida-kind">نوع</label><select id="ida-kind"><option value="auto">خودکار (از روی پسوند)</option>' + Object.keys(IDA_KIND).map(function (k) { return '<option value="' + k + '">' + IDA_KIND[k] + "</option>"; }).join("") + "</select>" +
+      '<label for="ida-file">انتخاب فایل</label><input id="ida-file" type="file" multiple>' +
+      '<div class="row-btns"><button class="go" type="button" id="ida-up">آپلود (رمزگذاری‌شده)</button></div><div class="msg" id="ida-msg"></div>' +
+      '<div class="alist" id="ida-list">' + (list.length ? list.map(idAssetHTML).join("") : '<div class="empty">هنوز فایلی آپلود نشده.</div>') + "</div></section>";
+  }
+  function identityView(pid) {
+    var cp = cpById(pid); if (!cp) { location.hash = "#/identity"; return; }
+    app.innerHTML = shell("هویت · " + cp.name, "#/identity", "هویت برند") +
+      '<div class="v8head idhead sm">' + logoHTML(cp, pageData(cp), "dlogo") + "<div><h1>" + esc(cp.name) + "</h1><p>شناسنامه‌ی برند · " + esc(cp.topic_fa || "") + "</p></div></div>" +
+      '<div id="dgate"></div><div id="v8body"></div>';
+    bindShell();
+    var doc = null, baseline = {}, open = v10ui.open[pid] || (v10ui.open[pid] = {});
+    withData(function () {
+      var body = document.getElementById("v8body"); body.innerHTML = '<div class="muted-note pad">در حال بارگذاری…</div>';
+      var my = viewSeq;
+      mergeIdentityOut(pid).catch(function () { return 0; }).then(function () { return dsRead("identity-" + pid); }).then(function (d) {
+        if (!live(my) || !document.getElementById("v8body")) return;
+        doc = idoc(d); draw();
+      }).catch(function (e) { errBox("v8body", e); });
+    });
+    function headHTML() {
+      var hk = idHarkCount(doc), me = editorOf();
+      return '<div class="idtop card"><div class="idprog"><b>' + fa(idFilled(doc)) + " از " + fa(ID_SECTIONS.length) + "</b> بخش پر شده" + (hk ? ' · <i class="hkc">' + fa(hk) + " پیشنهاد هارک — تأیید کن</i>" : "") + "</div>" +
+        '<div class="row-btns"><button class="go" type="button" id="id-copyall">کپی کل شناسنامه برای ابزار AI</button>' + (hk ? '<button class="ghost" type="button" id="id-approveall">تأیید همه‌ی پیشنهادهای هارک</button>' : "") + "</div>" +
+        '<label>ویرایش‌کننده</label><div class="nets" role="radiogroup" id="id-author">' + ["negin", "amirhossein"].map(function (a) {
+          return '<label class="chk"><input type="radio" name="id-author" value="' + a + '"' + (me === a ? " checked" : "") + ">" + AUTHORS[a] + "</label>"; }).join("") + "</div></div>";
+    }
+    function snap(s) { s.f.forEach(function (f) { var x = doc.fields[f[0]]; baseline[f[0]] = JSON.stringify(x ? idNorm(f[2], x.v) : idBlank(f[2])); }); }
+    function draw() {
+      var body = document.getElementById("v8body"); if (!body) return;
+      ID_SECTIONS.forEach(snap);
+      body.innerHTML = '<div id="idhead">' + headHTML() + "</div>" + '<div id="idsecs">' + ID_SECTIONS.map(function (s) { return idSectionHTML(s, doc, open[s.k]); }).join("") + "</div>" +
+        idAssetsHTML(doc) + '<p class="footnote privacy">' + esc(PRIVACY_NOTE) + " شناسنامه و فایل‌ها هم رمزگذاری‌شده‌اند؛ یک نسخه‌ی رمزگذاری‌شده هم برای هارک نوشته می‌شود تا هارک بتواند بخواندش.</p>";
+      bind();
+    }
+    function redrawHead() { var h = document.getElementById("idhead"); if (h) { h.innerHTML = headHTML(); bindHead(); } }
+    function redrawSec(k) {
+      var s = ID_SECTIONS.filter(function (x) { return x.k === k; })[0], el = document.getElementById("sec-" + k); if (!s || !el) return;
+      snap(s); var tmp = document.createElement("div"); tmp.innerHTML = idSectionHTML(s, doc, el.open); el.parentNode.replaceChild(tmp.firstChild, el);
+    }
+    function redrawAssets() { var el = document.getElementById("idassets"); if (!el) return; var tmp = document.createElement("div"); tmp.innerHTML = idAssetsHTML(doc); el.parentNode.replaceChild(tmp.firstChild, el); bindAssets(); }
+    function after(r, msg) {
+      doc = r.doc; toast(msg + (r.mirror ? "" : " (نسخه‌ی هارک به‌روز نشد: " + (r.err && r.err.message || "خطا") + ")"), r.mirror ? 3200 : 6000);
+    }
+    function author() { var r = document.querySelector('input[name="id-author"]:checked'); return r ? r.value : editorOf(); }
+    function bindHead() {
+      document.getElementById("id-copyall").onclick = function () { copyWithToast(identityBrief(cp, doc)); };
+      var aa = document.getElementById("id-approveall");
+      if (aa) aa.onclick = function () {
+        if (!confirm("همه‌ی پیشنهادهای هارک (" + fa(idHarkCount(doc)) + " مورد) تأیید شود؟")) return;
+        aa.disabled = true; var now = new Date().toISOString(), by = author();
+        idSave(cp, function (d) { Object.keys(d.fields).forEach(function (k) { var x = d.fields[k]; if (x && x.src === "hark") { x.src = "user"; x.draft = false; x.from_hark = true; x.at = now; x.by = by; } }); return d; })
+          .then(function (r) { after(r, "تأیید شد ✓"); draw(); }, function (e) { aa.disabled = false; toast("✗ " + ghErrorFa(e), 5000); });
+      };
+      Array.prototype.forEach.call(document.querySelectorAll('input[name="id-author"]'), function (r) { r.onchange = function () { lsSet(AUTHOR_LS, r.value); }; });
+    }
+    function bind() {
+      bindHead(); bindAssets();
+      var secs = document.getElementById("idsecs");
+      secs.addEventListener("toggle", function (e) { var dt = e.target; if (dt && dt.getAttribute) open[dt.getAttribute("data-sec")] = dt.open; }, true);
+      secs.oninput = function (e) {
+        var t = e.target, row = t.closest(".crow"); if (!row) return;
+        if (t.type === "color") row.querySelector(".hex").value = t.value;
+        else if (t.classList.contains("hex")) { var hx = hexNorm(t.value); if (hx) row.querySelector('input[type="color"]').value = hx; }
+        var sw = row.closest(".idf").querySelector(".swatches");
+        if (sw) sw.innerHTML = Array.prototype.map.call(row.parentNode.querySelectorAll(".crow"), function (r) { var h = hexNorm(r.querySelector(".hex").value); return h ? '<span style="background:' + h + '"></span>' : ""; }).join("");
+      };
+      secs.onclick = function (e) {
+        var b = e.target.closest("[data-act]"); if (!b || b.disabled) return;
+        var act = b.getAttribute("data-act"), sec = b.closest(".idsec"), k = b.getAttribute("data-k") || b.getAttribute("data-ak");
+        if (act === "cadd") { sec.querySelector('.colors[data-k="' + k + '"]').insertAdjacentHTML("beforeend", colorRowHTML()); return; }
+        if (act === "crm") { b.closest(".crow").remove(); return; }
+        if (act === "chadd") { sec.querySelector('.chars[data-k="' + k + '"]').insertAdjacentHTML("beforeend", charHTML()); var n = sec.querySelectorAll(".charb .c-name"); n[n.length - 1].focus(); return; }
+        if (act === "chrm") { if (confirm("این کاراکتر حذف شود؟ (با «ذخیره‌ی این بخش» ثبت می‌شود)")) b.closest(".charb").remove(); return; }
+        if (act === "copyai") { var x = doc.fields.ai_notes; var t = sec.querySelector('textarea[data-k="ai_notes"]').value.trim() || (x && x.v) || ""; if (!t) { toast("System prompt هنوز خالی است"); return; } copyWithToast(t); return; }
+        var sk = sec.getAttribute("data-sec"), m = sec.querySelector(".msg"), now = new Date().toISOString(), by = author();
+        if (act === "approve") {
+          b.disabled = true;
+          idSave(cp, function (d) { var x = d.fields[k]; if (x && x.src === "hark") { x.src = "user"; x.draft = false; x.from_hark = true; x.at = now; x.by = by; } return d; })
+            .then(function (r) { after(r, "تأیید شد ✓"); redrawSec(sk); redrawHead(); }, function (e2) { b.disabled = false; toast("✗ " + ghErrorFa(e2), 5000); });
+          return;
+        }
+        if (act === "save") {
+          var s = ID_SECTIONS.filter(function (x) { return x.k === sk; })[0], changed = {};
+          s.f.forEach(function (f) { var v = readField(sec, f[0]); if (JSON.stringify(v) !== baseline[f[0]]) changed[f[0]] = v; });
+          if (!Object.keys(changed).length) { m.textContent = "تغییری نبود."; return; }
+          b.disabled = true; m.textContent = "در حال ذخیره (رمزگذاری‌شده)…";
+          idSave(cp, function (d) { for (var kk in changed) d.fields[kk] = { v: changed[kk], at: now, by: by, src: "user", draft: false }; return d; })
+            .then(function (r) { after(r, "ذخیره شد ✓"); redrawSec(sk); redrawHead(); }, function (e2) { b.disabled = false; m.textContent = "✗ " + ghErrorFa(e2); });
+        }
+      };
+    }
+    function bindAssets() {
+      var up = document.getElementById("ida-up"), msg = document.getElementById("ida-msg");
+      up.onclick = function () {
+        var files = Array.prototype.slice.call(document.getElementById("ida-file").files || []);
+        if (!files.length) { msg.textContent = "اول فایل را انتخاب کن."; return; }
+        var big = files.filter(function (f) { return f.size > MAX_UPLOAD; });
+        if (big.length) { msg.textContent = "✗ بیشتر از ۷۰ مگابایت: " + big.map(function (f) { return f.name; }).join("، "); return; }
+        var pick = document.getElementById("ida-kind").value, by = author(), done = [];
+        up.disabled = true;
+        var chain = Promise.resolve();
+        files.forEach(function (f) { chain = chain.then(function () { return idUpload(cp, f, pick, by, function (t) { msg.textContent = t; }).then(function (a) { done.push(a); }); }); });
+        chain.then(function () {
+          msg.textContent = "در حال ذخیره‌ی فهرست فایل‌ها…";
+          return idSave(cp, function (d) { done.forEach(function (a) { d.assets.push(a); }); return d; });
+        }).then(function (r) { after(r, fa(done.length) + " فایل آپلود شد ✓"); redrawAssets(); redrawHead(); }, function (e) {
+          up.disabled = false; msg.textContent = "✗ " + ghErrorFa(e);
+          if (done.length) idSave(cp, function (d) { done.forEach(function (a) { d.assets.push(a); }); return d; }).then(function (r) { doc = r.doc; redrawAssets(); }, function () {});
+        });
+      };
+      document.getElementById("ida-list").onclick = function (e) {
+        var b = e.target.closest("[data-act]"); if (!b || b.disabled) return;
+        var row = b.closest(".asset"), a = findBy(doc.assets, "id", row.getAttribute("data-aid")), act = b.getAttribute("data-act"); if (!a) return;
+        var busy = function (p, label) { var t = b.textContent; b.disabled = true; b.textContent = label || "…"; return p.then(function (x) { b.disabled = false; b.textContent = t; return x; }, function (err) { b.disabled = false; b.textContent = t; toast("✗ " + ghErrorFa(err), 5000); throw err; }); };
+        if (act === "aview") busy(idFetchAsset(pid, a), "در حال باز کردن…").then(function (bl) { showImage(bl, a.name); }, function () {});
+        else if (act === "adl") busy(idFetchAsset(pid, a), "در حال دانلود…").then(function (bl) { saveBlob(bl, a.name); }, function () {});
+        else if (act === "azip") {
+          var zb = row.querySelector(".zipbox");
+          if (!zb.hidden) { zb.hidden = true; return; }
+          zb.hidden = false;
+          var imgs = (a.zip || []).filter(function (z) { return IMG_EXT.test(z.n); }).length;
+          zb.innerHTML = '<div class="ziplist">' + (a.zip && a.zip.length ? a.zip.slice(0, 400).map(function (z) { return '<div class="zrow"><span dir="ltr">' + esc(z.n) + "</span><small>" + esc(mb(z.s)) + "</small></div>"; }).join("") + (a.zip.length > 400 ? '<div class="muted-note">… و ' + fa(a.zip.length - 400) + " فایل دیگر</div>" : "")
+            : '<div class="muted-note">فهرست فایل‌ها ذخیره نشده.</div>') + "</div>" +
+            '<button class="ghost sm" data-act="zimgs">' + (imgs ? "نمایش " + fa(imgs) + " عکس داخل ZIP" : "باز کردن ZIP و نمایش عکس‌ها") + '</button><div class="zgrid"></div>';
+        } else if (act === "zimgs") {
+          var grid = row.querySelector(".zgrid");
+          busy(Promise.all([idFetchAsset(pid, a), loadFflate()]).then(function (r) {
+            return r[0].arrayBuffer().then(function (buf) {
+              var n = 0, files = r[1].unzipSync(new Uint8Array(buf), { filter: function (f) { return IMG_EXT.test(f.name) && !/(^|\/)__MACOSX/.test(f.name) && n++ < 80; } });
+              return Object.keys(files).map(function (name) { return { name: name, blob: new Blob([files[name]], { type: mimeOf(name) }) }; });
+            });
+          }), "در حال باز کردن…").then(function (list) {
+            grid.innerHTML = list.length ? "" : '<div class="muted-note">عکسی داخل ZIP نیست.</div>';
+            list.forEach(function (it) {
+              var bt = document.createElement("button"); bt.type = "button"; bt.className = "zimg"; bt.title = it.name;
+              var im = document.createElement("img"); im.alt = it.name; im.src = URL.createObjectURL(it.blob); bt.appendChild(im);
+              var cap = document.createElement("small"); cap.textContent = it.name.split("/").pop(); cap.dir = "ltr"; bt.appendChild(cap);
+              bt.onclick = function () { showImage(it.blob, it.name.split("/").pop()); };
+              grid.appendChild(bt);
+            });
+          }, function () {});
+        } else if (act === "adel") {
+          if (!confirm("فایل «" + a.name + "» حذف شود؟")) return;
+          b.disabled = true;
+          idSave(cp, function (d) { d.assets = d.assets.filter(function (x) { return x.id !== a.id; }); return d; }).then(function (r) {
+            after(r, "حذف شد"); redrawAssets(); redrawHead();
+            if (a.path) stageOn(a.branch || IDASSET_BRANCH, a.path, null, "identity: remove " + a.path).catch(function () {});
+          }, function (e2) { b.disabled = false; toast("✗ " + ghErrorFa(e2), 5000); });
+        }
+      };
+    }
   }
 
   // ============================================================= v8: «گالری محتوا» (#/gallery)
@@ -2750,9 +3444,32 @@
     if (pl === "aparat") return { ready: false, reason: "آپارات API انتشار عمومی ندارد" };
     var c = state.caps && state.caps.channels && state.caps.channels[pid + "/" + pl];
     if (c && c.ready) return { ready: true };
+    if (bufferCh(pid, pl) && !(c && c.reason_fa && /کلید بافر/.test(c.reason_fa))) return { ready: true, via: "buffer" };
     return { ready: false, reason: (c && c.reason_fa) || (pl === "instagram" ? "کلید API اینستاگرام (Business) ثبت نشده" : "کلید API تیک‌تاک ثبت نشده") };
   }
-  var MANUAL_LABEL = "نیاز به اتصال / انتشار دستی";
+  var MANUAL_LABEL = "اتصال برقرار نیست";
+  // Instagram/TikTok through Buffer: data/buffer.json (buffer-sync.yml) lists the page's connected channels
+  function bufferCh(pid, pl) {
+    var p = state.buffer && state.buffer.pages && state.buffer.pages[pid];
+    if (!p || p.status !== "ok") return null;
+    return (p.channels || []).filter(function (c) { return c.service === pl; })[0] || null;
+  }
+  // one Persian line: why this channel can't publish automatically + what fixes it (the real cause, not a stale message)
+  function connWhy(pid, pl, r) {
+    r = r || {};
+    if (pl === "youtube") {
+      var y = ytStatus(pid).st;
+      if (y === "ok") return { why: "یوتیوب این پیج حالا متصل است" + (r.status === "needs_setup" ? "؛ این مورد قبل از اتصال (یا با پیام قدیمی) بررسی شده بود" : ""), fix: "«تلاش دوباره» را بزن." };
+      if (y === "mismatch") return { why: "حساب یوتیوبِ وصل‌شده کانال این پیج نیست", fix: "کانال‌ها ← یوتیوب ← «اتصال دوباره» و انتخاب کانال درست." };
+      if (y === "revoked") return { why: "گوگل دسترسی پنل به این کانال را لغو کرده", fix: "کانال‌ها ← یوتیوب ← «اتصال دوباره»." };
+      return { why: "حساب یوتیوب این پیج به پنل وصل نیست", fix: "کانال‌ها ← یوتیوب ← «اتصال»؛ بعد «تلاش دوباره»." };
+    }
+    if (pl === "aparat") return { why: "آپارات API عمومی برای انتشار ندارد", fix: "فایل را دانلود و در آپارات دستی منتشر کن، بعد «دستی منتشر کردم ✓»." };
+    var c = state.caps && state.caps.channels && state.caps.channels[pid + "/" + pl], b = bufferCh(pid, pl), nm = PNAME[pl];
+    if (r.status === "needs_setup" && r.reason && /بافر|BUFFER|یکی نیست|Paused/.test(r.reason)) return { why: r.reason, fix: "بعد از درست کردن، «تلاش دوباره» را بزن." };
+    if ((c && c.ready) || b) return { why: nm + " این پیج " + (c && c.via === "official" ? "با API رسمی" : "از طریق بافر") + " وصل است", fix: "«تلاش دوباره» را بزن تا خودکار منتشر شود." };
+    return { why: nm + " این پیج نه کلید API رسمی دارد نه در بافر وصل است", fix: "کانال را در بافر وصل کن (+ Secret BUFFER_KEY) یا دستی منتشر کن." };
+  }
   function chMatrixHTML(sel) {
     var h = '<div class="chm-wrap"><table class="chm" id="chm"><thead><tr><th class="c0"><label class="chk"><input type="checkbox" data-g="all"> همه</label></th>' +
       PLATFORMS.map(function (pl) { return '<th><label class="chk col" title="همه‌ی ' + PNAME[pl] + '"><input type="checkbox" data-g="pl:' + pl + '">' + picon(pl) + '<span class="pln">' + PNAME[pl] + "</span></label></th>"; }).join("") + "</tr></thead><tbody>";
@@ -2958,18 +3675,28 @@
         var name = b.getAttribute("data-name"), act = b.getAttribute("data-jact"), key = b.getAttribute("data-key");
         if (act === "cancel" && !window.confirm("این انتشار لغو شود؟")) return;
         if (act === "manual" && !window.confirm("این مقصد را دستی منتشر کردی؟")) return;
+        if (act === "retry" && !window.confirm("انتشار در «" + key + "» همین حالا دوباره امتحان شود؟")) return;
+        var why = "";
+        if (act === "giveup") { why = window.prompt("این مقصد «ناموفق» بسته شود. دلیل (اختیاری):", ""); if (why === null) return; why = String(why).trim(); }
         b.disabled = true;
+        var nowI = new Date().toISOString();
         updateQueueFile(name, function (job) {
-          if (act === "cancel") { job.status = "cancelled"; job.cancelled_at = new Date().toISOString(); }
-          else {
-            job.results = job.results || {};
-            job.results[key] = { status: "published", manual: true, reason: "دستی منتشر شد", at: new Date().toISOString() };
-            var all = (job.targets || []).map(function (t) { return (job.results[t.page + "/" + t.platform] || {}).status; });
-            var fin = ["published", "failed", "needs_setup", "skipped", "manual", "cancelled"];
-            if (all.every(function (s) { return fin.indexOf(s) >= 0 && s !== "manual"; })) { job.status = all.every(function (s) { return s === "published"; }) ? "published" : "partial"; job.finished_at = new Date().toISOString(); }
+          job.results = job.results || {};
+          var prev = job.results[key] || {};
+          if (act === "cancel") { job.status = "cancelled"; job.cancelled_at = nowI; return job; }
+          if (act === "manual") job.results[key] = { status: "published", manual: true, reason: "دستی منتشر شد", at: nowI, prev_reason: prev.reason || "" };
+          else if (act === "giveup") job.results[key] = { status: "failed", resolved_by: "panel", reason: "لغو / ناموفق" + (why ? ": " + why : ""), at: nowI, prev_reason: prev.reason || "" };
+          else if (act === "retry") {
+            job.results[key] = { status: "queued", attempts: 0, retry_requested_at: nowI, prev_reason: prev.reason || "", at: nowI };
+            (job.targets || []).forEach(function (t) { if (t.page + "/" + t.platform === key) delete t.manual; });
           }
-          return job;
-        }).then(function () { toast(act === "cancel" ? "انتشار لغو شد" : "ثبت شد: دستی منتشر شد ✓"); loadPView(); }, function (er) { b.disabled = false; toast("✗ " + ghErrorFa(er), 5000); });
+          return finalizeJob(job);
+        }).then(function () {
+          if (act !== "retry") { toast(act === "cancel" ? "انتشار لغو شد" : act === "manual" ? "ثبت شد: دستی منتشر شد ✓" : "ثبت شد: ناموفق"); loadPView(); return; }
+          // the queue commit itself starts publish.yml (push on queue/**); the dispatch makes sure a run starts now
+          return gh("/actions/workflows/publish.yml/dispatches", { method: "POST", body: { ref: GH_BRANCH } }).then(function () { return true; }, function () { return false; })
+            .then(function (ok) { RUNNING.at = 0; toast(ok ? "دوباره در صف انتشار ✓ (اجرای انتشار شروع شد)" : "دوباره در صف انتشار ✓ (اجرای بعدی انتشار حداکثر ۱۵ دقیقه‌ی دیگر)", 4500); loadPView(); });
+        }, function (er) { b.disabled = false; toast("✗ " + ghErrorFa(er), 5000); });
       };
     }
     function bindCalendar(box, c, st) {
@@ -3009,22 +3736,42 @@
     }
     return attempt();
   }
+  function jobExtra(j) {
+    if (j.status === "cancelled") return "لغو شد";
+    var ts = (j.targets || []).map(function (t) { return targetState(j, t); });
+    if (ts.indexOf("pending") >= 0) {
+      var rt = (j.targets || []).map(function (t) { return (j.results || {})[t.page + "/" + t.platform] || {}; }).filter(function (r) { return r.status === "retry"; });
+      return rt.length ? "تلاش خودکار " + fa(Math.max.apply(null, rt.map(function (r) { return r.attempts || 1; }))) + " از ۳" : "";
+    }
+    if (ts.indexOf("manual") >= 0) return "نیاز به اقدام";
+    if (ts.every(function (x) { return x === "published"; })) return "";
+    return ts.indexOf("published") >= 0 ? "جزئی" : "ناموفق";
+  }
   function jobHTML(j, st, rec) {
     var res = j.results || {};
-    var extra = j.status === "cancelled" ? "لغو شد" : j.status === "partial" ? "بخشی" : "";
+    var extra = jobExtra(j);
     return '<div class="job" id="job-' + esc(j.id) + '" data-id="' + esc(j.id) + '" data-status="' + st + '"><div class="jh">' + stChip("publish", st, extra) + '<b class="jt">' + esc(j.title || "(بدون عنوان)") + "</b></div>" + stDots("publish", st) +
       '<div class="jm">' + esc("زمان انتشار: " + fmtDateTime(j.publish_at)) + (j.media && j.media.source === "gallery" ? " · از گالری" : "") + "</div>" +
       (rec && rec.gallery_id ? '<a class="lchip" href="#/gallery/' + esc(rec.page) + "?focus=" + esc(rec.gallery_id) + '">▣ آیتم گالری</a>' : "") +
       '<ul class="jtargets">' + (j.targets || []).map(function (t) {
         var key = t.page + "/" + t.platform, r = res[key] || {}, ts = targetState(j, t);
-        var chip = ts === "published" ? '<span class="schip s-publish-published">' + (r.manual ? "دستی منتشر شد" : "منتشر شد") + "</span>" :
+        var chip = ts === "published" ? '<span class="schip s-publish-published">' + (r.manual ? "دستی منتشر شد" : "منتشر شد") + (r.via === "buffer" ? " (بافر)" : "") + "</span>" :
           ts === "manual" ? '<span class="schip manual">' + MANUAL_LABEL + "</span>" :
-          ts === "error" ? (r.status === "needs_setup" ? '<span class="schip manual">' + MANUAL_LABEL + "</span>" : '<span class="schip s-publish-error">' + (r.status === "skipped" ? "رد شد" : "خطا") + "</span>") :
-          j.status === "cancelled" ? '<span class="schip s-publish-error">لغو شد</span>' : stChip("publish", st === "published" || st === "error" ? "queued" : st);
-        var canManual = (ts === "manual" || r.status === "needs_setup") && j.status !== "cancelled";
-        return "<li>" + picon(t.platform) + '<span class="tn">' + esc(targetName(t)) + "</span>" + chip +
-          (r.reason && !r.manual ? '<div class="tr">' + esc(r.reason) + "</div>" : "") + (r.url ? '<a class="tr" href="' + esc(r.url) + '" target="_blank" rel="noopener">مشاهده ↗</a>' : "") +
-          (canManual ? '<div class="tr">' + (j.asset_url ? '<a href="' + esc(j.asset_url) + '" target="_blank" rel="noopener">دانلود فایل ↓</a> · ' : "") + '<button class="linkbtn" data-jact="manual" data-key="' + esc(key) + '" data-name="' + esc(j._name) + '">دستی منتشر کردم ✓</button></div>' : "") + "</li>";
+          ts === "error" ? (j.status === "cancelled" && !r.status ? '<span class="schip s-publish-error">لغو شد</span>' : '<span class="schip s-publish-error">' + (r.status === "skipped" ? "رد شد" : r.resolved_by === "panel" ? "ناموفق (لغو)" : "ناموفق") + "</span>") :
+          r.status === "retry" ? '<span class="schip warnchip">تلاش دوباره ' + fa(r.attempts || 1) + " از ۳</span>" :
+          r.status === "queued" ? '<span class="schip s-publish-queued">در صف تلاش دوباره</span>' :
+          stChip("publish", st === "published" || st === "error" ? "queued" : st);
+        var open = (ts === "manual" || (ts === "error" && r.status === "failed" && r.resolved_by !== "panel")) && j.status !== "cancelled";
+        var info = "";
+        if (ts === "manual") { var w = connWhy(t.page, t.platform, r); info = '<div class="tr why">' + esc(w.why) + '</div><div class="tr fix">راه‌حل: ' + esc(w.fix) + "</div>"; }
+        else if (r.reason && !r.manual) info = '<div class="tr">' + esc(r.reason) + "</div>";
+        if (ts === "pending" && t.manual && !r.status) info += '<div class="tr notyet">موقع ثبت به انتشار خودکار وصل نبود؛ اگر تا زمان انتشار وصل شود، خودکار منتشر می‌شود.</div>';
+        var btns = open ? '<div class="tr racts">' + (j.asset_url ? '<a href="' + esc(j.asset_url) + '" target="_blank" rel="noopener">دانلود فایل ↓</a>' : "") +
+          '<button class="ghost sm" data-jact="retry" data-key="' + esc(key) + '" data-name="' + esc(j._name) + '">تلاش دوباره</button>' +
+          '<button class="ghost sm" data-jact="manual" data-key="' + esc(key) + '" data-name="' + esc(j._name) + '">دستی منتشر کردم ✓</button>' +
+          '<button class="ghost sm danger" data-jact="giveup" data-key="' + esc(key) + '" data-name="' + esc(j._name) + '">لغو / ناموفق</button></div>' : "";
+        return '<li data-key="' + esc(key) + '" data-ts="' + ts + '">' + picon(t.platform) + '<span class="tn">' + esc(targetName(t)) + "</span>" + chip + info +
+          (r.url ? '<a class="tr" href="' + esc(r.url) + '" target="_blank" rel="noopener">مشاهده ↗</a>' : "") + btns + "</li>";
       }).join("") + "</ul>" +
       (j.status === "pending" ? '<button class="ghost danger sm" data-jact="cancel" data-name="' + esc(j._name) + '">لغو این انتشار</button>' : "") + "</div>";
   }
@@ -3130,12 +3877,13 @@
     if (state.error && !state.config) { app.innerHTML = '<div class="loading">بارگذاری داده‌ها ناموفق بود. اتصال را بررسی کنید.</div>'; return; }
     if (!state.config) return;
     var h = location.hash || "#/";
-    var br, gl, a = h.match(/^#\/a\/([\w-]+)\/(\w+)/), pb = h.match(/^#\/publish(?:\/([\w-]+))?(?:\/(\w+))?/);
+    var br, gl, idr, a = h.match(/^#\/a\/([\w-]+)\/(\w+)/), pb = h.match(/^#\/publish(?:\/([\w-]+))?(?:\/(\w+))?/);
     if (a) analyticsView(a[1], a[2]);
     else if (pb) publishView(pb[1], pb[2]);
     else if (/^#\/settings/.test(h)) settingsView();
     else if ((br = h.match(/^#\/brain(?:\/([\w-]+))?(?:\/(\w+))?/))) { if (br[1]) brainWorkView(br[1], br[2]); else brainHomeView(); }
     else if ((gl = h.match(/^#\/gallery(?:\/([\w-]+))?(?:\/(\w+))?/))) { if (gl[1]) galleryWorkView(gl[1], gl[2]); else galleryHomeView(); }
+    else if ((idr = h.match(/^#\/identity(?:\/([\w-]+))?/))) { if (idr[1]) identityView(idr[1]); else identityHomeView(); }
     else if (/^#\/tools/.test(h)) toolsView();
     else if (/^#\/(channels|p\/)/.test(h)) channelsView();
     else homeView();
@@ -3153,9 +3901,10 @@
       getJSON("data/latest.json", true).catch(function () { return null; }),
       getJSON("data/history.json", true).catch(function () { return { series: {} }; }),
       getJSON("data/posts_history.json", true).catch(function () { return { channels: {} }; }),
-      getJSON("data/comments.json", true).catch(function () { return { channels: {} }; })
+      getJSON("data/comments.json", true).catch(function () { return { channels: {} }; }),
+      getJSON("data/buffer.json", true).catch(function () { return null; })
     ]).then(function (res) {
-      state.config = res[0]; state.latest = res[1]; state.history = res[2]; state.postsHist = res[3]; state.comments = res[4]; state.error = null;
+      state.config = res[0]; state.latest = res[1]; state.history = res[2]; state.postsHist = res[3]; state.comments = res[4]; state.buffer = res[5]; state.error = null;
       if (!quiet) rerenderSafe();
     }).catch(function (e) { state.error = e; if (!quiet) render(); });
   }

@@ -211,7 +211,7 @@ print(json.dumps([[ [x["kind"], x["files"], x["rule"]] for x in g.classify_uploa
         return out;
       });
       ok(sync.sched === "scheduled" && sync.queued === "queued" && sync.running === "publishing", `pubStatusOf pending: ${sync.sched}/${sync.queued}/${sync.running}`);
-      ok(sync.pubManual === "published" && sync.onlyManual === "queued" && sync.failed === "error" && sync.cancel === "error", `pubStatusOf final: ${sync.pubManual}/${sync.onlyManual}/${sync.failed}/${sync.cancel}`);
+      ok(sync.pubManual === "published" && sync.onlyManual === "error" /* v10: an unresolved channel needs action, it no longer hangs as queued */ && sync.failed === "error" && sync.cancel === "error", `pubStatusOf final: ${sync.pubManual}/${sync.onlyManual}/${sync.failed}/${sync.cancel}`);
       ok(JSON.stringify(sync.s0) === JSON.stringify(["made", "made", "made", "idea", "ready", "uploaded"]), `sync: gallery link -> made, lifts ancestors: ${sync.s0}`);
       ok(JSON.stringify(sync.s1) === JSON.stringify(["scheduled", "scheduled", "made", "made"]), `sync: scheduled job -> gallery scheduled: ${sync.s1}`);
       ok(JSON.stringify(sync.s2) === JSON.stringify(["published", "published", "published", "published", "published", "idea", "uploaded"]), `sync: published job -> gallery + brain chain published: ${sync.s2}`);
@@ -399,7 +399,7 @@ print(json.dumps([[ [x["kind"], x["files"], x["rule"]] for x in g.classify_uploa
       ok(mx.cells === 20, `publish: 20 channel checkboxes (${mx.cells})`);
       ok(mx.checked.length === 4 && mx.checked.every((k) => k.startsWith(P1 + "|")) && mx.row, `publish: the gallery item's domain preselected (${mx.checked})`);
       ok(!mx.manual.includes(P1 + "|youtube") && mx.manual.includes(P1 + "|aparat") && mx.manual.includes(P2 + "|youtube") && mx.manual.length === 19, `publish: connected YouTube automatic, others labelled manual (${mx.manual.length})`);
-      ok(/نیاز به اتصال \/ انتشار دستی/.test(mx.legend) && /نیاز به اتصال \/ انتشار دستی/.test(mx.sum), "publish: «نیاز به اتصال / انتشار دستی» label shown");
+      ok(/اتصال برقرار نیست/.test(mx.legend) && /اتصال برقرار نیست/.test(mx.sum), "publish: «اتصال برقرار نیست» label shown (v10 wording)");
       // group toggles
       await page.check('input[data-g="pl:youtube"]');
       let n = await page.$$eval("input[data-t]:checked", (x) => x.length);
@@ -432,8 +432,8 @@ print(json.dumps([[ [x["kind"], x["files"], x["rule"]] for x in g.classify_uploa
       ok(isEncFile(praw), "publish: link record stored encrypted");
       // queue list
       await page.waitForSelector("#jobs .job");
-      const jb = await page.$eval("#jobs .job", (e) => ({ chip: e.querySelector(".schip").textContent, dots: e.querySelectorAll(".sdots i.on").length, manual: e.querySelectorAll(".jtargets .schip.manual").length, gal: !!e.querySelector('.lchip[href*="#/gallery/"]') }));
-      ok(jb.chip === "زمان‌بندی شد" && jb.dots === 2 && jb.manual === 2 && jb.gal, `publish: queue item chip/dots/manual labels/gallery link (${JSON.stringify(jb)})`);
+      const jb = await page.$eval("#jobs .job", (e) => ({ chip: e.querySelector(".schip").textContent, dots: e.querySelectorAll(".sdots i.on").length, manual: e.querySelectorAll(".jtargets .schip.manual").length, notyet: e.querySelectorAll(".jtargets .tr.notyet").length, gal: !!e.querySelector('.lchip[href*="#/gallery/"]') }));
+      ok(jb.chip === "زمان‌بندی شد" && jb.dots === 2 && jb.manual === 0 && jb.notyet === 2 && jb.gal, /* v10: before publish.py runs, not-yet-connected targets carry a note, not a final label */ `publish: queue item chip/dots/manual labels/gallery link (${JSON.stringify(jb)})`);
       // gallery shows زمان‌بندی شد
       await hashTo(page, "#/gallery/" + P1 + "/slide", ".gitem");
       ok((await page.textContent(".gitem .schip")) === "زمان‌بندی شد" && /انتشار/.test(await page.textContent(".gitem .lchip.pub")), "status sync: gallery item -> زمان‌بندی شد");
@@ -454,7 +454,7 @@ print(json.dumps([[ [x["kind"], x["files"], x["rule"]] for x in g.classify_uploa
       await page.click('#jobs .job button[data-jact="manual"]');
       await until(() => { const j = R.json(jobName); return Object.values(j.results).some((r) => r.manual); });
       const j3 = R.json(jobName);
-      ok(Object.values(j3.results).filter((r) => r.manual && r.status === "published").length === 1 && j3.status === "partial", "publish: «دستی منتشر کردم» recorded in the queue file");
+      ok(Object.values(j3.results).filter((r) => r.manual && r.status === "published").length === 1 && j3.status === "needs_action", "publish: «دستی منتشر کردم» recorded in the queue file (one channel still unresolved -> needs_action)");
       // filters
       await page.waitForSelector('#pview .sfilter button[data-f="published"]');
       await page.click('#pview .sfilter button[data-f="error"]');
