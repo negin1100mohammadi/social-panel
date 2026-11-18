@@ -177,53 +177,75 @@ class ModelError(Exception):
     def __init__(self, reason, log): Exception.__init__(self, log); self.reason = reason; self.log = log
 
 
+DEADLINE_S = 200  # the panel waits ~4 min; stop trying before that and report an error it can show
+
+
+def _post(model, body, key, timeout):
+    r = urllib.request.Request(API % model, data=json.dumps(body).encode(), method="POST",
+                               headers={"Content-Type": "application/json", "x-goog-api-key": key})
+    with urllib.request.urlopen(r, timeout=timeout) as resp:
+        return json.loads(resp.read())
+
+
 def call_gemini(prompt):
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not key: raise ModelError("کلید Gemini (GEMINI_API_KEY) در Secrets گیت‌هاب تنظیم نشده.", "GEMINI_API_KEY missing")
-    body = {"systemInstruction": {"parts": [{"text": SYSTEM}]},
+    base = {"systemInstruction": {"parts": [{"text": SYSTEM}]},
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-            "generationConfig": {"responseMimeType": "application/json", "responseSchema": SCHEMA, "temperature": 0.9, "maxOutputTokens": 16384}}
-    last = None
-    models = list(MODELS); discovered = False
-    mi = 0
+            "generationConfig": {"responseMimeType": "application/json", "responseSchema": SCHEMA, "temperature": 0.9, "maxOutputTokens": 8192,
+                                 "thinkingConfig": {"thinkingBudget": 1024}}}
+    t0 = time.time(); last = None
+    models = list(MODELS); discovered = False; mi = 0
     while mi < len(models):
         model = models[mi]; mi += 1
-        for attempt in range(3):
-            r = urllib.request.Request(API % model, data=json.dumps(body).encode(), method="POST",
-                                       headers={"Content-Type": "application/json", "x-goog-api-key": key})
+        body = json.loads(json.dumps(base))
+        tries = 0
+        while tries < 3:
+            tries += 1
+            left = DEADLINE_S - (time.time() - t0)
+            if left < 15: break
+            t1 = time.time()
             try:
-                with urllib.request.urlopen(r, timeout=150) as resp:
-                    data = json.loads(resp.read())
+                data = _post(model, body, key, min(120, left))
             except urllib.error.HTTPError as e:
-                try: msg = (json.loads(e.read()).get("error") or {}).get("status", "")
-                except Exception: msg = ""
-                last = (e.code, msg)
-                print("  gemini %s -> HTTP %s %s" % (model, e.code, msg))
-                if e.code in (400, 404, 429): break  # next model
-                if e.code in (500, 502, 503, 504): time.sleep(4 * (attempt + 1)); continue
+                try: err = json.loads(e.read()).get("error") or {}
+                except Exception: err = {}
+                st, msg = err.get("status", ""), str(err.get("message", ""))
+                last = (e.code, st)
+                print("  gemini %s -> HTTP %s %s (%.0fs)" % (model, e.code, st, time.time() - t1))
+                if e.code == 400 and "thinking" in msg.lower() and "thinkingConfig" in body["generationConfig"]:
+                    del body["generationConfig"]["thinkingConfig"]; tries -= 1; continue  # model without thinking control
+                if e.code == 400 and "schema" in msg.lower() and "responseSchema" in body["generationConfig"]:
+                    del body["generationConfig"]["responseSchema"]; tries -= 1; continue
+                if e.code == 400 and ("api key" in msg.lower() or "API_KEY" in msg):
+                    raise ModelError("کلید Gemini (GEMINI_API_KEY) نامعتبر است.", "HTTP 400 key invalid")
                 if e.code in (401, 403):
-                    raise ModelError("کلید Gemini نامعتبر است یا اجازه ندارد (HTTP %s)." % e.code, "HTTP %s %s" % (e.code, msg))
-                break
+                    raise ModelError("کلید Gemini نامعتبر است یا اجازه ندارد (HTTP %s)." % e.code, "HTTP %s %s" % (e.code, st))
+                if e.code in (500, 502, 503, 504): time.sleep(3); continue
+                break  # 400 / 404 / 429 -> next model
             except Exception as e:
-                last = (0, type(e).__name__); print("  gemini %s -> %s" % (model, type(e).__name__)); time.sleep(3); continue
+                last = (0, type(e).__name__); print("  gemini %s -> %s (%.0fs)" % (model, type(e).__name__, time.time() - t1)); break
             cands = data.get("candidates") or []
-            txt = "".join(p.get("text", "") for p in ((cands[0].get("content") or {}).get("parts") or [])) if cands else ""
-            if not txt:
-                last = (200, (cands[0].get("finishReason") if cands else (data.get("promptFeedback") or {}).get("blockReason", "empty")))
-                print("  gemini %s -> empty answer (%s)" % (model, last[1])); continue
+            fin = cands[0].get("finishReason", "") if cands else (data.get("promptFeedback") or {}).get("blockReason", "empty")
+            txt = "".join(p.get("text", "") for p in ((cands[0].get("content") or {}).get("parts") or []) if not p.get("thought")) if cands else ""
+            print("  gemini %s -> 200 %s, %d chars (%.0fs)" % (model, fin, len(txt), time.time() - t1))
             try:
                 return parse_script(txt), model
             except ValueError as e:
-                last = (200, "unparseable"); print("  gemini %s -> %s" % (model, e)); continue
+                last = (200, fin or "unparseable"); print("  gemini %s -> %s" % (model, e))
+                if fin == "MAX_TOKENS": body["generationConfig"]["maxOutputTokens"] = 16384
+                continue
         if mi >= len(models) and not discovered and last and last[0] in (404, 400):
             discovered = True
             extra = [m for m in list_flash_models(key) if m not in models]
             print("  ListModels flash candidates: %s" % (", ".join(extra[:6]) or "none"))
             models += extra[:4]
+        if DEADLINE_S - (time.time() - t0) < 15: break
     if last and last[0] == 429: raise ModelError("سهمیه‌ی رایگان Gemini فعلاً تمام شده؛ چند دقیقه بعد «دوباره» را بزن.", "quota (429)")
     if last and last[0] == 400: raise ModelError("Gemini درخواست را نپذیرفت (HTTP 400)؛ «دوباره» را بزن.", "HTTP 400")
     if last and last[0] == 200: raise ModelError("پاسخ Gemini قابل خواندن نبود؛ «دوباره» را بزن.", "bad answer (%s)" % (last[1],))
-    raise ModelError("اتصال به Gemini ممکن نشد؛ «دوباره» را بزن.", "no answer %s" % (last,))
+    if last and last[0] == 404: raise ModelError("مدل Gemini پیدا نشد (HTTP 404).", "no model (404)")
+    raise ModelError("Gemini به‌موقع جواب نداد؛ «دوباره» را بزن.", "no answer %s" % (last,))
 
 
 def list_flash_models(key):

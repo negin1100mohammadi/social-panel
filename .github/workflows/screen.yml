@@ -37,6 +37,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           REQUEST_ID: ${{ inputs.request_id }}
           SELFTEST: ${{ inputs.selftest }}
+          PYTHONUNBUFFERED: "1"
         run: |
           if [ "$SELFTEST" = "true" ]; then python scripts/screen.py --selftest; exit $?; fi
           python scripts/screen.py --root .
