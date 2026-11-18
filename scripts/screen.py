@@ -35,7 +35,7 @@ PAGES = ["hamrah-seller", "titan-station", "fancatstic-four", "shode-dige", "pre
 REQ_INFO, OUT_INFO, ID_INFO = "sp-hark-req-v1", "sp-hark-out-v1", "sp-hark-id-v1"
 ALG = "ECDH-P256+HKDF-SHA256+A256GCM"
 TEH = timezone(timedelta(hours=3, minutes=30))
-MODELS = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash"]  # then whatever flash model ListModels offers
+MODELS = ["gemini-2.5-flash", "gemini-2.0-flash"]  # the brief's models; gemini-flash-latest + the newest flash models from ListModels go first
 API = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent"
 
 
@@ -195,7 +195,9 @@ def call_gemini(prompt):
             "generationConfig": {"responseMimeType": "application/json", "responseSchema": SCHEMA, "temperature": 0.9, "maxOutputTokens": 8192,
                                  "thinkingConfig": {"thinkingBudget": 1024}}}
     t0 = time.time(); last = None
-    models = list(MODELS); discovered = False; mi = 0
+    found = list_flash_models(key)
+    print("  flash models: %s" % (", ".join(found[:5]) or "none listed"))
+    models = ["gemini-flash-latest"] + [m for m in found[:4] if m not in MODELS] + MODELS; discovered = True; mi = 0
     while mi < len(models):
         model = models[mi]; mi += 1
         body = json.loads(json.dumps(base))
@@ -221,7 +223,7 @@ def call_gemini(prompt):
                     raise ModelError("کلید Gemini (GEMINI_API_KEY) نامعتبر است.", "HTTP 400 key invalid")
                 if e.code in (401, 403):
                     raise ModelError("کلید Gemini نامعتبر است یا اجازه ندارد (HTTP %s)." % e.code, "HTTP %s %s" % (e.code, st))
-                if e.code in (500, 502, 503, 504): time.sleep(3); continue
+                if e.code in (500, 502, 503, 504) and tries < 2: time.sleep(2); continue  # one retry, then the next model
                 break  # 400 / 404 / 429 -> next model
             except Exception as e:
                 last = (0, type(e).__name__); print("  gemini %s -> %s (%.0fs)" % (model, type(e).__name__, time.time() - t1)); break
