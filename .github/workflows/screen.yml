@@ -1,0 +1,49 @@
+name: Screen (غربال‌گری)
+run-name: "screen ${{ inputs.request_id || 'all' }}"
+
+# v25: «شروع غربال‌گری» in «مغز متفکر» › «غربال‌گری» dispatches this workflow:
+#   POST /repos/negin1100mohammadi/social-panel/actions/workflows/screen.yml/dispatches
+#   {"ref":"main","inputs":{"request_id":"r…"}}        (no request_id = every pending «screen» request)
+# scripts/screen.py decrypts the request with HARK_PRIV_JWK, writes a viral Persian script with Gemini (GEMINI_API_KEY)
+# following the brand identity, encrypts the answer to the panel (hark/out/<page>/) and deletes the request.
+# Repo + logs are public: nothing decrypted is ever printed.
+on:
+  workflow_dispatch:
+    inputs:
+      request_id: { description: "hark/requests/<id> to screen (empty = all pending screen requests)", required: false, default: "", type: string }
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screen-${{ inputs.request_id || 'all' }}
+  cancel-in-progress: false
+
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -q cryptography
+      - name: Screen
+        env:
+          HARK_PRIV_JWK: ${{ secrets.HARK_PRIV_JWK }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          REQUEST_ID: ${{ inputs.request_id }}
+        run: python scripts/screen.py --root .
+      - name: Commit answers
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A hark/out hark/requests
+          if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
+          git commit -q -m "hark: screen ${REQUEST_ID:-all} $(TZ=Asia/Tehran date '+%Y-%m-%d %H:%M') Tehran"
+          for i in 1 2 3 4 5; do git pull -q --rebase --autostash origin "${GITHUB_REF_NAME}" && git push -q && exit 0; sleep $((i*3)); done
+          exit 1
+        env:
+          REQUEST_ID: ${{ inputs.request_id }}

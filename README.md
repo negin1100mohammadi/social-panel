@@ -21,6 +21,7 @@ A lightweight, installable PWA (Persian, RTL) that shows stats for five pages ac
 | `scripts/publish.py`، `.github/workflows/publish.yml` | انتشار پست‌های صف (با push به `queue/` و هر ۱۵ دقیقه) |
 | `scripts/fetch_stats.py` | اسکریپت جمع‌آوری آمار (پایتون ۳ + `requests`) |
 | `.github/workflows/refresh.yml` | اجرای ساعتی + انتشار روی GitHub Pages |
+| `scripts/screen.py`، `.github/workflows/screen.yml` | غربال‌گری فوری (v25): با دکمه‌ی «شروع غربال‌گری» در «مغز متفکر» اجرا می‌شود؛ درخواست رمزشده‌ی `hark/requests/` را با `HARK_PRIV_JWK` باز می‌کند، با Gemini (`GEMINI_API_KEY`) و شناسنامه‌ی برند اسکریپت وایرال می‌نویسد و جواب رمزشده را در `hark/out/<page>/` می‌گذارد |
 
 دکمه‌ی «پسوورد منیجر» فقط `https://vault.vaultwarden.com/` را در زبانه‌ی جدید باز می‌کند. هیچ رمز یا محتوای گاوصندوقی در این مخزن ذخیره نمی‌شود — و نباید بشود.
 

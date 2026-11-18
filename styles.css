@@ -1290,3 +1290,11 @@ a.tbox.guidebtn .gq { width: 22px; height: 22px; border-radius: 50%; background:
 .sentag.ok { background: #dcfce7; color: #166534; }
 [data-theme="dark"] .sentag { background: #3b2d4a; color: #e9d5ff; }
 [data-theme="dark"] .sentag.ok { background: #14361f; color: #bbf7d0; }
+/* v25: screening robot */
+.schip.v9-running { --sc: var(--accent); --sb: var(--accent-soft); }
+.schip.v9-error { --sc: var(--bad); --sb: var(--bad-bg, var(--warn-bg)); }
+.sdots.v9-running { --sc: var(--accent); } .sdots.v9-error { --sc: var(--bad); }
+.scrrun { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--accent); line-height: 1.8; margin: 6px 0; }
+.scrrun .spin-dot, .sitem .spin-dot { flex: none; display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid var(--accent-soft); border-top-color: var(--accent); animation: ospin 1s linear infinite; }
+.screrr { margin: 6px 0; }
+.scrall { margin: 0 0 10px; }
