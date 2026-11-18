@@ -3,7 +3,7 @@
  "channels": {
   "titan-station/youtube": {
    "channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g",
-   "fetched_at": "2026-11-18T12:03:23Z",
+   "fetched_at": "2026-11-18T12:47:05Z",
    "threads": [
     {
      "id": "UgzNSK3bD8UhRyB6LvN4AaABAg",
@@ -17,9 +17,19 @@
      "likes": 0,
      "published": "2026-11-18T02:18:21Z",
      "updated": "2026-11-18T02:18:21Z",
-     "reply_count": 0,
+     "reply_count": 1,
      "can_reply": true,
-     "replies": []
+     "replies": [
+      {
+       "id": "UgzNSK3bD8UhRyB6LvN4AaABAg.AdKvRdhE-kGAdLzZntvh-P",
+       "author": "@Titan.Station",
+       "author_channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g",
+       "avatar": "https://yt3.ggpht.com/uBmqKC1KAanMSRUdmgGGa_hEnvi-m_J6mqX0GCSwjOcOg_3WdJZNmjIXCmc3xrwHM7gUO-zIYw=s48-c-k-c0x00ffffff-no-rj",
+       "text": "❤️",
+       "likes": 0,
+       "published": "2026-11-18T12:13:39Z"
+      }
+     ]
     },
     {
      "id": "Ugyt08ESPZ--wdx2_Dx4AaABAg",
@@ -33,9 +43,19 @@
      "likes": 0,
      "published": "2026-11-13T12:24:16Z",
      "updated": "2026-11-13T12:24:16Z",
-     "reply_count": 0,
+     "reply_count": 1,
      "can_reply": true,
-     "replies": []
+     "replies": [
+      {
+       "id": "Ugyt08ESPZ--wdx2_Dx4AaABAg.Ad97oC-_WLYAdLzjdutLPw",
+       "author": "@Titan.Station",
+       "author_channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g",
+       "avatar": "https://yt3.ggpht.com/uBmqKC1KAanMSRUdmgGGa_hEnvi-m_J6mqX0GCSwjOcOg_3WdJZNmjIXCmc3xrwHM7gUO-zIYw=s48-c-k-c0x00ffffff-no-rj",
+       "text": "💚",
+       "likes": 0,
+       "published": "2026-11-18T12:15:08Z"
+      }
+     ]
     },
     {
      "id": "UgxEpkZZSlKpkuCQhrJ4AaABAg",
@@ -49,9 +69,19 @@
      "likes": 0,
      "published": "2026-11-13T12:20:51Z",
      "updated": "2026-11-13T12:20:51Z",
-     "reply_count": 0,
+     "reply_count": 1,
      "can_reply": true,
-     "replies": []
+     "replies": [
+      {
+       "id": "UgxEpkZZSlKpkuCQhrJ4AaABAg.Ad97QD6Ct3mAdLzlM90Vj_",
+       "author": "@Titan.Station",
+       "author_channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g",
+       "avatar": "https://yt3.ggpht.com/uBmqKC1KAanMSRUdmgGGa_hEnvi-m_J6mqX0GCSwjOcOg_3WdJZNmjIXCmc3xrwHM7gUO-zIYw=s48-c-k-c0x00ffffff-no-rj",
+       "text": "💚",
+       "likes": 0,
+       "published": "2026-11-18T12:15:22Z"
+      }
+     ]
     },
     {
      "id": "Ugy3OMQHad39S4av7ZN4AaABAg",
@@ -81,20 +111,30 @@
      "likes": 0,
      "published": "2026-10-25T14:55:29Z",
      "updated": "2026-10-25T14:55:29Z",
-     "reply_count": 0,
+     "reply_count": 1,
      "can_reply": true,
-     "replies": []
+     "replies": [
+      {
+       "id": "UgwvV86b16V3JTihEpx4AaABAg.AcOU08KFGS6AdLzsbm7o_Y",
+       "author": "@Titan.Station",
+       "author_channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g",
+       "avatar": "https://yt3.ggpht.com/uBmqKC1KAanMSRUdmgGGa_hEnvi-m_J6mqX0GCSwjOcOg_3WdJZNmjIXCmc3xrwHM7gUO-zIYw=s48-c-k-c0x00ffffff-no-rj",
+       "text": "💚",
+       "likes": 0,
+       "published": "2026-11-18T12:16:21Z"
+      }
+     ]
     }
    ]
   },
   "hamrah-seller/youtube": {
    "channel_id": "UC8qU5BbC-KmKVXgsKklGikw",
-   "fetched_at": "2026-11-18T12:02:52Z",
+   "fetched_at": "2026-11-18T12:46:34Z",
    "threads": []
   },
   "fancatstic-four/youtube": {
    "channel_id": "UCIQ32GL3mxkGKJoxToCrMDg",
-   "fetched_at": "2026-11-18T12:03:56Z",
+   "fetched_at": "2026-11-18T12:47:38Z",
    "threads": [
     {
      "id": "UgzYSU3mVLKZ-WwlwLd4AaABAg",
@@ -116,14 +156,14 @@
   },
   "shode-dige/youtube": {
    "channel_id": "UCy_RFO09PBC9RhAqtgMf_Eg",
-   "fetched_at": "2026-11-18T12:04:27Z",
+   "fetched_at": "2026-11-18T12:48:07Z",
    "threads": []
   },
   "pretime-tv/youtube": {
    "channel_id": "UCgByc7LjKGswrjkXavPJoxA",
-   "fetched_at": "2026-11-18T12:04:54Z",
+   "fetched_at": "2026-11-18T12:48:34Z",
    "threads": []
   }
  },
- "updated_at": "2026-11-18T12:02:36Z"
+ "updated_at": "2026-11-18T12:46:17Z"
 }
