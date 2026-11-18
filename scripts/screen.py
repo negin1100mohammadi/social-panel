@@ -35,7 +35,7 @@ PAGES = ["hamrah-seller", "titan-station", "fancatstic-four", "shode-dige", "pre
 REQ_INFO, OUT_INFO, ID_INFO = "sp-hark-req-v1", "sp-hark-out-v1", "sp-hark-id-v1"
 ALG = "ECDH-P256+HKDF-SHA256+A256GCM"
 TEH = timezone(timedelta(hours=3, minutes=30))
-MODELS = ["gemini-2.5-flash", "gemini-2.0-flash"]
+MODELS = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash"]  # then whatever flash model ListModels offers
 API = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent"
 
 
@@ -184,7 +184,10 @@ def call_gemini(prompt):
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "generationConfig": {"responseMimeType": "application/json", "responseSchema": SCHEMA, "temperature": 0.9, "maxOutputTokens": 16384}}
     last = None
-    for mi, model in enumerate(MODELS):
+    models = list(MODELS); discovered = False
+    mi = 0
+    while mi < len(models):
+        model = models[mi]; mi += 1
         for attempt in range(3):
             r = urllib.request.Request(API % model, data=json.dumps(body).encode(), method="POST",
                                        headers={"Content-Type": "application/json", "x-goog-api-key": key})
@@ -212,10 +215,34 @@ def call_gemini(prompt):
                 return parse_script(txt), model
             except ValueError as e:
                 last = (200, "unparseable"); print("  gemini %s -> %s" % (model, e)); continue
+        if mi >= len(models) and not discovered and last and last[0] in (404, 400):
+            discovered = True
+            extra = [m for m in list_flash_models(key) if m not in models]
+            print("  ListModels flash candidates: %s" % (", ".join(extra[:6]) or "none"))
+            models += extra[:4]
     if last and last[0] == 429: raise ModelError("سهمیه‌ی رایگان Gemini فعلاً تمام شده؛ چند دقیقه بعد «دوباره» را بزن.", "quota (429)")
     if last and last[0] == 400: raise ModelError("Gemini درخواست را نپذیرفت (HTTP 400)؛ «دوباره» را بزن.", "HTTP 400")
     if last and last[0] == 200: raise ModelError("پاسخ Gemini قابل خواندن نبود؛ «دوباره» را بزن.", "bad answer (%s)" % (last[1],))
     raise ModelError("اتصال به Gemini ممکن نشد؛ «دوباره» را بزن.", "no answer %s" % (last,))
+
+
+def list_flash_models(key):
+    """text 'flash' models that support generateContent, newest version first (no previews/lite/tts/image when others exist)"""
+    try:
+        r = urllib.request.Request("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", headers={"x-goog-api-key": key})
+        with urllib.request.urlopen(r, timeout=30) as resp: data = json.loads(resp.read())
+    except Exception as e:
+        print("  ListModels -> %s" % type(e).__name__); return []
+    out = []
+    for m in data.get("models") or []:
+        n = str(m.get("name", "")).replace("models/", "")
+        if "generateContent" not in (m.get("supportedGenerationMethods") or []) or "flash" not in n: continue
+        if re.search(r"tts|image|audio|live|embed|thinking|exp", n): continue
+        out.append(n)
+    def rank(n):
+        v = re.search(r"gemini-(\d+(?:\.\d+)?)", n)
+        return (0 if re.search(r"preview|lite", n) else 1, float(v.group(1)) if v else 0, "latest" in n)
+    return sorted(out, key=rank, reverse=True)
 
 
 def parse_script(txt):

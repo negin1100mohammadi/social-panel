@@ -1,5 +1,5 @@
 name: Screen (غربال‌گری)
-run-name: "screen ${{ inputs.request_id || 'all' }}"
+run-name: "screen ${{ inputs.selftest == 'true' && 'selftest' || inputs.request_id || 'all' }}"
 
 # v25: «شروع غربال‌گری» in «مغز متفکر» › «غربال‌گری» dispatches this workflow:
 #   POST /repos/negin1100mohammadi/social-panel/actions/workflows/screen.yml/dispatches
