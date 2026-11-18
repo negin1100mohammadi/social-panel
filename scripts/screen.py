@@ -252,6 +252,28 @@ MOCK = {"title": "اسکریپت آزمایشی", "hook": "هوک آزمایشی
         "caption": "کپشن", "hashtags": ["#تست"], "platforms": {"reels": "25–30 s", "shorts": "30–45 s", "tiktok": "21–34 s"}}
 
 
+# ------------------------------------------------------------------ self-test (synthetic request, throwaway keys, nothing written to the repo)
+def selftest(mock=False):
+    import tempfile
+    def jwk(k, priv=False):
+        n = (k.public_key() if priv else k).public_numbers()
+        d = {"kty": "EC", "crv": "P-256", "x": b64u(n.x.to_bytes(32, "big")), "y": b64u(n.y.to_bytes(32, "big"))}
+        if priv: d["d"] = b64u(k.private_numbers().private_value.to_bytes(32, "big"))
+        return d
+    hk, ik = ec.generate_private_key(ec.SECP256R1()), ec.generate_private_key(ec.SECP256R1())
+    root = tempfile.mkdtemp(); R = Repo(root)
+    R.write("config/inbox_pub.json", {"kid": "selftest-inbox", "jwk": jwk(ik.public_key())})
+    hpub = {"kid": "selftest", "jwk": jwk(hk.public_key())}
+    req = {"type": "screen", "id": "rselftest", "page": "shode-dige", "page_name": "Self test", "topic": "سرگرمی و طنز روزمره", "screen_id": "sselftest",
+           "title": "سه اشتباه رایج صبح‌ها که روزت را خراب می‌کند", "body": "ویدئوی کوتاه طنز", "networks": ["instagram", "tiktok", "youtube"], "format": "ریل"}
+    R.write("hark/requests/rselftest.json", seal(hpub, REQ_INFO, REQ_INFO + "|rselftest", req, {"id": "rselftest"}))
+    os.environ["HARK_PRIV_JWK"] = json.dumps({"kid": "selftest", "jwk": jwk(hk, True)})
+    print("self-test: synthetic request, throwaway keys, dry run")
+    summ = main(["--root", root, "--dry-run"] + (["--mock"] if mock else []))
+    if not summ["done"]: raise SystemExit("self-test failed")
+    print("self-test ok")
+
+
 # ------------------------------------------------------------------ main
 def main(argv=None):
     ap = argparse.ArgumentParser()
@@ -304,4 +326,5 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    main()
+    if "--selftest" in sys.argv: selftest(mock="--mock" in sys.argv)
+    else: main()

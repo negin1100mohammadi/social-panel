@@ -11,12 +11,13 @@ on:
   workflow_dispatch:
     inputs:
       request_id: { description: "hark/requests/<id> to screen (empty = all pending screen requests)", required: false, default: "", type: string }
+      selftest:   { description: "true = synthetic request with throwaway keys + real Gemini call, nothing written", required: false, default: "false", type: string }
 
 permissions:
   contents: write
 
 concurrency:
-  group: screen-${{ inputs.request_id || 'all' }}
+  group: screen-${{ inputs.selftest == 'true' && 'selftest' || inputs.request_id || 'all' }}
   cancel-in-progress: false
 
 jobs:
@@ -35,8 +36,12 @@ jobs:
           HARK_PRIV_JWK: ${{ secrets.HARK_PRIV_JWK }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           REQUEST_ID: ${{ inputs.request_id }}
-        run: python scripts/screen.py --root .
+          SELFTEST: ${{ inputs.selftest }}
+        run: |
+          if [ "$SELFTEST" = "true" ]; then python scripts/screen.py --selftest; exit $?; fi
+          python scripts/screen.py --root .
       - name: Commit answers
+        if: inputs.selftest != 'true'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
