@@ -4,7 +4,8 @@ run-name: "screen ${{ inputs.selftest == 'true' && 'selftest' || inputs.request_
 # v25: «شروع غربال‌گری» in «مغز متفکر» › «غربال‌گری» dispatches this workflow:
 #   POST /repos/negin1100mohammadi/social-panel/actions/workflows/screen.yml/dispatches
 #   {"ref":"main","inputs":{"request_id":"r…"}}        (no request_id = every pending «screen» request)
-# scripts/screen.py decrypts the request with HARK_PRIV_JWK, writes a viral Persian script with Gemini (GEMINI_API_KEY)
+# scripts/screen.py decrypts the request with HARK_PRIV_JWK, writes a viral Persian script with the first free AI provider that
+# answers (GEMINI_API_KEY → GEMINI_API_KEY_2 → GROQ_API_KEY → OPENROUTER_API_KEY; empty secrets are skipped)
 # following the brand identity, encrypts the answer to the panel (hark/out/<page>/) and deletes the request.
 # Repo + logs are public: nothing decrypted is ever printed.
 on:
@@ -35,6 +36,9 @@ jobs:
         env:
           HARK_PRIV_JWK: ${{ secrets.HARK_PRIV_JWK }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           REQUEST_ID: ${{ inputs.request_id }}
           SELFTEST: ${{ inputs.selftest }}
           PYTHONUNBUFFERED: "1"

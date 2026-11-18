@@ -8,7 +8,8 @@ Works on a checkout of the repo (the workflow commits + pushes what it writes):
   writes  hark/out/<page>/<oid>.json   ECIES to config/inbox_pub.json (info "sp-hark-out-v1", AAD "sp-hark-out-v1|<page>/<oid>")
           = the same {type:"script"} message as hark_bridge.py post-script, or {type:"screen_error", reason} on failure
   deletes the handled request file (= hark_bridge.py mark-done).
-Secrets: HARK_PRIV_JWK (Hark's private key doc {kid, jwk}), GEMINI_API_KEY.
+Secrets: HARK_PRIV_JWK (Hark's private key doc {kid, jwk}); AI keys, tried in order, empty ones skipped:
+  GEMINI_API_KEY, GEMINI_API_KEY_2 (Gemini), GROQ_API_KEY (Groq), OPENROUTER_API_KEY (OpenRouter free models).
 The repo and the Actions logs are public: this script never prints decrypted content (titles, ideas, identity, scripts).
 
   python scripts/screen.py [--root .] [--request-id r…] [--dry-run] [--mock]
@@ -177,7 +178,21 @@ class ModelError(Exception):
     def __init__(self, reason, log): Exception.__init__(self, log); self.reason = reason; self.log = log
 
 
-DEADLINE_S = 200  # the panel waits ~4 min; stop trying before that and report an error it can show
+DEADLINE_S = 225  # the panel waits ~4 min; stop trying before that and report an error it can show
+# provider chain (v25): the first one that returns a valid script wins; a provider whose secret is empty is skipped
+PROVIDERS = [  # (id, env var, kind, budget seconds)
+    ("gemini", "GEMINI_API_KEY", "gemini", 95),
+    ("gemini-2", "GEMINI_API_KEY_2", "gemini", 70),
+    ("groq", "GROQ_API_KEY", "openai", 45),
+    ("openrouter", "OPENROUTER_API_KEY", "openai", 70),
+]
+OPENAI_COMPAT = {
+    "groq": ("https://api.groq.com/openai/v1/chat/completions", ["llama-3.3-70b-versatile", "openai/gpt-oss-120b"], {}),
+    "openrouter": ("https://openrouter.ai/api/v1/chat/completions", ["deepseek/deepseek-chat-v3-0324:free", "meta-llama/llama-3.3-70b-instruct:free"],
+                   {"HTTP-Referer": "https://negin1100mohammadi.github.io/social-panel/", "X-Title": "social-panel screening"}),
+}
+JSON_SHAPE = ('{"title": "…", "hook": "…", "beats": [{"t": "0:03", "text": "…"}], "cta": "…", "text": "متن کامل با شکست خط", '
+              '"caption": "…", "hashtags": ["#…"], "platforms": {"reels": "…", "shorts": "…", "tiktok": "…"}, "trend": "… یا خالی"}')
 
 
 def _post(model, body, key, timeout):
@@ -187,70 +202,140 @@ def _post(model, body, key, timeout):
         return json.loads(resp.read())
 
 
-def call_gemini(prompt):
-    key = os.environ.get("GEMINI_API_KEY", "").strip()
-    if not key: raise ModelError("کلید Gemini (GEMINI_API_KEY) در Secrets گیت‌هاب تنظیم نشده.", "GEMINI_API_KEY missing")
+def _err_of(e):
+    try: err = json.loads(e.read()).get("error") or {}
+    except Exception: err = {}
+    if not isinstance(err, dict): err = {"message": str(err)}
+    return str(err.get("status") or err.get("code") or err.get("type") or ""), str(err.get("message", ""))
+
+
+def call_gemini(prompt, key, budget, tag="gemini"):
+    """Gemini with model fallbacks; returns (script, model) or raises ModelError (kind: quota|key|bad|down)."""
     base = {"systemInstruction": {"parts": [{"text": SYSTEM}]},
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "generationConfig": {"responseMimeType": "application/json", "responseSchema": SCHEMA, "temperature": 0.9, "maxOutputTokens": 8192,
                                  "thinkingConfig": {"thinkingBudget": 512}}}
     t0 = time.time(); last = None
     found = list_flash_models(key)
-    print("  flash models: %s" % (", ".join(found[:5]) or "none listed"))
+    print("  %s: flash models: %s" % (tag, ", ".join(found[:5]) or "none listed"))
     models = []
     for m in found[:4] + ["gemini-flash-latest"] + MODELS:
         if m not in models: models.append(m)
-    discovered = True; mi = 0
-    while mi < len(models):
-        model = models[mi]; mi += 1
+    for model in models:
         body = json.loads(json.dumps(base))
         tries = 0
         while tries < 3:
             tries += 1
-            left = DEADLINE_S - (time.time() - t0)
-            if left < 15: break
+            left = budget - (time.time() - t0)
+            if left < 12: break
             t1 = time.time()
             try:
-                data = _post(model, body, key, min(70, left))
+                data = _post(model, body, key, min(60, left))
             except urllib.error.HTTPError as e:
-                try: err = json.loads(e.read()).get("error") or {}
-                except Exception: err = {}
-                st, msg = err.get("status", ""), str(err.get("message", ""))
+                st, msg = _err_of(e)
                 last = (e.code, st)
-                print("  gemini %s -> HTTP %s %s (%.0fs)" % (model, e.code, st, time.time() - t1))
+                print("  %s %s -> HTTP %s %s (%.0fs)" % (tag, model, e.code, st, time.time() - t1))
                 if e.code == 400 and "thinking" in msg.lower() and "thinkingConfig" in body["generationConfig"]:
-                    del body["generationConfig"]["thinkingConfig"]; tries -= 1; continue  # model without thinking control
+                    del body["generationConfig"]["thinkingConfig"]; tries -= 1; continue
                 if e.code == 400 and "schema" in msg.lower() and "responseSchema" in body["generationConfig"]:
                     del body["generationConfig"]["responseSchema"]; tries -= 1; continue
-                if e.code == 400 and ("api key" in msg.lower() or "API_KEY" in msg):
-                    raise ModelError("کلید Gemini (GEMINI_API_KEY) نامعتبر است.", "HTTP 400 key invalid")
-                if e.code in (401, 403):
-                    raise ModelError("کلید Gemini نامعتبر است یا اجازه ندارد (HTTP %s)." % e.code, "HTTP %s %s" % (e.code, st))
-                if e.code in (500, 502, 503, 504) and tries < 2: time.sleep(2); continue  # one retry, then the next model
-                break  # 400 / 404 / 429 -> next model
+                if (e.code == 400 and ("api key" in msg.lower() or "API_KEY" in msg)) or e.code in (401, 403):
+                    raise ModelError("key", "%s key refused (HTTP %s)" % (tag, e.code))
+                if e.code in (500, 502, 503, 504) and tries < 2: time.sleep(2); continue
+                break  # 400 / 404 / 429 / repeated 5xx -> next model
             except Exception as e:
-                last = (0, type(e).__name__); print("  gemini %s -> %s (%.0fs)" % (model, type(e).__name__, time.time() - t1)); break
+                last = (0, type(e).__name__); print("  %s %s -> %s (%.0fs)" % (tag, model, type(e).__name__, time.time() - t1)); break
             cands = data.get("candidates") or []
             fin = cands[0].get("finishReason", "") if cands else (data.get("promptFeedback") or {}).get("blockReason", "empty")
             txt = "".join(p.get("text", "") for p in ((cands[0].get("content") or {}).get("parts") or []) if not p.get("thought")) if cands else ""
-            print("  gemini %s -> 200 %s, %d chars (%.0fs)" % (model, fin, len(txt), time.time() - t1))
+            print("  %s %s -> 200 %s, %d chars (%.0fs)" % (tag, model, fin, len(txt), time.time() - t1))
             try:
                 return parse_script(txt), model
             except ValueError as e:
-                last = (200, fin or "unparseable"); print("  gemini %s -> %s" % (model, e))
+                last = (200, fin or "unparseable"); print("  %s %s -> %s" % (tag, model, e))
                 if fin == "MAX_TOKENS": body["generationConfig"]["maxOutputTokens"] = 16384
                 continue
-        if mi >= len(models) and not discovered and last and last[0] in (404, 400):
-            discovered = True
-            extra = [m for m in list_flash_models(key) if m not in models]
-            print("  ListModels flash candidates: %s" % (", ".join(extra[:6]) or "none"))
-            models += extra[:4]
-        if DEADLINE_S - (time.time() - t0) < 15: break
-    if last and last[0] == 429: raise ModelError("سهمیه‌ی رایگان Gemini فعلاً تمام شده؛ چند دقیقه بعد «دوباره» را بزن.", "quota (429)")
-    if last and last[0] == 400: raise ModelError("Gemini درخواست را نپذیرفت (HTTP 400)؛ «دوباره» را بزن.", "HTTP 400")
-    if last and last[0] == 200: raise ModelError("پاسخ Gemini قابل خواندن نبود؛ «دوباره» را بزن.", "bad answer (%s)" % (last[1],))
-    if last and last[0] == 404: raise ModelError("مدل Gemini پیدا نشد (HTTP 404).", "no model (404)")
-    raise ModelError("Gemini به‌موقع جواب نداد؛ «دوباره» را بزن.", "no answer %s" % (last,))
+        if budget - (time.time() - t0) < 12: break
+    raise ModelError(_kind(last), "%s: %s" % (tag, last))
+
+
+def call_openai(pid, prompt, key, budget):
+    url, models, extra = OPENAI_COMPAT[pid]
+    t0 = time.time(); last = None
+    for model in models:
+        body = {"model": model, "temperature": 0.9, "max_tokens": 4096, "response_format": {"type": "json_object"},
+                "messages": [{"role": "system", "content": SYSTEM + "\n\nفقط یک شیء JSON معتبر با این شکل برگردان (بدون هیچ متن دیگری):\n" + JSON_SHAPE},
+                             {"role": "user", "content": prompt}]}
+        tries = 0
+        while tries < 2:
+            tries += 1
+            left = budget - (time.time() - t0)
+            if left < 8: break
+            h = {"Content-Type": "application/json", "Authorization": "Bearer " + key, "User-Agent": "social-panel-screen"}
+            h.update(extra)
+            t1 = time.time()
+            try:
+                with urllib.request.urlopen(urllib.request.Request(url, data=json.dumps(body).encode(), method="POST", headers=h), timeout=min(60, left)) as resp:
+                    data = json.loads(resp.read())
+            except urllib.error.HTTPError as e:
+                st, msg = _err_of(e)
+                last = (e.code, st)
+                print("  %s %s -> HTTP %s %s (%.0fs)" % (pid, model, e.code, st, time.time() - t1))
+                if e.code == 400 and "response_format" in body and ("response_format" in msg or "json" in msg.lower()):
+                    del body["response_format"]; tries -= 1; continue
+                if e.code in (401, 403): raise ModelError("key", "%s key refused (HTTP %s)" % (pid, e.code))
+                if e.code in (500, 502, 503, 504) and tries < 2: time.sleep(2); continue
+                break
+            except Exception as e:
+                last = (0, type(e).__name__); print("  %s %s -> %s (%.0fs)" % (pid, model, type(e).__name__, time.time() - t1)); break
+            ch = (data.get("choices") or [{}])[0]
+            txt = str((ch.get("message") or {}).get("content") or "")
+            print("  %s %s -> 200 %s, %d chars (%.0fs)" % (pid, model, ch.get("finish_reason", ""), len(txt), time.time() - t1))
+            try:
+                return parse_script(txt), model
+            except ValueError as e:
+                last = (200, "unparseable"); print("  %s %s -> %s" % (pid, model, e)); continue
+        if budget - (time.time() - t0) < 8: break
+    raise ModelError(_kind(last), "%s: %s" % (pid, last))
+
+
+def _kind(last):
+    if not last: return "down"
+    if last[0] == 429: return "quota"
+    if last[0] == 200: return "bad"
+    return "down"
+
+
+FAIL_FA = {"quota": "سهمیه‌ی رایگان همه‌ی سرویس‌ها فعلاً تمام شده؛ چند دقیقه بعد «دوباره» را بزن.",
+           "key": "کلید سرویس‌های هوش مصنوعی در Secrets گیت‌هاب نامعتبر است.",
+           "bad": "پاسخ سرویس‌های هوش مصنوعی قابل خواندن نبود؛ «دوباره» را بزن.",
+           "down": "سرویس‌های هوش مصنوعی به‌موقع جواب ندادند؛ «دوباره» را بزن.",
+           "none": "هیچ کلید هوش مصنوعی (GEMINI_API_KEY و …) در Secrets گیت‌هاب تنظیم نشده."}
+PROVIDER_FA = {"gemini": "Gemini", "gemini-2": "Gemini (کلید دوم)", "groq": "Groq", "openrouter": "OpenRouter"}
+
+
+def call_model(prompt):
+    """walk the provider chain; returns (script, provider, model); raises ModelError(reason_fa) only when all failed"""
+    t0 = time.time(); kinds = []; tried = []
+    chain = [(pid, os.environ.get(env, "").strip(), kind, bud) for pid, env, kind, bud in PROVIDERS]
+    active = [c for c in chain if c[1]]
+    print("  providers: %s" % (", ".join(c[0] for c in active) or "none"))
+    for i, (pid, key, kind, bud) in enumerate(active):
+        left = DEADLINE_S - (time.time() - t0)
+        # keep room for the providers after this one (fast ones answer in seconds)
+        reserve = sum(min(25, c[3]) for c in active[i + 1:])
+        budget = max(15, min(bud, left - reserve)) if i < len(active) - 1 else left
+        if left < 10: break
+        tried.append(pid)
+        try:
+            sc, model = call_gemini(prompt, key, budget, pid) if kind == "gemini" else call_openai(pid, prompt, key, budget)
+            return sc, pid, model
+        except ModelError as e:
+            print("  %s failed (%s); next provider" % (pid, e.log)); kinds.append(e.reason)
+    if not active: raise ModelError(FAIL_FA["none"], "no provider keys")
+    k = "quota" if kinds and all(x == "quota" for x in kinds) else "key" if kinds and all(x == "key" for x in kinds) else \
+        "bad" if "bad" in kinds else "down"
+    raise ModelError(FAIL_FA[k] + " (امتحان‌شده: %s)" % "، ".join(PROVIDER_FA.get(p, p) for p in tried), "all providers failed: %s" % ",".join(kinds))
 
 
 def list_flash_models(key):
@@ -363,10 +448,11 @@ def main(argv=None):
         brief = identity_brief(repo, page, kid, priv)
         print("  identity brief: %s" % ("yes (%d chars)" % len(brief) if brief else "no, using page topic"))
         try:
-            if a.mock: sc, model = dict(MOCK), "mock"
-            else: sc, model = call_gemini(build_prompt(req, brief))
-            oid, _ = post_out(repo, page, {"type": "script", "request_id": rid, "screen_id": req.get("screen_id"), "script": sc, "by": "screen-robot", "model": model}, a.dry_run)
-            print("  ok: %s, %d beats -> hark/out/%s/%s.json%s" % (model, len(sc.get("beats") or []), page, oid, " (dry run, not written)" if a.dry_run else ""))
+            if a.mock: sc, provider, model = dict(MOCK), "mock", "mock"
+            else: sc, provider, model = call_model(build_prompt(req, brief))
+            oid, _ = post_out(repo, page, {"type": "script", "request_id": rid, "screen_id": req.get("screen_id"), "script": sc, "by": "screen-robot",
+                                           "provider": provider, "model": model}, a.dry_run)
+            print("  ok: %s/%s, %d beats -> hark/out/%s/%s.json%s" % (provider, model, len(sc.get("beats") or []), page, oid, " (dry run, not written)" if a.dry_run else ""))
             summary["done"].append(rid)
         except ModelError as e:
             oid, _ = post_out(repo, page, {"type": "screen_error", "request_id": rid, "screen_id": req.get("screen_id"), "reason": e.reason}, a.dry_run)
