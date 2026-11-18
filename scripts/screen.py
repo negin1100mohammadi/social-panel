@@ -35,7 +35,7 @@ PAGES = ["hamrah-seller", "titan-station", "fancatstic-four", "shode-dige", "pre
 REQ_INFO, OUT_INFO, ID_INFO = "sp-hark-req-v1", "sp-hark-out-v1", "sp-hark-id-v1"
 ALG = "ECDH-P256+HKDF-SHA256+A256GCM"
 TEH = timezone(timedelta(hours=3, minutes=30))
-MODELS = ["gemini-2.5-flash", "gemini-2.0-flash"]  # the brief's models; gemini-flash-latest + the newest flash models from ListModels go first
+MODELS = ["gemini-2.5-flash", "gemini-2.0-flash"]  # the brief's models; the newest flash models from ListModels and gemini-flash-latest go first
 API = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent"
 
 
@@ -197,7 +197,10 @@ def call_gemini(prompt):
     t0 = time.time(); last = None
     found = list_flash_models(key)
     print("  flash models: %s" % (", ".join(found[:5]) or "none listed"))
-    models = ["gemini-flash-latest"] + [m for m in found[:4] if m not in MODELS] + MODELS; discovered = True; mi = 0
+    models = []
+    for m in found[:4] + ["gemini-flash-latest"] + MODELS:
+        if m not in models: models.append(m)
+    discovered = True; mi = 0
     while mi < len(models):
         model = models[mi]; mi += 1
         body = json.loads(json.dumps(base))
