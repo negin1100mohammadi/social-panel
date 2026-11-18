@@ -1,6 +1,6 @@
 {
  "v": 1,
- "updated_at": "2026-11-15T20:29:14Z",
+ "updated_at": "2026-11-18T12:13:39Z",
  "items": [
   {
    "req": "verify2",
@@ -10,6 +10,17 @@
    "status": "needs_setup",
    "error_fa": "این پیج حساب یوتیوب متصل (و هم‌خوان) ندارد؛ اول «اتصال» را بزن.",
    "at": "2026-11-15T20:29:14Z"
+  },
+  {
+   "req": "rmwm31hoz276eb6",
+   "page": "titan-station",
+   "parent_id": "UgzNSK3bD8UhRyB6LvN4AaABAg",
+   "text": "❤️",
+   "status": "sent",
+   "reply_id": "UgzNSK3bD8UhRyB6LvN4AaABAg.AdKvRdhE-kGAdLzZntvh-P",
+   "channel_id": "UCJu9uDiwC2XOug0s7kkzZ3g",
+   "published": "2026-11-18T12:13:39Z",
+   "at": "2026-11-18T12:13:39Z"
   }
  ]
 }
