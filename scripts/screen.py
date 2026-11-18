@@ -193,7 +193,7 @@ def call_gemini(prompt):
     base = {"systemInstruction": {"parts": [{"text": SYSTEM}]},
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "generationConfig": {"responseMimeType": "application/json", "responseSchema": SCHEMA, "temperature": 0.9, "maxOutputTokens": 8192,
-                                 "thinkingConfig": {"thinkingBudget": 1024}}}
+                                 "thinkingConfig": {"thinkingBudget": 512}}}
     t0 = time.time(); last = None
     found = list_flash_models(key)
     print("  flash models: %s" % (", ".join(found[:5]) or "none listed"))
@@ -211,7 +211,7 @@ def call_gemini(prompt):
             if left < 15: break
             t1 = time.time()
             try:
-                data = _post(model, body, key, min(120, left))
+                data = _post(model, body, key, min(70, left))
             except urllib.error.HTTPError as e:
                 try: err = json.loads(e.read()).get("error") or {}
                 except Exception: err = {}
