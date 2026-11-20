@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-20T10:33:22.442133+00:00",
+ "updated": "2026-11-20T13:50:47.219341+00:00",
  "pages": {
   "hamrah-seller": {
    "status": "ok",
@@ -94,7 +94,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-20T09:52:30.901Z"
+     "metricsUpdatedAt": "2026-11-20T12:52:32.161Z"
     },
     {
      "id": "6afe0241b38fc9c50b4cc23f",
@@ -176,13 +176,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 3.48,
+       "value": 3.47,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Views",
-       "value": 215,
+       "value": 216,
        "unit": "count"
       },
       {
@@ -200,7 +200,7 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 28.87,
+       "value": 29.04,
        "unit": "count"
       },
       {
@@ -212,11 +212,11 @@
       {
        "type": "reach",
        "name": "Reach",
-       "value": 201,
+       "value": 202,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-20T09:52:30.901Z"
+     "metricsUpdatedAt": "2026-11-20T12:52:32.182Z"
     },
     {
      "id": "6afd6cc8bbedb3d3373b9940",
@@ -338,7 +338,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-20T09:52:30.901Z"
+     "metricsUpdatedAt": "2026-11-20T12:52:32.140Z"
     },
     {
      "id": "6afc4df3116d8535a4646d9b",
@@ -402,7 +402,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-20T09:52:30.901Z"
+     "metricsUpdatedAt": "2026-11-20T12:52:32.149Z"
     },
     {
      "id": "6afc0203f17e85e8abfc49b6",
@@ -640,7 +640,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-20T09:52:30.901Z"
+     "metricsUpdatedAt": "2026-11-20T12:52:32.166Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633529",
@@ -704,7 +704,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-20T09:52:30.901Z"
+     "metricsUpdatedAt": "2026-11-20T12:52:32.156Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633525",
@@ -768,7 +768,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-20T09:52:30.901Z"
+     "metricsUpdatedAt": "2026-11-20T12:52:32.186Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633522",
@@ -832,7 +832,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-20T09:52:30.901Z"
+     "metricsUpdatedAt": "2026-11-20T12:52:32.152Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633520",
@@ -890,7 +890,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-19T12:52:22.105Z"
+     "metricsUpdatedAt": "2026-11-20T12:52:32.144Z"
     },
     {
      "id": "6afb0a78dbbf158e2c63351e",
@@ -954,7 +954,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-20T09:52:30.901Z"
+     "metricsUpdatedAt": "2026-11-20T12:52:32.170Z"
     },
     {
      "id": "6afb0a78dbbf158e2c63351c",
@@ -1018,7 +1018,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-20T09:52:30.901Z"
+     "metricsUpdatedAt": "2026-11-20T12:52:32.158Z"
     },
     {
      "id": "6afb0a78dbbf158e2c63351a",
@@ -1082,7 +1082,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-20T09:52:30.901Z"
+     "metricsUpdatedAt": "2026-11-20T12:52:32.180Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633518",
@@ -1146,7 +1146,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-20T09:52:30.901Z"
+     "metricsUpdatedAt": "2026-11-20T12:52:32.168Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633516",
@@ -1210,7 +1210,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-20T09:52:30.901Z"
+     "metricsUpdatedAt": "2026-11-20T12:52:32.175Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633514",
@@ -1274,7 +1274,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-20T09:52:30.901Z"
+     "metricsUpdatedAt": "2026-11-20T12:52:32.142Z"
     },
     {
      "id": "6af8c0694cec742ed9bab20b",
