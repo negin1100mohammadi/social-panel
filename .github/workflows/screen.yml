@@ -1,11 +1,13 @@
 name: Screen (غربال‌گری)
 run-name: "screen ${{ inputs.selftest == 'true' && 'selftest' || inputs.request_id || 'all' }}"
 
-# v25: «شروع غربال‌گری» in «مغز متفکر» › «غربال‌گری» dispatches this workflow:
+# v26: «شروع غربال‌گری» in «مغز متفکر» › «غربال‌گری» dispatches this workflow:
 #   POST /repos/negin1100mohammadi/social-panel/actions/workflows/screen.yml/dispatches
 #   {"ref":"main","inputs":{"request_id":"r…"}}        (no request_id = every pending «screen» request)
-# scripts/screen.py decrypts the request with HARK_PRIV_JWK, writes a viral Persian script with the first free AI provider that
-# answers (GEMINI_API_KEY → GEMINI_API_KEY_2 → GROQ_API_KEY → OPENROUTER_API_KEY; empty secrets are skipped)
+# scripts/screen.py decrypts the request with HARK_PRIV_JWK, writes a viral Persian script with the first AI provider that
+# answers: Gemini ۱ (GEMINI_API_KEY, up to 5 min) → Gemini ۲ (GEMINI_API_KEY_2, up to 5 min) → "ChatGPT" = OpenAI's open model
+# openai/gpt-oss-120b via GROQ_API_KEY (~2 min), then OPENROUTER_API_KEY (openai/gpt-oss-120b:free); empty secrets are skipped;
+# the whole chain stops after ~13 min (DEADLINE_S) and the panel polls for ~14 min
 # following the brand identity, encrypts the answer to the panel (hark/out/<page>/) and deletes the request.
 # Repo + logs are public: nothing decrypted is ever printed.
 on:
@@ -24,7 +26,7 @@ concurrency:
 jobs:
   screen:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

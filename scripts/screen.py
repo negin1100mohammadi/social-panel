@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""«غربال‌گری» robot (v25): answers encrypted «screen» requests right away with Gemini.
+"""«غربال‌گری» robot (v26): answers encrypted «screen» requests right away with Gemini.
 
 Run by .github/workflows/screen.yml when Negin presses «شروع غربال‌گری» in «مغز متفکر» › «غربال‌گری».
 Works on a checkout of the repo (the workflow commits + pushes what it writes):
@@ -8,8 +8,11 @@ Works on a checkout of the repo (the workflow commits + pushes what it writes):
   writes  hark/out/<page>/<oid>.json   ECIES to config/inbox_pub.json (info "sp-hark-out-v1", AAD "sp-hark-out-v1|<page>/<oid>")
           = the same {type:"script"} message as hark_bridge.py post-script, or {type:"screen_error", reason} on failure
   deletes the handled request file (= hark_bridge.py mark-done).
-Secrets: HARK_PRIV_JWK (Hark's private key doc {kid, jwk}); AI keys, tried in order, empty ones skipped:
-  GEMINI_API_KEY, GEMINI_API_KEY_2 (Gemini), GROQ_API_KEY (Groq), OPENROUTER_API_KEY (OpenRouter free models).
+Secrets: HARK_PRIV_JWK (Hark's private key doc {kid, jwk}); AI keys, tried in order, empty ones skipped (v26 chain):
+  1. GEMINI_API_KEY    = Gemini ۱, up to 300 s (its internal model retries fit inside that budget)
+  2. GEMINI_API_KEY_2  = Gemini ۲, up to 300 s
+  3. "ChatGPT" = OpenAI's open model openai/gpt-oss-120b: GROQ_API_KEY (~120 s), then OPENROUTER_API_KEY (openai/gpt-oss-120b:free) as last resort.
+  Whole run stops trying after DEADLINE_S (~13 min) and posts a screen_error the panel shows with «دوباره».
 The repo and the Actions logs are public: this script never prints decrypted content (titles, ideas, identity, scripts).
 
   python scripts/screen.py [--root .] [--request-id r…] [--dry-run] [--mock]
@@ -178,18 +181,19 @@ class ModelError(Exception):
     def __init__(self, reason, log): Exception.__init__(self, log); self.reason = reason; self.log = log
 
 
-DEADLINE_S = 225  # the panel waits ~4 min; stop trying before that and report an error it can show
-# provider chain (v25): the first one that returns a valid script wins; a provider whose secret is empty is skipped
-PROVIDERS = [  # (id, env var, kind, budget seconds)
-    ("gemini", "GEMINI_API_KEY", "gemini", 95),
-    ("gemini-2", "GEMINI_API_KEY_2", "gemini", 70),
-    ("groq", "GROQ_API_KEY", "openai", 45),
-    ("openrouter", "OPENROUTER_API_KEY", "openai", 70),
+DEADLINE_S = 780  # v26: the panel waits ~14 min (workflow timeout 18 min); stop trying before that and report an error it can show
+# provider chain (v26): Gemini ۱ (5 min) → Gemini ۲ (5 min) → ChatGPT = gpt-oss-120b (Groq, then OpenRouter).
+# The first one that returns a valid script wins; a provider whose secret is empty is skipped.
+PROVIDERS = [  # (id, env var, kind, budget seconds, reserved for it by the providers before it)
+    ("gemini", "GEMINI_API_KEY", "gemini", 300, 0),
+    ("gemini-2", "GEMINI_API_KEY_2", "gemini", 300, 0),
+    ("groq", "GROQ_API_KEY", "openai", 120, 60),
+    ("openrouter", "OPENROUTER_API_KEY", "openai", 120, 45),
 ]
-OPENAI_COMPAT = {
-    "groq": ("https://api.groq.com/openai/v1/chat/completions", ["llama-3.3-70b-versatile", "openai/gpt-oss-120b"], {}),
-    "openrouter": ("https://openrouter.ai/api/v1/chat/completions", ["deepseek/deepseek-chat-v3-0324:free", "meta-llama/llama-3.3-70b-instruct:free"],
-                   {"HTTP-Referer": "https://negin1100mohammadi.github.io/social-panel/", "X-Title": "social-panel screening"}),
+OPENAI_COMPAT = {  # (url, models, extra headers, reasoning params) — only OpenAI's open model, no llama/deepseek fallbacks
+    "groq": ("https://api.groq.com/openai/v1/chat/completions", ["openai/gpt-oss-120b"], {}, {"reasoning_effort": "low"}),
+    "openrouter": ("https://openrouter.ai/api/v1/chat/completions", ["openai/gpt-oss-120b:free"],
+                   {"HTTP-Referer": "https://negin1100mohammadi.github.io/social-panel/", "X-Title": "social-panel screening"}, {"reasoning": {"effort": "low"}}),
 }
 JSON_SHAPE = ('{"title": "…", "hook": "…", "beats": [{"t": "0:03", "text": "…"}], "cta": "…", "text": "متن کامل با شکست خط", '
               '"caption": "…", "hashtags": ["#…"], "platforms": {"reels": "…", "shorts": "…", "tiktok": "…"}, "trend": "… یا خالی"}')
@@ -230,7 +234,7 @@ def call_gemini(prompt, key, budget, tag="gemini"):
             if left < 12: break
             t1 = time.time()
             try:
-                data = _post(model, body, key, min(60, left))
+                data = _post(model, body, key, min(120, left))
             except urllib.error.HTTPError as e:
                 st, msg = _err_of(e)
                 last = (e.code, st)
@@ -260,12 +264,13 @@ def call_gemini(prompt, key, budget, tag="gemini"):
 
 
 def call_openai(pid, prompt, key, budget):
-    url, models, extra = OPENAI_COMPAT[pid]
+    url, models, extra, reasoning = OPENAI_COMPAT[pid]
     t0 = time.time(); last = None
     for model in models:
-        body = {"model": model, "temperature": 0.9, "max_tokens": 4096, "response_format": {"type": "json_object"},
+        body = {"model": model, "temperature": 0.9, "max_tokens": 8192, "response_format": {"type": "json_object"},
                 "messages": [{"role": "system", "content": SYSTEM + "\n\nفقط یک شیء JSON معتبر با این شکل برگردان (بدون هیچ متن دیگری):\n" + JSON_SHAPE},
                              {"role": "user", "content": prompt}]}
+        body.update(json.loads(json.dumps(reasoning)))
         tries = 0
         while tries < 2:
             tries += 1
@@ -275,7 +280,7 @@ def call_openai(pid, prompt, key, budget):
             h.update(extra)
             t1 = time.time()
             try:
-                with urllib.request.urlopen(urllib.request.Request(url, data=json.dumps(body).encode(), method="POST", headers=h), timeout=min(60, left)) as resp:
+                with urllib.request.urlopen(urllib.request.Request(url, data=json.dumps(body).encode(), method="POST", headers=h), timeout=min(90, left)) as resp:
                     data = json.loads(resp.read())
             except urllib.error.HTTPError as e:
                 st, msg = _err_of(e)
@@ -283,6 +288,9 @@ def call_openai(pid, prompt, key, budget):
                 print("  %s %s -> HTTP %s %s (%.0fs)" % (pid, model, e.code, st, time.time() - t1))
                 if e.code == 400 and "response_format" in body and ("response_format" in msg or "json" in msg.lower()):
                     del body["response_format"]; tries -= 1; continue
+                if e.code == 400 and any(k in body for k in reasoning) and "reasoning" in msg.lower():
+                    for k in reasoning: body.pop(k, None)
+                    tries -= 1; continue
                 if e.code in (401, 403): raise ModelError("key", "%s key refused (HTTP %s)" % (pid, e.code))
                 if e.code in (500, 502, 503, 504) and tries < 2: time.sleep(2); continue
                 break
@@ -311,21 +319,22 @@ FAIL_FA = {"quota": "سهمیه‌ی رایگان همه‌ی سرویس‌ها 
            "bad": "پاسخ سرویس‌های هوش مصنوعی قابل خواندن نبود؛ «دوباره» را بزن.",
            "down": "سرویس‌های هوش مصنوعی به‌موقع جواب ندادند؛ «دوباره» را بزن.",
            "none": "هیچ کلید هوش مصنوعی (GEMINI_API_KEY و …) در Secrets گیت‌هاب تنظیم نشده."}
-PROVIDER_FA = {"gemini": "Gemini", "gemini-2": "Gemini (کلید دوم)", "groq": "Groq", "openrouter": "OpenRouter"}
+PROVIDER_FA = {"gemini": "Gemini ۱", "gemini-2": "Gemini ۲", "groq": "ChatGPT (gpt-oss، Groq)", "openrouter": "ChatGPT (gpt-oss، OpenRouter)"}
 
 
 def call_model(prompt):
     """walk the provider chain; returns (script, provider, model); raises ModelError(reason_fa) only when all failed"""
     t0 = time.time(); kinds = []; tried = []
-    chain = [(pid, os.environ.get(env, "").strip(), kind, bud) for pid, env, kind, bud in PROVIDERS]
+    chain = [(pid, os.environ.get(env, "").strip(), kind, bud, rsv) for pid, env, kind, bud, rsv in PROVIDERS]
     active = [c for c in chain if c[1]]
     print("  providers: %s" % (", ".join(c[0] for c in active) or "none"))
-    for i, (pid, key, kind, bud) in enumerate(active):
+    for i, (pid, key, kind, bud, _r) in enumerate(active):
         left = DEADLINE_S - (time.time() - t0)
-        # keep room for the providers after this one (fast ones answer in seconds)
-        reserve = sum(min(25, c[3]) for c in active[i + 1:])
-        budget = max(15, min(bud, left - reserve)) if i < len(active) - 1 else left
+        # each Gemini step gets its full 5 min; the gpt-oss steps share what is left (the later one keeps a small reserve)
+        reserve = sum(c[4] for c in active[i + 1:])
+        budget = min(bud, left) if kind == "gemini" else max(15, min(bud, left - reserve)) if i < len(active) - 1 else min(bud, left)
         if left < 10: break
+        print("  step %d: %s (budget %ds)" % (i + 1, pid, budget))
         tried.append(pid)
         try:
             sc, model = call_gemini(prompt, key, budget, pid) if kind == "gemini" else call_openai(pid, prompt, key, budget)
