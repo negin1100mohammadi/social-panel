@@ -1,0 +1,17 @@
+{
+ "v": 1,
+ "kid": "cf5f61aaccbaa3d5",
+ "alg": "ECDH-P256+HKDF-SHA256+A256GCM",
+ "info": "sp-hark-out-v1",
+ "epk": {
+  "kty": "EC",
+  "crv": "P-256",
+  "x": "Ko46ekTkOlv8rQS2LumX0QV2tiuzu1FFBRnBwZj9xm8",
+  "y": "F3zq9Pu-vl9pR4pG5NY9NQMciHIMlnXU4MBTFnDNIVE"
+ },
+ "iv": "Oa8hXzrNsxdidZE6",
+ "ct": "WDfGp33YuKDSlv3nIsTr8/PmknsJO74uRFwQX1Oy9TeA51MVQ511DbcTy4LXteQ/s/b6aFdy3+UIwcduupSeqmK14IfRdZMBAe7rl6oXJOfAB6vwgsO+9duq3d4sbwv/L2ECXgDQ/2GYrwhmukLCRgG7gA4wZA35bSFRA44oLlpepekCIfQbcWO63V42x8/0MAjdP20kMJuIsCcEPkyIsK9kdPH2CzEWOzaWfIpRdfk2wY/TsJB9Y7sZOV+QLZwzk8NyvkNUSbhH+FdaDly9st5Ojsq+Nz6z0jwfjlb4UH70aMlOmrzDfXgBV9jpl1w81F+JeOJ7qQUZ45DfYQnbpwJcc7c6Hy4DAgnxjhoUOexqAmy6fj83GHk+5TJpjEh7okg409NdYhp3foE3rTgIXySDITft4K5xiBa202B27GNHJLZ0",
+ "created_at": "2026-11-20T21:00:19+03:30",
+ "id": "o261120-210019-012e86",
+ "page": "shode-dige"
+}
