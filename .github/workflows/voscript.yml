@@ -1,0 +1,60 @@
+name: Voice-over script (اسکریپت ویس‌اور)
+run-name: "voscript ${{ inputs.selftest == 'true' && 'selftest' || inputs.request_id || 'all' }}"
+
+# v28: «نوشتن ویس‌اور» in «مغز متفکر» › ۵ «اسکریپت ویس‌اور» dispatches this workflow:
+#   POST /repos/negin1100mohammadi/social-panel/actions/workflows/voscript.yml/dispatches
+#   {"ref":"main","inputs":{"request_id":"r…"}}        (no request_id = every pending «voscript» request)
+# scripts/voscript.py (uses scripts/screen.py's crypto + provider chain) decrypts the request with HARK_PRIV_JWK and writes the Persian
+# voice-over text (timing per slide/scene + tone notes) from the approved final script, the content type and the brand identity, with the
+# first provider that answers: Gemini ۱ (GEMINI_API_KEY, ≤5 min) → Gemini ۲ (GEMINI_API_KEY_2, ≤5 min) → ChatGPT = openai/gpt-oss-120b
+# (GROQ_API_KEY, then OPENROUTER_API_KEY); empty secrets are skipped; ~13 min max; the panel polls for ~14 min.
+# The answer is encrypted to the panel (hark/out/<page>/) and the request is deleted. Repo + logs are public: nothing decrypted is printed.
+on:
+  workflow_dispatch:
+    inputs:
+      request_id: { description: "hark/requests/<id> (empty = all pending voscript requests)", required: false, default: "", type: string }
+      selftest:   { description: "true = synthetic request with throwaway keys + real AI call, nothing written", required: false, default: "false", type: string }
+
+permissions:
+  contents: write
+
+concurrency:
+  group: voscript-${{ inputs.selftest == 'true' && 'selftest' || inputs.request_id || 'all' }}
+  cancel-in-progress: false
+
+jobs:
+  voscript:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -q cryptography
+      - name: Write voice-over
+        env:
+          HARK_PRIV_JWK: ${{ secrets.HARK_PRIV_JWK }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          REQUEST_ID: ${{ inputs.request_id }}
+          SELFTEST: ${{ inputs.selftest }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          if [ "$SELFTEST" = "true" ]; then python scripts/voscript.py --selftest; exit $?; fi
+          python scripts/voscript.py --root .
+      - name: Commit answers
+        if: inputs.selftest != 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A hark/out hark/requests
+          if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
+          git commit -q -m "hark: voscript ${REQUEST_ID:-all} $(TZ=Asia/Tehran date '+%Y-%m-%d %H:%M') Tehran"
+          for i in 1 2 3 4 5; do git pull -q --rebase --autostash origin "${GITHUB_REF_NAME}" && git push -q && exit 0; sleep $((i*3)); done
+          exit 1
+        env:
+          REQUEST_ID: ${{ inputs.request_id }}

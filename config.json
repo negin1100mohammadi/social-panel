@@ -302,6 +302,14 @@
       }
     }
   },
+  "voice_tools": {
+    "_note": "v28 — PRELIMINARY list for «ساخت صدا» (Negin will give the final tools). id = what the panel sends as voice.tool; url = the tool page the team (and Hark) opens.",
+    "preliminary": true,
+    "list": [
+      { "id": "elevenlabs", "name": "ElevenLabs", "url": "https://elevenlabs.io/app/speech-synthesis", "color": "#111827" },
+      { "id": "other", "name": "ابزار دیگر", "url": "", "color": "#64748b", "note": "جای خالی تا نگین ابزارهای نهایی رو بگه" }
+    ]
+  },
   "youtube_oauth": {
     "client_id": "37619814235-dmnoad0krqqla6bcgpp5kc7vnrre1c66.apps.googleusercontent.com",
     "redirect_uri": "https://negin1100mohammadi.github.io/social-panel/oauth.html",

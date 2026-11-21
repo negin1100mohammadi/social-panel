@@ -105,6 +105,20 @@ All handles live in `config.json` (`pages[].accounts`). Page order on the Home s
 
 The vault button only links to `https://vault.vaultwarden.com/`. Never commit passwords, tokens or vault content to this repo — use GitHub Secrets.
 
+## v28 (2026-11-21) — ویس‌اور و ساخت صدا (خط تولید ۸ مرحله‌ای)
+
+Brain line: مغز متفکر › غربال‌گری › اسکریپت نهایی › نوع محتوا › **اسکریپت ویس‌اور** › **ساخت صدا** › ساخت › مشاهده و انتشار.
+- «اسکریپت ویس‌اور»: per item «ویس‌اور» or «بدون ویس‌اور (موسیقی)». «نوشتن ویس‌اور» sends an encrypted `voscript` request and dispatches
+  `.github/workflows/voscript.yml` (`scripts/voscript.py`, same crypto + provider chain/timing as `screen.py`: GEMINI_API_KEY 5 min →
+  GEMINI_API_KEY_2 5 min → openai/gpt-oss-120b via GROQ_API_KEY then OPENROUTER_API_KEY). Output: Persian voice-over with timing per
+  slide/scene + tone notes, encrypted to the panel. Music = mood/track note + optional link. Dual approval (نگین + امیرحسین).
+- «ساخت صدا»: tools from `config.json` `voice_tools` (preliminary), «ارسال برای ساخت صدا» = encrypted `voice` request for Hark's
+  scheduled run (result `voice_result` with `audio_url`); or upload / record (MediaRecorder) an audio file, staged on `media-upload`
+  under `gallery/voice-…` and moved into the public `gallery` release by publish.yml. Dual approval; music skips this step.
+- `produce` requests now carry `voiceover`, `voice_url` (+ name/source/tool) and `music`.
+- Back button is sticky under the top bar on every page; the «در حال به‌روزرسانی» box opens below it.
+- Tests: `node tests/v28.test.js <fixture> <media>` (42 checks), `python3 scripts/voscript.py --selftest --mock`.
+
 ## v8 (2026-11-16) — مغز متفکر، گالری محتوا، انتشار جدید
 
 ### فارسی

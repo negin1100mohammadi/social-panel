@@ -179,7 +179,10 @@ def migrate_gallery():
             continue
         ext = os.path.splitext(name)[1].lower()
         ctype = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif", ".heic": "image/heic",
-                 ".mp4": "video/mp4", ".mov": "video/quicktime", ".webm": "video/webm", ".m4v": "video/mp4"}.get(ext, "application/octet-stream")
+                 ".mp4": "video/mp4", ".mov": "video/quicktime", ".webm": "video/webm", ".m4v": "video/mp4",
+                 # v28: voice-over audio (uploaded / recorded in «ساخت صدا», or posted by Hark) lives in the same release
+                 ".mp3": "audio/mpeg", ".m4a": "audio/mp4", ".aac": "audio/aac", ".wav": "audio/wav", ".ogg": "audio/ogg", ".oga": "audio/ogg",
+                 ".opus": "audio/ogg", ".weba": "audio/webm", ".flac": "audio/flac"}.get(ext, "application/octet-stream")
         fd, path = tempfile.mkstemp(suffix=ext)
         os.close(fd)
         try:
