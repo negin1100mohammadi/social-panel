@@ -1509,3 +1509,21 @@ i.undc { font-style: normal; color: #c2410c; }
 .job .jh.has-bdg { position: static; } .job .jh .bdg { position: static; margin-inline-start: auto; box-shadow: none; }
 .job.needs { box-shadow: inset 3px 0 0 #e11d48, var(--shadow); }
 .topbar .brand a.bdg-link .bdg { inset-inline-start: -30px; top: -2px; }
+
+/* v30.1: purple «تازه» = new Hark ideas (suggestions, not tasks). Red .bdg stays for «کار داری». */
+.has-new { position: relative; }
+.bdg-new { position: absolute; top: 8px; inset-inline-end: 8px; z-index: 3; display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 8px; border-radius: 999px;
+  background: #f3e8ff; color: #6d28d9; border: 1px solid #ddd6fe; font: 700 11px/18px inherit; font-style: normal; white-space: nowrap; pointer-events: none; }
+.bdg-new::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #8b5cf6; flex: none; }
+.bdg-new.dot { width: 10px; height: 10px; padding: 0; box-sizing: content-box; border: 2px solid var(--bg, #fff); background: #a78bfa; }
+.bdg-new.dot::before { display: none; }
+.hb .bdg-new { top: 8px; inset-inline-end: 8px; }
+.dombox.brain .bdg-new { top: auto; bottom: 8px; inset-inline-end: 10px; }
+.subtabs .tab.has-new .bdg-new { position: static; margin-inline-start: 6px; vertical-align: middle; }
+.line .ln-st .bdg-new.dot { top: -4px; inset-inline-end: -2px; }
+.newchip { display: inline-block; margin-inline-start: 6px; padding: 0 8px; border-radius: 999px; background: #f3e8ff; color: #6d28d9; font-size: 11px; font-weight: 800; line-height: 18px; }
+.tdsec.soft h2 em { background: #f3e8ff; color: #6d28d9; }
+.tdsec.soft .tdlist a { border-color: #ddd6fe; }
+[data-theme="dark"] .bdg-new, [data-theme="dark"] .newchip, [data-theme="dark"] .tdsec.soft h2 em { background: rgba(139, 92, 246, .2); color: #c4b5fd; border-color: rgba(139, 92, 246, .35); }
+[data-theme="dark"] .bdg-new.dot { background: #a78bfa; }
+[data-theme="dark"] .tdsec.soft .tdlist a { border-color: rgba(139, 92, 246, .35); }

@@ -269,6 +269,14 @@ const TODO = { items: [{ id: "t1", title: "چک کردن بایو تایتان",
     ok(/صدا/.test(why("fVc1")) && /AI Studio دستیه/.test(why("fMk1")) && /منتظر تأیید نگین و امیرحسین/.test(why("fV81")), "voice / AI Studio manual / view approvals: " + [why("fVc1"), why("fMk1"), why("fV81")].join(" | "));
     ok(items.some((x) => x.area === "identity" && /slogan/.test(x.id)) === false, "no slogan item (cleared)");
     ok(items.some((x) => x.area === "today" && x.id === "todo:t1") && items.some((x) => x.area === "publish"), "todos and the failed publish are pending items");
+    // ---------- v30.1: Hark ideas are suggestions (purple «تازه»), never red
+    ok(!items.some((x) => x.sec === "idea" || x.tab === "hark"), "v30.1: no Hark idea in the red «کار داری» list");
+    ok(await page.evaluate((ps) => ps.every((p) => window.__spV30.hkNew(p) === 0), PAGES), "v30.1: first run after the update: existing Hark ideas count as seen");
+    await page.waitForTimeout(30);
+    await page.evaluate(async (p) => { const t = new Date().toISOString(); await window.__spV8.dsUpdate("brain-" + p, (d) => { d.hark = (d.hark || []).concat([1, 2, 3].map((k) => ({ id: "hn" + k, title: "ایده‌ی خیلی تازه " + k, body: "ب", created_at: t }))); return d; }); }, P2);
+    await page.evaluate(() => window.__spV30.pending(true));
+    const items2 = await page.evaluate(() => window.__spV30.items());
+    ok(items2.length === items.length && await page.evaluate((p) => window.__spV30.hkNew(p), P2) === 3 && await page.evaluate((p) => window.__spV30.hkNew(p), P1) === 0, "v30.1: 3 new ideas → hkNew(P2)=3, red list unchanged (" + items.length + "→" + items2.length + ")");
 
     // ---------- home: badges up the chain
     await hashTo(page, "#/"); await page.waitForSelector("#brainbox .bdg", { timeout: 15000 });
@@ -276,9 +284,24 @@ const TODO = { items: [{ id: "t1", title: "چک کردن بایو تایتان",
       top: !!document.querySelector("#topbar .brand a.bdg-link .bdg"), order: Array.from(document.querySelectorAll("#topbar > *")).map((e) => e.id || e.className.split(" ")[0]).join(",") }));
     ok(hb.brain && hb.today && hb.pub && hb.top, "home: badges on مغز متفکر / امروز / انتشار and the title box (" + JSON.stringify(hb) + ")");
     ok(hb.order === "refresh,brand,tbox,idbtn,guidebtn,theme", "top bar order unchanged (" + hb.order + ")");
+    ok(+(hb.today || "").replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)) === items.length && (await page.textContent("#brainbox .bdg-new")) === "۱" && !(await page.$("#brainbox .bdg-new.bdg")), "v30.1 home: red «امروز» = real actions only; brain box has a soft purple «۱» (brands with new ideas)");
     await noOverflow(page, "01 home");
     await hashTo(page, "#/brain", ".dombox.brain"); await page.waitForSelector(".dombox.brain .bdg", { timeout: 15000 });
     ok((await page.$$(".dombox.brain .bdg")).length === PAGES.length && (await page.$$(".line.static .ln-st .bdg")).length >= 5, "brain home: every brand tile + steps carry a badge");
+    ok((await page.$$(".dombox.brain .bdg-new")).length === 1 && /۳ ایده‌ی تازه/.test(await page.textContent('.dombox.brain[data-page="' + P2 + '"] .bdg-new')), "v30.1 brain home: only P2's tile carries «۳ ایده‌ی تازه»");
+    await noOverflow(page, "02b brain home v30.1");
+    await hashTo(page, "#/today", ".tdsec"); await page.waitForTimeout(800);
+    const soft = await page.$$eval(".tdsec.soft li", (a) => a.map((e) => e.textContent));
+    ok(soft.length === 1 && /\u200f?: ۳ ایده‌ی تازه از هارک/.test(soft[0]) && !!(await page.$('.tdsec.soft a[href="#/brain/' + P2 + '/hark"]')), "v30.1 today: one soft row per brand linking to its «پیشنهاد هارک» (" + soft.join(" | ") + ")");
+    await noOverflow(page, "07b today v30.1");
+    await hashTo(page, "#/brain/" + P2 + "/idea", "#blist"); await page.waitForSelector('.subtabs a[data-tab="hark"] .bdg-new', { timeout: 10000 });
+    ok(/۳ ایده‌ی تازه/.test(await page.textContent('.subtabs a[data-tab="hark"] .bdg-new')) && !(await page.$('.subtabs a[data-tab="hark"] .bdg')) && !!(await page.$('#line-top .ln-st[data-step="0"] .bdg-new.dot')), "v30.1: «پیشنهاد هارک» tab shows «۳ ایده‌ی تازه», no red; step ۱ soft dot");
+    await noOverflow(page, "03b brain idea v30.1");
+    await hashTo(page, "#/brain/" + P2 + "/hark", "#b-hn1"); await page.waitForTimeout(400);
+    ok((await page.$$("#blist .newchip")).length === 3 && await page.evaluate((p) => window.__spV30.hkNew(p), P2) === 0 && !(await page.$('.subtabs a[data-tab="hark"] .bdg-new')), "v30.1: opening the tab clears «تازه» (3 cards keep a «تازه» chip in this view)");
+    await noOverflow(page, "03c brain hark v30.1");
+    await hashTo(page, "#/brain", ".dombox.brain"); await page.waitForTimeout(500);
+    ok(!(await page.$(".dombox.brain .bdg-new")), "v30.1: brain home has no purple dot after opening");
     await noOverflow(page, "02 brain home");
     for (const tab of ["hark", "idea", "screen", "final", "ctype", "vo", "voice", "make", "view", "scenario"]) {
       await hashTo(page, "#/brain/" + P1 + "/" + tab, "#v8body .ilist, #v8body .empty, #blist");
@@ -344,7 +367,7 @@ const TODO = { items: [{ id: "t1", title: "چک کردن بایو تایتان",
     await hashTo(page, "#/gallery/" + P1 + "/reel", "#g-g1"); await page.click("#g-g1 .gpv summary");
     ok(!!(await page.$("#g-g1 .gpv video")) && /کپشن گالری/.test(await page.textContent("#g-g1 .gpv")) && await page.evaluate(() => { const a = document.querySelector("#g-g1 .gpv"), b = document.querySelector('#g-g1 a[href*="#/publish?g="]'); return !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING); }), "gallery item: preview (video + caption) above «انتشار»");
     await hashTo(page, "#/guide", ".ghero");
-    ok(/v30/.test(await page.textContent(".ghero")) && /کار داری/.test(await page.textContent("#app")), "guide mentions v30 and the badges");
+    ok(/v30\.1/.test(await page.textContent(".ghero")) && /کار داری/.test(await page.textContent("#app")) && /بنفش/.test(await page.textContent("#app")), "guide mentions v30.1, red «کار داری» and purple «تازه»");
     // sticky back button on inner pages
     for (const h of ["#/brain/" + P1 + "/vo", "#/pipeline", "#/publish", "#/identity/" + tit, "#/today", "#/settings", "#/tools", "#/gallery"]) {
       await hashTo(page, h); await page.waitForTimeout(500);
