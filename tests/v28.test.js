@@ -229,10 +229,9 @@ const SEED = (P) => ({ items: [], hark: [], screen: [], final: [
     jobs: { aistudio: { id: "jF", state: "error", reason: "AI Studio از مرورگر هارک باز نمی‌شود (خطای شبکه)", requested_at: "2026-11-16T08:00:00Z" } } }] });
 async function approveBoth(page, card, act) {
   for (const who of ["نگین", "امیرحسین"]) {
-    await page.selectOption(card + " select[data-me]", who);
-    await page.waitForFunction(([c, w]) => { const s = document.querySelector(c + " select[data-me]"); return s && s.value === w; }, [card, who]);
-    await page.click(card + ' [data-act="' + act + '"]');
-    await page.waitForFunction(([c, w]) => !document.querySelector(c) || /پس گرفتن تأیید/.test((document.querySelector(c + " .v6appr") || {}).textContent || "") || location.hash.indexOf("/" + "vo?") < 0, [card, who], { timeout: 15000 }).catch(() => {});
+    // v30: no «من:» selector — one explicit «تأیید <name>» button per person
+    await page.click(card + ' button.go[data-act="' + act + '"][data-who="' + who + '"]');
+    await page.waitForFunction(([c, w]) => !document.querySelector(c) || !!document.querySelector(c + ' .achip.ok [data-who="' + w + '"]') || location.hash.indexOf("/" + "vo?") < 0, [card, who], { timeout: 15000 }).catch(() => {});
     await new Promise((r) => setTimeout(r, 400));
   }
 }
@@ -453,7 +452,7 @@ async function approveBoth(page, card, act) {
     await M.page.click('.ghead[data-g="brain"]'); await M.page.waitForSelector("#g-brain .gbody");
     const gb = await M.page.textContent("#g-brain");
     await M.page.click('.ghead[data-g="topbar"]'); await M.page.waitForSelector("#g-topbar .gbody");
-    ok(/۵ · اسکریپت ویس‌اور/.test(gb) && /۶ · ساخت صدا/.test(gb) && /۸ · مشاهده و انتشار/.test(gb) && /دکمه‌ی برگشت/.test(await M.page.textContent("#g-topbar")) && /v29/.test(await M.page.textContent(".ghero")), "guide (v28) explains the new steps and the back button");
+    ok(/۵ · اسکریپت ویس‌اور/.test(gb) && /۶ · ساخت صدا/.test(gb) && /۸ · مشاهده و انتشار/.test(gb) && /دکمه‌ی برگشت/.test(await M.page.textContent("#g-topbar")) && /v(29|3\d)/.test(await M.page.textContent(".ghero")), "guide (v28) explains the new steps and the back button");
     ok(!errors.length, "no page errors (" + errors.join(" | ") + ")");
   } catch (e) { fails.push("exception: " + (e && e.stack || e)); console.log(e); }
   await browser.close(); srv.close();

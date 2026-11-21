@@ -1420,3 +1420,92 @@ button.tacc { font: inherit; cursor: pointer; }
 .ln-mini a.miss { background: var(--soft); color: var(--muted); border-style: dashed; }
 .jchip.j-manual { background: var(--soft); color: var(--muted); border: 1px solid var(--line); }
 .jman { flex-basis: 100%; font-size: 12px; color: var(--muted); margin-top: 2px; }
+/* ---- v30: «اینجا کار داری» badges, undecided identity, explicit approvals, plain sentences */
+.has-bdg { position: relative; }
+.bdg { position: absolute; top: -6px; inset-inline-start: -6px; z-index: 3; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: #e11d48; color: #fff; font: 800 11px/20px inherit; font-style: normal; text-align: center; box-shadow: 0 0 0 2px var(--bg, #fff); pointer-events: none; }
+.hb.has-bdg .bdg, .dombox.has-bdg .bdg { top: 8px; inset-inline-start: 8px; }
+.line .ln-st .bdg { top: -7px; inset-inline-start: -5px; }
+.subtabs .tab.has-bdg .bdg, .kcol > h2 .bdg, .idsec > summary .bdg { position: static; display: inline-block; margin-inline-start: 6px; vertical-align: middle; box-shadow: none; }
+.kcol > h2.has-bdg, .idsec > summary.has-bdg { position: static; }
+.cname.has-bdg { padding-inline-end: 2px; }
+.cname .bdg { position: static; display: inline-block; margin-inline-start: 6px; box-shadow: none; }
+.pf-st .bdg { top: -7px; inset-inline-start: -4px; }
+.pc-h.has-bdg .bdg { position: static; margin-inline-start: auto; box-shadow: none; }
+.topbar .brand { position: relative; }
+.topbar .brand a.bdg-link { position: relative; display: inline-block; width: 22px; height: 22px; flex: none; text-decoration: none; }
+.topbar .brand a.bdg-link .bdg { top: 1px; inset-inline-start: 0; pointer-events: auto; }
+a.tbox.idbtn.has-bdg .bdg { top: -6px; inset-inline-start: -6px; }
+.bdg-why { margin: 6px 0 2px; padding: 6px 10px; border-radius: 10px; background: #fff1f2; color: #be123c; font-size: 12.5px; font-weight: 700; line-height: 1.7; }
+[data-theme="dark"] .bdg-why { background: rgba(225, 29, 72, .16); color: #fda4af; }
+.bitem.needs, .pcard.needs { box-shadow: inset 3px 0 0 #e11d48, var(--shadow); }
+.undchip { flex: none; font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 2px 9px; background: #fff7ed; color: #c2410c; border: 1px dashed #fdba74; }
+[data-theme="dark"] .undchip { background: rgba(251, 146, 60, .12); color: #fdba74; }
+.idsec > summary .undchip { margin-inline-start: 4px; }
+i.undc { font-style: normal; color: #c2410c; }
+.kitrm { margin-top: 8px; font-size: 12.5px; }
+.kitrm summary { cursor: pointer; color: var(--muted); }
+.kitrm pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 12.5px; background: var(--soft); padding: 8px; border-radius: 10px; max-height: 280px; overflow: auto; }
+.appr-btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+.appr-btns .achip .linkbtn { font-size: 11.5px; margin-inline-start: 4px; }
+.apprsent { margin: 0; font-weight: 700; }
+.pc-say { margin: 4px 0; font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.7; }
+/* v30: publish composer picker + queue cards */
+.vh-file { position: absolute !important; width: 1px; height: 1px; opacity: 0; overflow: hidden; pointer-events: none; }
+#src-upload { position: relative; }
+#src-upload .lbl { display: block; font-weight: 700; margin: 4px 0 6px; }
+.pfdrop { cursor: pointer; border: 2px dashed var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 800; border-radius: 16px; }
+.pfdrop svg { width: 28px; height: 28px; }
+.pfdrop.want { animation: pfpulse 1s ease 2; }
+@keyframes pfpulse { 50% { box-shadow: 0 0 0 6px rgba(124, 58, 237, .25); } }
+.fileinfo:not(:empty) { margin-top: 6px; font-weight: 700; }
+.jbrands { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.jbrand { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 4px; border-radius: 999px; background: var(--soft); border: 1px solid var(--line); font-size: 12.5px; }
+.jbrand .plogo { width: 22px; height: 22px; border-radius: 50%; }
+.jsay { margin: 6px 0; font-weight: 700; font-size: 13px; line-height: 1.8; }
+.jpv { margin: 8px 0; }
+.jpv video, .jpv img { display: block; width: 100%; max-height: 420px; object-fit: contain; background: #000; border-radius: 12px; }
+.jpv.multi { display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; }
+.jpv.multi img, .jpv.multi video { flex: 0 0 72%; scroll-snap-align: start; }
+.jcap { margin: 4px 0 8px; font-size: 13px; }
+.jcap p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 6px 0 0; line-height: 1.8; }
+.schip.okready { background: var(--good-bg); color: var(--good); white-space: normal; }
+.jtargets .tr.why { font-weight: 600; overflow-wrap: anywhere; }
+.pubpv { margin: 12px 0 6px; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--soft); }
+.pubpv h3 { margin: 0 0 8px; font-size: 14px; }
+.pvt { margin: 6px 0 2px; }
+.pvc { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.8; margin: 4px 0; }
+.pvto { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.gpv { margin: 6px 0; }
+.gpv summary { cursor: pointer; font-weight: 700; color: var(--accent); }
+/* v30: «امروز» rows: title on top, the plain sentence under it (no squeezed column) */
+.tdlist a { display: grid; grid-template-columns: 1fr auto; column-gap: 8px; align-items: center; }
+.tdlist a b { grid-column: 1; }
+.tdlist a small { grid-column: 1; margin-top: 3px; color: var(--ink); opacity: .75; line-height: 1.7; }
+.tdlist a .arrow { grid-column: 2; grid-row: 1 / span 2; }
+/* v30: the top-bar count never takes the title's width */
+.topbar .brand a.bdg-link { position: absolute; top: -9px; inset-inline-end: -8px; width: 0; height: 0; }
+.topbar .brand a.bdg-link .bdg { top: 0; inset-inline-start: auto; inset-inline-end: -12px; pointer-events: auto; }
+/* v30: 375 px top bar — every button fits (the theme button was clipped) and the title keeps ~80 px; order unchanged */
+@media (max-width: 400px) {
+  .topbar { gap: 4px; padding-left: 10px; padding-right: 10px; margin-left: -16px; margin-right: -16px; }
+  .refresh-btn { width: 38px; height: 38px; border-radius: 12px; }
+  .topbar .tbox { height: 38px; padding: 0 6px; border-radius: 12px; }
+  .topbar .brand { min-width: 64px; }
+  .topbar .brand b { font-size: 14px; }
+  .tbox .ul b { font-size: 11px; } .tbox .ul span { font-size: 9.5px; }
+  a.tbox.idbtn { padding: 0 7px; font-size: 12px; }
+  a.tbox.guidebtn { padding: 0 6px; }
+  .topbar button.tbox#theme { padding: 0 7px; }
+}
+/* v30 fix: at ≤420 px the theme button lost its icon (and at ≤380 its label), leaving an empty sliver */
+@media (max-width: 420px) { .topbar button.tbox#theme > svg { display: block; width: 18px; height: 18px; } .topbar button.tbox#theme { min-width: 34px; justify-content: center; } }
+.topbar .brand a.bdg-link .bdg { inset-inline-end: -24px; top: -2px; }
+.form label.pfdrop { display: flex; flex-direction: column; align-items: center; text-align: center; margin: 0; }
+.pfdrop span, .pfdrop small { display: block; unicode-bidi: plaintext; }
+/* the count sits on the corner between the refresh button and the title, never over the clock */
+.topbar .brand a.bdg-link { inset-inline-end: auto; inset-inline-start: -2px; top: -8px; }
+.topbar .brand a.bdg-link .bdg { inset-inline-end: auto; inset-inline-start: -16px; top: 0; }
+@media (max-width: 420px) { .cgroup .cname { white-space: normal; overflow-wrap: anywhere; line-height: 1.25; } }
+.job .jh.has-bdg { position: static; } .job .jh .bdg { position: static; margin-inline-start: auto; box-shadow: none; }
+.job.needs { box-shadow: inset 3px 0 0 #e11d48, var(--shadow); }
+.topbar .brand a.bdg-link .bdg { inset-inline-start: -30px; top: -2px; }
