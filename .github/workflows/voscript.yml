@@ -1,31 +1,34 @@
 name: Voice-over script (اسکریپت ویس‌اور)
-run-name: "voscript ${{ inputs.selftest == 'true' && 'selftest' || inputs.request_id || 'all' }}"
+run-name: "voscript ${{ inputs.keycheck == 'true' && 'keycheck' || inputs.selftest == 'true' && 'selftest' || inputs.request_id || 'all' }}"
 
 # v28: «نوشتن ویس‌اور» in «مغز متفکر» › ۵ «اسکریپت ویس‌اور» dispatches this workflow:
 #   POST /repos/negin1100mohammadi/social-panel/actions/workflows/voscript.yml/dispatches
 #   {"ref":"main","inputs":{"request_id":"r…"}}        (no request_id = every pending «voscript» request)
 # scripts/voscript.py (uses scripts/screen.py's crypto + provider chain) decrypts the request with HARK_PRIV_JWK and writes the Persian
 # voice-over text (timing per slide/scene + tone notes) from the approved final script, the content type and the brand identity, with the
-# first provider that answers: Gemini ۱ (GEMINI_API_KEY, ≤5 min) → Gemini ۲ (GEMINI_API_KEY_2, ≤5 min) → ChatGPT = openai/gpt-oss-120b
-# (GROQ_API_KEY, then OPENROUTER_API_KEY); empty secrets are skipped; ~13 min max; the panel polls for ~14 min.
+# first provider that answers: Gemini (کلید برند = GEMINI_KEY_<PAGE>, v29, ≤5 min) → Gemini ۱ (GEMINI_API_KEY, ≤5 min) → Gemini ۲ (GEMINI_API_KEY_2, ≤5 min) → ChatGPT = openai/gpt-oss-120b
+# (GROQ_API_KEY, then OPENROUTER_API_KEY); empty secrets are skipped; ~18 min max; the panel polls for ~21 min.
 # The answer is encrypted to the panel (hark/out/<page>/) and the request is deleted. Repo + logs are public: nothing decrypted is printed.
 on:
   workflow_dispatch:
     inputs:
       request_id: { description: "hark/requests/<id> (empty = all pending voscript requests)", required: false, default: "", type: string }
       selftest:   { description: "true = synthetic request with throwaway keys + real AI call, nothing written", required: false, default: "false", type: string }
+      page:       { description: "selftest brand page id (titan-station, shode-dige, fancatstic-four, hamrah-seller, pretime-tv)", required: false, default: "", type: string }
+      keycheck:   { description: "true = one Gemini ListModels call per key (brand + shared), logs status codes only, nothing written", required: false, default: "false", type: string }
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
-  group: voscript-${{ inputs.selftest == 'true' && 'selftest' || inputs.request_id || 'all' }}
+  group: voscript-${{ inputs.keycheck == 'true' && 'keycheck' || inputs.selftest == 'true' && 'selftest' || inputs.request_id || 'all' }}
   cancel-in-progress: false
 
 jobs:
   voscript:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 24
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,21 +36,40 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: pip install -q cryptography
+      - name: Stagger (v29, no parallel bursts on the same Gemini key)
+        if: inputs.keycheck != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # «شروع … همه» starts one run per item: runs started earlier go first, each later one waits 30 s per earlier run (max 90 s)
+          n=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/voscript.yml/runs?status=in_progress&per_page=30" \
+                --jq "[.workflow_runs[] | select(.id < ${GITHUB_RUN_ID})] | length" 2>/dev/null || echo 0)
+          w=$(( n * 30 )); [ "$w" -gt 90 ] && w=90
+          echo "earlier runs in progress: $n, waiting ${w}s"; sleep "$w"
       - name: Write voice-over
         env:
           HARK_PRIV_JWK: ${{ secrets.HARK_PRIV_JWK }}
+          # v29: each brand's own Gemini key goes first (GEMINI_KEY_<PAGE>); the shared keys and gpt-oss are the fallback
+          GEMINI_KEY_TITAN_STATION: ${{ secrets.GEMINI_KEY_TITAN_STATION }}
+          GEMINI_KEY_SHODE_DIGE: ${{ secrets.GEMINI_KEY_SHODE_DIGE }}
+          GEMINI_KEY_FANCATSTIC_FOUR: ${{ secrets.GEMINI_KEY_FANCATSTIC_FOUR }}
+          GEMINI_KEY_HAMRAH_SELLER: ${{ secrets.GEMINI_KEY_HAMRAH_SELLER }}
+          GEMINI_KEY_PRETIME_TV: ${{ secrets.GEMINI_KEY_PRETIME_TV }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           REQUEST_ID: ${{ inputs.request_id }}
           SELFTEST: ${{ inputs.selftest }}
+          SELFTEST_PAGE: ${{ inputs.page }}
+          KEYCHECK: ${{ inputs.keycheck }}
           PYTHONUNBUFFERED: "1"
         run: |
+          if [ "$KEYCHECK" = "true" ]; then python scripts/screen.py --keycheck; exit $?; fi
           if [ "$SELFTEST" = "true" ]; then python scripts/voscript.py --selftest; exit $?; fi
           python scripts/voscript.py --root .
       - name: Commit answers
-        if: inputs.selftest != 'true'
+        if: inputs.selftest != 'true' && inputs.keycheck != 'true'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

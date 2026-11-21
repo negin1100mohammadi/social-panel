@@ -421,7 +421,7 @@ async function approveBoth(page, card, act) {
     await M.page.click('.ghead[data-g="brain"]'); await M.page.waitForSelector("#g-brain .gbody");
     const gb = await M.page.textContent("#g-brain");
     await M.page.click('.ghead[data-g="topbar"]'); await M.page.waitForSelector("#g-topbar .gbody");
-    ok(/۵ · اسکریپت ویس‌اور/.test(gb) && /۶ · ساخت صدا/.test(gb) && /۸ · مشاهده و انتشار/.test(gb) && /دکمه‌ی برگشت/.test(await M.page.textContent("#g-topbar")) && /v28/.test(await M.page.textContent(".ghero")), "guide (v28) explains the new steps and the back button");
+    ok(/۵ · اسکریپت ویس‌اور/.test(gb) && /۶ · ساخت صدا/.test(gb) && /۸ · مشاهده و انتشار/.test(gb) && /دکمه‌ی برگشت/.test(await M.page.textContent("#g-topbar")) && /v29/.test(await M.page.textContent(".ghero")), "guide (v28) explains the new steps and the back button");
     ok(!errors.length, "no page errors (" + errors.join(" | ") + ")");
   } catch (e) { fails.push("exception: " + (e && e.stack || e)); console.log(e); }
   await browser.close(); srv.close();

@@ -9,10 +9,13 @@ Works on a checkout of the repo (the workflow commits + pushes what it writes):
           = the same {type:"script"} message as hark_bridge.py post-script, or {type:"screen_error", reason} on failure
   deletes the handled request file (= hark_bridge.py mark-done).
 Secrets: HARK_PRIV_JWK (Hark's private key doc {kid, jwk}); AI keys, tried in order, empty ones skipped (v26 chain):
-  1. GEMINI_API_KEY    = Gemini ۱, up to 300 s (its internal model retries fit inside that budget)
-  2. GEMINI_API_KEY_2  = Gemini ۲, up to 300 s
+  0. GEMINI_KEY_<PAGE> = the brand's OWN Gemini key (v29; e.g. GEMINI_KEY_TITAN_STATION for page titan-station), up to 300 s
+  1. GEMINI_API_KEY    = Gemini ۱ (shared), up to 300 s (its internal model retries fit inside that budget)
+  2. GEMINI_API_KEY_2  = Gemini ۲ (shared), up to 300 s
   3. "ChatGPT" = OpenAI's open model openai/gpt-oss-120b: GROQ_API_KEY (~120 s), then OPENROUTER_API_KEY (openai/gpt-oss-120b:free) as last resort.
-  Whole run stops trying after DEADLINE_S (~13 min) and posts a screen_error the panel shows with «دوباره».
+  Whole run stops trying after DEADLINE_S (~18 min) and posts a screen_error the panel shows with «دوباره».
+  Gentle on every key (v29): one request at a time, ≥ MIN_GAP_S between requests on the same key, 429 → wait (Retry-After / "retry in Ns",
+  capped) and give the key up after 3 × 429, 5xx → jittered backoff. Keys and e-mails are never printed.
 The repo and the Actions logs are public: this script never prints decrypted content (titles, ideas, identity, scripts).
 
   python scripts/screen.py [--root .] [--request-id r…] [--dry-run] [--mock]
@@ -20,8 +23,10 @@ The repo and the Actions logs are public: this script never prints decrypted con
 """
 import argparse
 import base64
+import hashlib
 import json
 import os
+import random
 import re
 import secrets
 import sys
@@ -181,10 +186,11 @@ class ModelError(Exception):
     def __init__(self, reason, log): Exception.__init__(self, log); self.reason = reason; self.log = log
 
 
-DEADLINE_S = 780  # v26: the panel waits ~14 min (workflow timeout 18 min); stop trying before that and report an error it can show
-# provider chain (v26): Gemini ۱ (5 min) → Gemini ۲ (5 min) → ChatGPT = gpt-oss-120b (Groq, then OpenRouter).
-# The first one that returns a valid script wins; a provider whose secret is empty is skipped.
-PROVIDERS = [  # (id, env var, kind, budget seconds, reserved for it by the providers before it)
+DEADLINE_S = 1080  # v29: brand key + 2 shared Gemini keys (5 min each) + gpt-oss; the panel waits ~21 min (workflow timeout 24 min)
+# provider chain (v29): Gemini (کلید برند, 5 min) → Gemini ۱ (5 min) → Gemini ۲ (5 min) → ChatGPT = gpt-oss-120b (Groq, then OpenRouter).
+# The first one that returns a valid script wins; a provider whose secret is empty (or a duplicate of an earlier key) is skipped.
+PROVIDERS = [  # (id, env var, kind, budget seconds, reserved for it by the providers before it); "{PAGE}" = upper-snake page id
+    ("gemini-brand", "GEMINI_KEY_{PAGE}", "gemini", 300, 0),
     ("gemini", "GEMINI_API_KEY", "gemini", 300, 0),
     ("gemini-2", "GEMINI_API_KEY_2", "gemini", 300, 0),
     ("groq", "GROQ_API_KEY", "openai", 120, 60),
@@ -199,7 +205,40 @@ JSON_SHAPE = ('{"title": "…", "hook": "…", "beats": [{"t": "0:03", "text": "
               '"caption": "…", "hashtags": ["#…"], "platforms": {"reels": "…", "shorts": "…", "tiktok": "…"}, "trend": "… یا خالی"}')
 
 
+MIN_GAP_S = 2.0      # v29: never fire two requests at the same key closer than this (human pace, no bursts)
+MAX_429_PER_KEY = 3  # v29: after this many 429s on one key, leave that key alone for the rest of the run
+_last_call = {}      # key fingerprint -> time of the last request (the key itself is never stored or printed)
+
+
+def _fp(key): return hashlib.sha256(key.encode()).hexdigest()[:12]
+
+
+def _pace(key):
+    """wait so requests on the same key are ≥ MIN_GAP_S apart (with a little jitter)"""
+    f = _fp(key); t = _last_call.get(f)
+    if t is not None:
+        wait = MIN_GAP_S + random.uniform(0, 0.8) - (time.time() - t)
+        if wait > 0: time.sleep(wait)
+    _last_call[f] = time.time()
+
+
+def brand_env(page):
+    """GEMINI_KEY_<PAGE>: page id in upper snake case (titan-station -> GEMINI_KEY_TITAN_STATION)"""
+    return "GEMINI_KEY_" + re.sub(r"[^A-Z0-9]", "_", str(page or "").upper())
+
+
+def _retry_after(e, msg):
+    """seconds the API asked us to wait (Retry-After header or 'retry in 23.4s' / retryDelay "23s"), else None"""
+    try:
+        h = e.headers.get("Retry-After") if getattr(e, "headers", None) else None
+        if h: return float(h)
+    except Exception: pass
+    m = re.search(r"retry(?:Delay)?\D{0,12}?([\d.]+)\s*s", msg or "", re.I)
+    return float(m.group(1)) if m else None
+
+
 def _post(model, body, key, timeout):
+    _pace(key)
     r = urllib.request.Request(API % model, data=json.dumps(body).encode(), method="POST",
                                headers={"Content-Type": "application/json", "x-goog-api-key": key})
     with urllib.request.urlopen(r, timeout=timeout) as resp:
@@ -210,7 +249,10 @@ def _err_of(e):
     try: err = json.loads(e.read()).get("error") or {}
     except Exception: err = {}
     if not isinstance(err, dict): err = {"message": str(err)}
-    return str(err.get("status") or err.get("code") or err.get("type") or ""), str(err.get("message", ""))
+    msg = str(err.get("message", ""))
+    for d in err.get("details") or []:  # Google RetryInfo: {"@type": "...RetryInfo", "retryDelay": "23s"}
+        if isinstance(d, dict) and d.get("retryDelay"): msg += " retryDelay %s" % d.get("retryDelay")
+    return str(err.get("status") or err.get("code") or err.get("type") or ""), msg
 
 
 def call_gemini(prompt, key, budget, tag="gemini"):
@@ -219,7 +261,7 @@ def call_gemini(prompt, key, budget, tag="gemini"):
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "generationConfig": {"responseMimeType": "application/json", "responseSchema": SCHEMA, "temperature": 0.9, "maxOutputTokens": 8192,
                                  "thinkingConfig": {"thinkingBudget": 512}}}
-    t0 = time.time(); last = None
+    t0 = time.time(); last = None; n429 = 0
     found = list_flash_models(key)
     print("  %s: flash models: %s" % (tag, ", ".join(found[:5]) or "none listed"))
     models = []
@@ -245,8 +287,17 @@ def call_gemini(prompt, key, budget, tag="gemini"):
                     del body["generationConfig"]["responseSchema"]; tries -= 1; continue
                 if (e.code == 400 and ("api key" in msg.lower() or "API_KEY" in msg)) or e.code in (401, 403):
                     raise ModelError("key", "%s key refused (HTTP %s)" % (tag, e.code))
-                if e.code in (500, 502, 503, 504) and tries < 2: time.sleep(2); continue
-                break  # 400 / 404 / 429 / repeated 5xx -> next model
+                if e.code == 429:  # respect the quota: wait as asked (capped), then another model; give the key up after a few
+                    n429 += 1
+                    if n429 >= MAX_429_PER_KEY: raise ModelError("quota", "%s: %d x HTTP 429, key left alone" % (tag, n429))
+                    ra = _retry_after(e, msg)
+                    wait = min(30.0, max(5.0 * n429, ra or 0)) + random.uniform(0, 2)
+                    if budget - (time.time() - t0) - wait < 12: break
+                    print("  %s: 429, waiting %.0fs" % (tag, wait)); time.sleep(wait)
+                    break
+                if e.code in (500, 502, 503, 504) and tries < 2: time.sleep(3 + random.uniform(0, 3)); continue
+                if e.code in (500, 502, 503, 504): time.sleep(2 + random.uniform(0, 2))  # breathe before the next model
+                break  # 400 / 404 / repeated 5xx -> next model
             except Exception as e:
                 last = (0, type(e).__name__); print("  %s %s -> %s (%.0fs)" % (tag, model, type(e).__name__, time.time() - t1)); break
             cands = data.get("candidates") or []
@@ -280,6 +331,7 @@ def call_openai(pid, prompt, key, budget):
             h.update(extra)
             t1 = time.time()
             try:
+                _pace(key)
                 with urllib.request.urlopen(urllib.request.Request(url, data=json.dumps(body).encode(), method="POST", headers=h), timeout=min(90, left)) as resp:
                     data = json.loads(resp.read())
             except urllib.error.HTTPError as e:
@@ -292,7 +344,11 @@ def call_openai(pid, prompt, key, budget):
                     for k in reasoning: body.pop(k, None)
                     tries -= 1; continue
                 if e.code in (401, 403): raise ModelError("key", "%s key refused (HTTP %s)" % (pid, e.code))
-                if e.code in (500, 502, 503, 504) and tries < 2: time.sleep(2); continue
+                if e.code == 429:
+                    wait = min(20.0, _retry_after(e, msg) or 5.0) + random.uniform(0, 2)
+                    if tries < 2 and budget - (time.time() - t0) - wait > 8: time.sleep(wait); continue
+                    break
+                if e.code in (500, 502, 503, 504) and tries < 2: time.sleep(3 + random.uniform(0, 3)); continue
                 break
             except Exception as e:
                 last = (0, type(e).__name__); print("  %s %s -> %s (%.0fs)" % (pid, model, type(e).__name__, time.time() - t1)); break
@@ -318,15 +374,28 @@ FAIL_FA = {"quota": "سهمیه‌ی رایگان همه‌ی سرویس‌ها 
            "key": "کلید سرویس‌های هوش مصنوعی در Secrets گیت‌هاب نامعتبر است.",
            "bad": "پاسخ سرویس‌های هوش مصنوعی قابل خواندن نبود؛ «دوباره» را بزن.",
            "down": "سرویس‌های هوش مصنوعی به‌موقع جواب ندادند؛ «دوباره» را بزن.",
-           "none": "هیچ کلید هوش مصنوعی (GEMINI_API_KEY و …) در Secrets گیت‌هاب تنظیم نشده."}
-PROVIDER_FA = {"gemini": "Gemini ۱", "gemini-2": "Gemini ۲", "groq": "ChatGPT (gpt-oss، Groq)", "openrouter": "ChatGPT (gpt-oss، OpenRouter)"}
+           "none": "هیچ کلید هوش مصنوعی (کلید Gemini برند، GEMINI_API_KEY و …) در Secrets گیت‌هاب تنظیم نشده."}
+PROVIDER_FA = {"gemini-brand": "Gemini (کلید برند)", "gemini": "Gemini ۱", "gemini-2": "Gemini ۲", "groq": "ChatGPT (gpt-oss، Groq)", "openrouter": "ChatGPT (gpt-oss، OpenRouter)"}
 
 
-def call_model(prompt):
-    """walk the provider chain; returns (script, provider, model); raises ModelError(reason_fa) only when all failed"""
+def provider_chain(page=None):
+    """[(id, key, kind, budget, reserve)] in order; the brand key needs the page; empty and duplicate keys are dropped"""
+    out, seen = [], set()
+    for pid, env, kind, bud, rsv in PROVIDERS:
+        if "{PAGE}" in env:
+            if not page: continue
+            env = brand_env(page)
+        key = os.environ.get(env, "").strip()
+        if not key or key in seen: continue
+        seen.add(key); out.append((pid, key, kind, bud, rsv))
+    return out
+
+
+def call_model(prompt, page=None):
+    """walk the provider chain (brand key first when page is given); returns (script, provider, model);
+    raises ModelError(reason_fa) only when all failed"""
     t0 = time.time(); kinds = []; tried = []
-    chain = [(pid, os.environ.get(env, "").strip(), kind, bud, rsv) for pid, env, kind, bud, rsv in PROVIDERS]
-    active = [c for c in chain if c[1]]
+    active = provider_chain(page)
     print("  providers: %s" % (", ".join(c[0] for c in active) or "none"))
     for i, (pid, key, kind, bud, _r) in enumerate(active):
         left = DEADLINE_S - (time.time() - t0)
@@ -412,14 +481,37 @@ def selftest(mock=False):
     root = tempfile.mkdtemp(); R = Repo(root)
     R.write("config/inbox_pub.json", {"kid": "selftest-inbox", "jwk": jwk(ik.public_key())})
     hpub = {"kid": "selftest", "jwk": jwk(hk.public_key())}
-    req = {"type": "screen", "id": "rselftest", "page": "shode-dige", "page_name": "Self test", "topic": "سرگرمی و طنز روزمره", "screen_id": "sselftest",
+    page = os.environ.get("SELFTEST_PAGE", "").strip() or "shode-dige"
+    if page not in PAGES: raise SystemExit("unknown SELFTEST_PAGE")
+    req = {"type": "screen", "id": "rselftest", "page": page, "page_name": "Self test", "topic": "سرگرمی و طنز روزمره", "screen_id": "sselftest",
            "title": "سه اشتباه رایج صبح‌ها که روزت را خراب می‌کند", "body": "ویدئوی کوتاه طنز", "networks": ["instagram", "tiktok", "youtube"], "format": "ریل"}
     R.write("hark/requests/rselftest.json", seal(hpub, REQ_INFO, REQ_INFO + "|rselftest", req, {"id": "rselftest"}))
     os.environ["HARK_PRIV_JWK"] = json.dumps({"kid": "selftest", "jwk": jwk(hk, True)})
     print("self-test: synthetic request, throwaway keys, dry run")
     summ = main(["--root", root, "--dry-run"] + (["--mock"] if mock else []))
     if not summ["done"]: raise SystemExit("self-test failed")
-    print("self-test ok")
+    print("self-test ok (provider: %s)" % summ["provider"])
+
+
+# ------------------------------------------------------------------ key check (v29): one ListModels call per Gemini key, status codes only
+def keycheck():
+    rows = [(p, brand_env(p)) for p in PAGES] + [("shared-1", "GEMINI_API_KEY"), ("shared-2", "GEMINI_API_KEY_2")]
+    bad = 0
+    for i, (label, env) in enumerate(rows):
+        key = os.environ.get(env, "").strip()
+        if not key: print("%-16s missing" % label); continue
+        if i: time.sleep(3 + random.uniform(0, 2))  # different keys, still no burst
+        try:
+            r = urllib.request.Request("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", headers={"x-goog-api-key": key})
+            with urllib.request.urlopen(r, timeout=30) as resp:
+                data = json.loads(resp.read()); code = resp.status
+            n = sum(1 for m in data.get("models") or [] if "flash" in str(m.get("name", "")))
+            print("%-16s HTTP %s (%d flash models)" % (label, code, n))
+        except urllib.error.HTTPError as e:
+            print("%-16s HTTP %s" % (label, e.code)); bad += 1
+        except Exception as e:
+            print("%-16s %s" % (label, type(e).__name__)); bad += 1
+    print("keycheck done: %d failed" % bad)
 
 
 # ------------------------------------------------------------------ main
@@ -436,7 +528,7 @@ def main(argv=None):
     rid_in = a.request_id.strip()
     if rid_in and not re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", rid_in): raise SystemExit("bad request_id")
     names = [rid_in + ".json"] if rid_in else repo.list("hark/requests")
-    summary = {"done": [], "error": [], "skipped": []}
+    summary = {"done": [], "error": [], "skipped": [], "provider": ""}
     for name in names:
         rid = name[:-5]
         env = repo.read("hark/requests/" + name)
@@ -458,11 +550,11 @@ def main(argv=None):
         print("  identity brief: %s" % ("yes (%d chars)" % len(brief) if brief else "no, using page topic"))
         try:
             if a.mock: sc, provider, model = dict(MOCK), "mock", "mock"
-            else: sc, provider, model = call_model(build_prompt(req, brief))
+            else: sc, provider, model = call_model(build_prompt(req, brief), page)
             oid, _ = post_out(repo, page, {"type": "script", "request_id": rid, "screen_id": req.get("screen_id"), "script": sc, "by": "screen-robot",
-                                           "provider": provider, "model": model}, a.dry_run)
+                                           "provider": provider, "provider_label": PROVIDER_FA.get(provider, provider), "model": model}, a.dry_run)
             print("  ok: %s/%s, %d beats -> hark/out/%s/%s.json%s" % (provider, model, len(sc.get("beats") or []), page, oid, " (dry run, not written)" if a.dry_run else ""))
-            summary["done"].append(rid)
+            summary["done"].append(rid); summary["provider"] = provider
         except ModelError as e:
             oid, _ = post_out(repo, page, {"type": "screen_error", "request_id": rid, "screen_id": req.get("screen_id"), "reason": e.reason}, a.dry_run)
             print("  error: %s -> hark/out/%s/%s.json" % (e.log, page, oid))
@@ -475,5 +567,6 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    if "--selftest" in sys.argv: selftest(mock="--mock" in sys.argv)
+    if "--keycheck" in sys.argv: keycheck()
+    elif "--selftest" in sys.argv: selftest(mock="--mock" in sys.argv)
     else: main()

@@ -1,13 +1,13 @@
 name: Screen (غربال‌گری)
-run-name: "screen ${{ inputs.selftest == 'true' && 'selftest' || inputs.request_id || 'all' }}"
+run-name: "screen ${{ inputs.keycheck == 'true' && 'keycheck' || inputs.selftest == 'true' && 'selftest' || inputs.request_id || 'all' }}"
 
 # v26: «شروع غربال‌گری» in «مغز متفکر» › «غربال‌گری» dispatches this workflow:
 #   POST /repos/negin1100mohammadi/social-panel/actions/workflows/screen.yml/dispatches
 #   {"ref":"main","inputs":{"request_id":"r…"}}        (no request_id = every pending «screen» request)
 # scripts/screen.py decrypts the request with HARK_PRIV_JWK, writes a viral Persian script with the first AI provider that
-# answers: Gemini ۱ (GEMINI_API_KEY, up to 5 min) → Gemini ۲ (GEMINI_API_KEY_2, up to 5 min) → "ChatGPT" = OpenAI's open model
+# answers: Gemini (کلید برند = GEMINI_KEY_<PAGE>, v29, up to 5 min) → Gemini ۱ (GEMINI_API_KEY, up to 5 min) → Gemini ۲ (GEMINI_API_KEY_2, up to 5 min) → "ChatGPT" = OpenAI's open model
 # openai/gpt-oss-120b via GROQ_API_KEY (~2 min), then OPENROUTER_API_KEY (openai/gpt-oss-120b:free); empty secrets are skipped;
-# the whole chain stops after ~13 min (DEADLINE_S) and the panel polls for ~14 min
+# the whole chain stops after ~18 min (DEADLINE_S) and the panel polls for ~21 min
 # following the brand identity, encrypts the answer to the panel (hark/out/<page>/) and deletes the request.
 # Repo + logs are public: nothing decrypted is ever printed.
 on:
@@ -15,18 +15,21 @@ on:
     inputs:
       request_id: { description: "hark/requests/<id> to screen (empty = all pending screen requests)", required: false, default: "", type: string }
       selftest:   { description: "true = synthetic request with throwaway keys + real Gemini call, nothing written", required: false, default: "false", type: string }
+      page:       { description: "selftest brand page id (titan-station, shode-dige, fancatstic-four, hamrah-seller, pretime-tv)", required: false, default: "", type: string }
+      keycheck:   { description: "true = one Gemini ListModels call per key (brand + shared), logs status codes only, nothing written", required: false, default: "false", type: string }
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
-  group: screen-${{ inputs.selftest == 'true' && 'selftest' || inputs.request_id || 'all' }}
+  group: screen-${{ inputs.keycheck == 'true' && 'keycheck' || inputs.selftest == 'true' && 'selftest' || inputs.request_id || 'all' }}
   cancel-in-progress: false
 
 jobs:
   screen:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 24
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -34,21 +37,40 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: pip install -q cryptography
+      - name: Stagger (v29, no parallel bursts on the same Gemini key)
+        if: inputs.keycheck != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # «شروع … همه» starts one run per item: runs started earlier go first, each later one waits 30 s per earlier run (max 90 s)
+          n=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/screen.yml/runs?status=in_progress&per_page=30" \
+                --jq "[.workflow_runs[] | select(.id < ${GITHUB_RUN_ID})] | length" 2>/dev/null || echo 0)
+          w=$(( n * 30 )); [ "$w" -gt 90 ] && w=90
+          echo "earlier runs in progress: $n, waiting ${w}s"; sleep "$w"
       - name: Screen
         env:
           HARK_PRIV_JWK: ${{ secrets.HARK_PRIV_JWK }}
+          # v29: each brand's own Gemini key goes first (GEMINI_KEY_<PAGE>); the shared keys and gpt-oss are the fallback
+          GEMINI_KEY_TITAN_STATION: ${{ secrets.GEMINI_KEY_TITAN_STATION }}
+          GEMINI_KEY_SHODE_DIGE: ${{ secrets.GEMINI_KEY_SHODE_DIGE }}
+          GEMINI_KEY_FANCATSTIC_FOUR: ${{ secrets.GEMINI_KEY_FANCATSTIC_FOUR }}
+          GEMINI_KEY_HAMRAH_SELLER: ${{ secrets.GEMINI_KEY_HAMRAH_SELLER }}
+          GEMINI_KEY_PRETIME_TV: ${{ secrets.GEMINI_KEY_PRETIME_TV }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           REQUEST_ID: ${{ inputs.request_id }}
           SELFTEST: ${{ inputs.selftest }}
+          SELFTEST_PAGE: ${{ inputs.page }}
+          KEYCHECK: ${{ inputs.keycheck }}
           PYTHONUNBUFFERED: "1"
         run: |
+          if [ "$KEYCHECK" = "true" ]; then python scripts/screen.py --keycheck; exit $?; fi
           if [ "$SELFTEST" = "true" ]; then python scripts/screen.py --selftest; exit $?; fi
           python scripts/screen.py --root .
       - name: Commit answers
-        if: inputs.selftest != 'true'
+        if: inputs.selftest != 'true' && inputs.keycheck != 'true'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

@@ -3,8 +3,8 @@
 
 Run by .github/workflows/voscript.yml when the team presses «نوشتن ویس‌اور» in «مغز متفکر» › ۵ «اسکریپت ویس‌اور».
 Same channel, crypto, provider chain and timing as scripts/screen.py (it imports it):
-  Gemini ۱ (GEMINI_API_KEY, ≤5 min) → Gemini ۲ (GEMINI_API_KEY_2, ≤5 min) → ChatGPT = openai/gpt-oss-120b (GROQ_API_KEY, then
-  OPENROUTER_API_KEY); empty secrets skipped; whole chain ≤ ~13 min (screen.DEADLINE_S).
+  Gemini (کلید برند = GEMINI_KEY_<PAGE>, v29, ≤5 min) → Gemini ۱ (GEMINI_API_KEY, ≤5 min) → Gemini ۲ (GEMINI_API_KEY_2, ≤5 min) →
+  ChatGPT = openai/gpt-oss-120b (GROQ_API_KEY, then OPENROUTER_API_KEY); empty secrets skipped; whole chain ≤ ~18 min (screen.DEADLINE_S).
   reads   hark/requests/<id>.json   (type "voscript": approved final script + content_type + comments [+ redo note/previous text])
           hark/identity/<page>.json (brand identity brief, if the panel saved one)
   writes  hark/out/<page>/<oid>.json  {type:"voscript", request_id, final_id, vo:{title, tone, pace, duration, segments[{t, scene, text, note}], text, notes},
@@ -140,9 +140,9 @@ def main(argv=None):
         print("  identity brief: %s" % ("yes (%d chars)" % len(brief) if brief else "no"))
         try:
             if a.mock: vo, provider, model = dict(MOCK), "mock", "mock"
-            else: vo, provider, model = S.call_model(build_prompt(req, brief))
+            else: vo, provider, model = S.call_model(build_prompt(req, brief), page)
             oid, _ = S.post_out(repo, page, {"type": "voscript", "request_id": rid, "final_id": req.get("final_id"), "vo": vo, "by": "voscript-robot",
-                                             "provider": provider, "model": model}, a.dry_run)
+                                             "provider": provider, "provider_label": S.PROVIDER_FA.get(provider, provider), "model": model}, a.dry_run)
             print("  ok: %s/%s, %d segments, %d chars -> hark/out/%s/%s.json%s" % (provider, model, len(vo.get("segments") or []), len(vo.get("text") or ""),
                                                                                  page, oid, " (dry run, not written)" if a.dry_run else ""))
             summary["done"].append(rid); summary["provider"] = provider
@@ -168,7 +168,9 @@ def selftest(mock=False):
     root = tempfile.mkdtemp(); R = S.Repo(root)
     R.write("config/inbox_pub.json", {"kid": "selftest-inbox", "jwk": jwk(ik.public_key())})
     hpub = {"kid": "selftest", "jwk": jwk(hk.public_key())}
-    req = {"type": "voscript", "id": "rvoself", "page": "shode-dige", "page_name": "Self test", "topic": "سرگرمی و طنز روزمره", "final_id": "fself",
+    page = os.environ.get("SELFTEST_PAGE", "").strip() or "shode-dige"
+    if page not in S.PAGES: raise SystemExit("unknown SELFTEST_PAGE")
+    req = {"type": "voscript", "id": "rvoself", "page": page, "page_name": "Self test", "topic": "سرگرمی و طنز روزمره", "final_id": "fself",
            "title": "سه اشتباه رایج صبح‌ها", "content_type": "slide", "content_type_fa": "اسلاید",
            "script_text": "هوک: صبح‌ها این سه کار رو می‌کنی؟\n۱. گوشی قبل از آب\n۲. اسنوز پشت اسنوز\n۳. صبحونه‌ی سرپایی\nCTA: فالو کن برای روتین بهتر",
            "comments": [{"by": "نگین", "text": "لحن شوخ ولی کوتاه"}]}
