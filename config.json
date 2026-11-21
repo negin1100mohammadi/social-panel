@@ -107,11 +107,12 @@
         "id": "flow",
         "name": "Google Flow",
         "url": "https://labs.google/fx/tools/flow"
-      }
+      },
+      {"id": "notebooklm", "name": "NotebookLM", "url": "https://notebooklm.google.com"},
+      {"id": "elevenlabs", "name": "ElevenLabs", "url": "https://elevenlabs.io/app"}
     ],
     "brand_links": {
       "pretime-tv": {
-        "google": "wildframerecreated@gmail.com",
         "links": [
           [
             "gemini",
@@ -151,7 +152,6 @@
         ]
       },
       "titan-station": {
-        "google": "amirmajidi1375@gmail.com",
         "links": [
           [
             "gemini",
@@ -191,7 +191,6 @@
         ]
       },
       "hamrah-seller": {
-        "google": "amirhow3einmj@gmail.com",
         "links": [
           [
             "gemini",
@@ -231,7 +230,6 @@
         ]
       },
       "shode-dige": {
-        "google": "rajuamdada@gmail.com",
         "links": [
           [
             "gemini",
@@ -266,7 +264,6 @@
         ]
       },
       "fancatstic-four": {
-        "google": "suchameoww@gmail.com",
         "links": [
           [
             "gemini",

@@ -358,6 +358,46 @@ async function approveBoth(page, card, act) {
     await hashTo(page, "#/pipeline", ".pflow");
     ok(/اسکریپت ویس‌اور/.test(await page.textContent(".pflow")) && /ساخت صدا/.test(await page.textContent(".pflow")), "pipeline flow shows the two new columns");
 
+    // ---------------- account picker (fake e-mails only; the real list lives only in the encrypted vault)
+    const ACC = [{ email: "amir.titan@example.com", person: "amirhossein", brand: P1 }, { email: "negin.test@example.com", person: "negin" }, { email: "team.x@example.com", tools: ["claude"] }];
+    ok(/posted 3 account/.test(bridge(R, ["post-accounts", "-"], JSON.stringify(ACC))), "bridge post-accounts (encrypted)");
+    ok(!/example\.com/.test(R.text(outFiles(R, "accounts")[0])), "accounts outbox file is ciphertext");
+    ok(/secret field/.test(bridgeFails(R, ["post-accounts", JSON.stringify([{ email: "a@b.co", password: "x" }])]) || ""), "bridge refuses anything but e-mails");
+    await hashTo(page, "#/settings", "#acct-body");
+    await page.waitForSelector("#acct-body .acset", { timeout: 20000 });
+    ok((await page.$$("#acct-body .acset")).length === 3 && !outFiles(R, "accounts").length, "panel merged the accounts into its store and deleted the outbox file");
+    ok(R.files.has("vault/accounts.enc.json") && isEncFile(R.text("vault/accounts.enc.json")) && !/example\.com/.test(R.text("vault/accounts.enc.json")), "accounts stored only encrypted (vault/accounts.enc.json)");
+    ok(!/example\.com/.test(R.text("config.json") || ""), "no account e-mail in config.json");
+    await page.fill("#ac-email", "new.one@example.org"); await page.selectOption("#ac-person", "negin");
+    await page.check('input[name="ac-tool"][value="gemini"]'); await page.click('#acct-body [data-ac="save"]');
+    await until(() => page.$$eval("#acct-body .acset", (a) => a.length === 4));
+    const nrow = await page.$$("#acct-body .acset"); await nrow[3].$eval('[data-ac="del"]', (b) => b.click());
+    ok(await until(() => page.$$eval("#acct-body .acset", (a) => a.length === 3)), "settings: add + remove an account");
+    await hashTo(page, "#/tools", "#tlist");
+    await page.evaluate(() => { window.__opened = []; window.open = (u) => { window.__opened.push(u); return null; }; });
+    const gIcon = await page.$('.bicon[data-pick-tool="gemini"][data-pick-brand="' + P1 + '"]') || await page.$('.bicon[data-pick-tool="gemini"]');
+    const gUrl = await gIcon.getAttribute("data-pick-url");
+    await gIcon.click();
+    await page.waitForSelector(".acct-ovl .acrow", { timeout: 15000 }); await shot(page, "picker");
+    const grp = await page.$$eval(".acct-ovl .acgrp > b", (a) => a.map((e) => e.textContent));
+    ok(grp.includes("نگین") && grp.includes("امیرحسین") && grp.length === 3, "picker groups accounts by person (" + grp + ")");
+    await page.click('.acct-ovl .acrow:has-text("amir.titan@example.com")');
+    const op = await page.evaluate(() => window.__opened.slice());
+    ok(op[0] === "https://accounts.google.com/AccountChooser?Email=" + encodeURIComponent("amir.titan@example.com") + "&continue=" + encodeURIComponent(gUrl) && !(await page.$(".acct-ovl")), "Google tool: AccountChooser with the e-mail + the brand project link");
+    const cIcon = await page.$('.bicon[data-pick-tool="claude"]');
+    if (cIcon) {
+      await cIcon.click(); await page.waitForSelector(".acct-ovl .acrow");
+      await page.click('.acct-ovl .acrow:has-text("team.x@example.com")');
+      await page.waitForSelector(".acct-ovl .acbox");
+      ok(/team\.x@example\.com/.test(await page.textContent(".acct-ovl .acbox")) && await page.$('.acct-ovl [data-x="copy"]'), "Claude: e-mail shown with copy + hint");
+      await page.click('.acct-ovl [data-x="login"]');
+      ok((await page.evaluate(() => window.__opened.slice())).includes("https://claude.ai/login"), "Claude: opens its login page (no auto-login)");
+      await page.click('.acct-ovl [data-x="close"]');
+    } else ok(false, "no claude brand tile in the fixture");
+    await hashTo(page, "#/brain/" + P1 + "/make", "#b-fC");
+    await page.click('#b-fC .ptool[data-tool="chatgpt"] .acpick');
+    ok(await page.waitForSelector(".acct-ovl .acrow", { timeout: 10000 }).then(() => true, () => false), "Brain «ساخت» tool button opens the account picker");
+    await page.click('.acct-ovl [data-x="close"]');
     // ---------------- sticky back button vs the updating box (mobile)
     const M = await device(browser, R, "iphone", { pw: P });
     for (const h of ["#/brain/" + P1 + "/voice", "#/tools", "#/brain/" + P1 + "/vo"]) {
