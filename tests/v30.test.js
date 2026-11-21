@@ -359,6 +359,43 @@ const TODO = { items: [{ id: "t1", title: "چک کردن بایو تایتان",
     ok(pvOrder && /کپشن آزمایشی/.test(await page.textContent("#pubpv")), "composer: preview (media + caption) sits above «ثبت انتشار»");
     await noOverflow(page, "08 publish");
 
+    // ---------- v30.2: «تلاش دوباره» race guard — batched, buttons lock, «در حال انتشار…», published targets never requeued
+    {
+      const tp = PAGES.includes("titan-station") ? "titan-station" : P1;
+      const rj = { id: "20990101-000000-race", created_at: ISO(48), publish_at: ISO(47), title: "آزمون مسابقه", caption: "ک", status: "needs_action",
+        media: { type: "video/mp4" }, asset_url: "https://example.invalid/r.mp4",
+        targets: ["instagram", "youtube", "tiktok", "aparat"].map((pl) => ({ page: tp, platform: pl })),
+        results: { [tp + "/instagram"]: { status: "needs_setup", reason: "x" }, [tp + "/youtube"]: { status: "needs_setup", reason: "x" },
+          [tp + "/tiktok"]: { status: "needs_setup", reason: "x" }, [tp + "/aparat"]: { status: "needs_setup", reason: "x" } } };
+      R.set("queue/" + rj.id + ".json", JSON.stringify(rj, null, 1) + "\n");
+      await page.evaluate(() => window.__spRetry && window.__spRetry.wait(1500));
+      await page.click("#reloadjobs"); await page.waitForSelector("#job-" + rj.id);
+      ok(!!(await page.$('#job-' + rj.id + ' button[data-jact="retryall"]')), "v30.2: «تلاش دوباره‌ی همه» shows when 2+ targets are open");
+      // the incident: Instagram first, then the file changes under us (Instagram published by a run), then YouTube + TikTok
+      const putsBefore = R.puts.length, dispBefore = R.dispatches.filter((d) => d.wf === "publish.yml").length;
+      for (const pl of ["instagram", "youtube", "tiktok"]) {
+        const sel = '#job-' + rj.id + ' li[data-key="' + tp + "/" + pl + '"] button[data-jact="retry"]';
+        await page.click(sel);
+        ok(await page.$eval('#job-' + rj.id + ' li[data-key="' + tp + "/" + pl + '"] .racts button[disabled]', (b) => /ثبت شد/.test(b.textContent)).catch(() => false), "v30.2: " + pl + " retry button locks at once («ثبت شد…»)");
+        if (pl === "instagram") { const f = R.json("queue/" + rj.id + ".json"); f.results[tp + "/instagram"] = { status: "published", via: "buffer", url: "https://www.instagram.com/reel/X", attempts: 1 }; R.set("queue/" + rj.id + ".json", JSON.stringify(f, null, 1)); }
+      }
+      await until(() => R.puts.length > putsBefore, 8000); await page.waitForTimeout(1200);
+      const qp = R.puts.slice(putsBefore).filter((x) => x === "queue/" + rj.id + ".json");
+      const after = R.json("queue/" + rj.id + ".json");
+      ok(qp.length === 1, "v30.2: three presses -> ONE queue commit (got " + qp.length + ")");
+      ok(after.results[tp + "/instagram"].status === "published" && after.results[tp + "/youtube"].status === "queued" && after.results[tp + "/tiktok"].status === "queued" && after.status === "pending",
+        "v30.2: newest file re-read — published Instagram not requeued; YouTube + TikTok queued");
+      ok(R.dispatches.filter((d) => d.wf === "publish.yml").length === dispBefore, "v30.2: no extra workflow dispatch (the queue push starts one run)");
+      // a run holds the lock
+      after.results[tp + "/youtube"] = { status: "publishing", run_id: "1", started_at: new Date().toISOString() };
+      R.set("queue/" + rj.id + ".json", JSON.stringify(after, null, 1));
+      await page.click("#reloadjobs"); await page.waitForTimeout(1500);
+      const yli = await page.textContent('#job-' + rj.id + ' li[data-key="' + tp + '/youtube"]');
+      ok(/در حال انتشار…/.test(yli) && !/تلاش دوباره<\/button>/.test(yli), "v30.2: «در حال انتشار…» chip for a locked target (" + yli.slice(0, 80) + ")");
+      await noOverflow(page, "08b publish race");
+      R.files.delete("queue/" + rj.id + ".json");
+    }
+
     // ---------- the rest of the pages at 375 px
     for (const [h, sel, tag] of [["#/channels", ".cgroup", "09 channels"], ["#/a/" + P1 + "/instagram", "#app", "10 analytics ig"], ["#/a/" + P1 + "/youtube", "#app", "11 analytics yt"],
       ["#/gallery", ".dombox", "12 gallery home"], ["#/gallery/" + P1 + "/reel", "#app", "13 gallery"], ["#/tools", "#app", "14 tools"], ["#/settings", "#app", "15 settings"], ["#/guide", ".ghero", "16 guide"]]) {
@@ -367,7 +404,9 @@ const TODO = { items: [{ id: "t1", title: "چک کردن بایو تایتان",
     await hashTo(page, "#/gallery/" + P1 + "/reel", "#g-g1"); await page.click("#g-g1 .gpv summary");
     ok(!!(await page.$("#g-g1 .gpv video")) && /کپشن گالری/.test(await page.textContent("#g-g1 .gpv")) && await page.evaluate(() => { const a = document.querySelector("#g-g1 .gpv"), b = document.querySelector('#g-g1 a[href*="#/publish?g="]'); return !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING); }), "gallery item: preview (video + caption) above «انتشار»");
     await hashTo(page, "#/guide", ".ghero");
-    ok(/v30\.1/.test(await page.textContent(".ghero")) && /کار داری/.test(await page.textContent("#app")) && /بنفش/.test(await page.textContent("#app")), "guide mentions v30.1, red «کار داری» and purple «تازه»");
+    const g302 = await page.evaluate(async () => { const b = document.querySelector('.ghead[data-g="publish"]'); if (!b.getAttribute("aria-expanded").includes("true")) b.click(); await new Promise((r) => setTimeout(r, 300)); const t = document.getElementById("g-publish").textContent; const h = document.querySelector('.ghead[data-g="badges"]'); h.click(); await new Promise((r) => setTimeout(r, 300)); return /«تلاش دوباره» امن \(v30\.2\)/.test(t) && /در حال انتشار…/.test(t); });
+    ok(g302, "guide: publish section explains the v30.2 safe retry and «در حال انتشار…»");
+    ok(/v30\.2/.test(await page.textContent(".ghero")) && /کار داری/.test(await page.textContent("#app")) && /بنفش/.test(await page.textContent("#app")), "guide mentions v30.2 + safe retry, red «کار داری» and purple «تازه»");
     // sticky back button on inner pages
     for (const h of ["#/brain/" + P1 + "/vo", "#/pipeline", "#/publish", "#/identity/" + tit, "#/today", "#/settings", "#/tools", "#/gallery"]) {
       await hashTo(page, h); await page.waitForTimeout(500);

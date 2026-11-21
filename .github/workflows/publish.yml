@@ -21,7 +21,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
+      # v30.2: never work on the triggering (possibly stale) SHA — always the newest main
       - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Sync to latest main
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch -q origin main
+          git reset -q --hard origin/main
+          git log --oneline -1
 
       - uses: actions/setup-python@v5
         with:
@@ -34,6 +46,9 @@ jobs:
         env:
           # one secret per page/platform (<PAGE> = page id upper-cased, '-' -> '_'); a new page needs its lines here too
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # v30.2 race guard: publish.py re-reads newest main and pushes a "publishing" lock per target before any remote call
+          SP_GIT_SYNC: "1"
+          SP_GIT_BRANCH: main
           YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
           YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
           TOKEN_KEY: ${{ secrets.TOKEN_KEY }}   # decrypts config/yt_tokens.enc.json (connected YouTube channels)
@@ -70,15 +85,21 @@ jobs:
           BUFFER_KEY_PRETIME_TV: ${{ secrets.BUFFER_KEY_PRETIME_TV }}
         run: python scripts/publish.py
 
-      - name: Commit job status
+      # queue results are pushed by publish.py itself (per target); this only saves publish_caps.json.
+      # It fails loudly instead of silently dropping a status (2026-11-21: a rebase conflict lost YouTube/TikTok results).
+      - name: Commit publish caps
+        if: always()
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add queue/ || true
           if [ -f config/publish_caps.json ]; then git add config/publish_caps.json; fi
           if git diff --cached --quiet; then
-            echo "No status changes."
+            echo "No caps changes."
           else
-            git commit -m "queue: status update $(TZ=Asia/Tehran date '+%Y-%m-%d %H:%M') Tehran"
-            for i in 1 2 3; do git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push && break; sleep 5; done
+            git commit -q -m "publish: caps $(TZ=Asia/Tehran date '+%Y-%m-%d %H:%M') Tehran"
+            ok=0
+            for i in 1 2 3; do
+              if git pull --rebase origin main && git push origin HEAD:main; then ok=1; break; fi
+              git rebase --abort 2>/dev/null || true
+              sleep 5
+            done
+            [ "$ok" = 1 ] || { echo "::error::publish_caps.json could not be pushed"; exit 1; }
           fi

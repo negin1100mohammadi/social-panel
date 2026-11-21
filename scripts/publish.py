@@ -21,6 +21,15 @@ They are passed one by one as env variables by publish.yml.
   Aparat  : APARAT_USER_<PAGE>, APARAT_PASS_<PAGE>   (legacy etc/api; currently 503)
   TikTok  : TIKTOK_ACCESS_TOKEN_<PAGE>  or Buffer (same as Instagram)
 
+Race guard (v30.2)
+  publish.yml sets SP_GIT_SYNC=1: the run resets to the newest origin/main, and for every target re-reads the job,
+  skips it when it is published / final / "publishing" by a live run, and pushes a "publishing" lock (run id) BEFORE any
+  remote call. Only the run whose lock push lands publishes; a push conflict re-reads and re-checks (never overwrites).
+  The result is written onto the newest copy right after the remote call. A lock left by a run that died becomes
+  «manual» (check the network first) and is never re-published blindly. Remote dedupe: an existing Buffer post id is
+  followed instead of creating a new one; a Buffer post with the same text on that channel, or a YouTube upload with
+  the same title since the job was made, is adopted instead of posting again.
+
 Resolution of every channel (v10)
   published | failed (final)  · needs_setup / manual = «اتصال برقرار نیست» until the panel resolves it
   (تلاش دوباره -> status "queued", دستی منتشر کردم -> published+manual, لغو / ناموفق -> failed)
@@ -33,6 +42,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 import tempfile
 import time
@@ -59,6 +69,12 @@ MAX_ATTEMPTS = 3
 BUFFER_API = os.environ.get("SP_BUFFER_API") or "https://api.buffer.com"
 GALLERY_TAG = "gallery"  # «گالری محتوا»: files staged under gallery/ on the media branch move here
 GALLERY_PREFIX = "gallery/"
+# v30.2 race guard: every run works on the newest main and takes a pushed "publishing" lock per target before any
+# remote call. SP_GIT_SYNC=1 (set by publish.yml) turns the git side on; tests/local runs work on the files only.
+GIT_SYNC = os.environ.get("SP_GIT_SYNC") == "1"
+GIT_BRANCH = os.environ.get("SP_GIT_BRANCH") or "main"
+RUN_ID = os.environ.get("GITHUB_RUN_ID") or f"local-{os.getpid()}"
+LOCK_STALE_MIN = 90  # publish.yml times out after 60 min: an older lock belongs to a run that died mid-publish
 
 
 def log(*a):
@@ -84,6 +100,100 @@ def suffix(page):
 
 class NeedsSetup(Exception):
     pass
+
+
+class LockLost(Exception):
+    """The newest queue state says this target is not ours to publish (already published / another run holds it)."""
+
+
+# --------------------------------------------------------------------------- git (v30.2: latest main + locks)
+def git(*args, check=True):
+    r = subprocess.run(["git", "-C", ROOT, *args], capture_output=True, text=True)
+    if check and r.returncode != 0:
+        raise RuntimeError(f"git {args[0]} failed: {(r.stderr or r.stdout).strip()[:300]}")
+    return r
+
+
+def sync_main():
+    """Throw away local state and stand on the newest origin/main (never publish from a stale checkout)."""
+    if not GIT_SYNC:
+        return
+    git("fetch", "-q", "origin", GIT_BRANCH)
+    git("reset", "-q", "--hard", f"origin/{GIT_BRANCH}")
+
+
+def push_paths(paths, message):
+    """Commit + push; False when main moved meanwhile (caller re-syncs and re-checks; nothing is ever force-pushed)."""
+    if not GIT_SYNC:
+        return True
+    git("add", "--", *paths)
+    if git("diff", "--cached", "--quiet", check=False).returncode == 0:
+        return True
+    git("commit", "-q", "-m", message)
+    r = git("push", "-q", "origin", f"HEAD:{GIT_BRANCH}", check=False)
+    if r.returncode != 0:
+        log(f"push rejected ({message}); re-reading main")
+        return False
+    return True
+
+
+def read_job(job_id):
+    with open(os.path.join(QUEUE, f"{job_id}.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def write_job(job):
+    with open(os.path.join(QUEUE, f"{job['id']}.json"), "w", encoding="utf-8") as f:
+        json.dump(job, f, ensure_ascii=False, indent=1)
+        f.write("\n")
+
+
+SKIP = object()
+
+
+def update_job(job_id, mutate, message):
+    """Apply mutate(job) to the NEWEST copy of queue/<id>.json and push it. On a push conflict: re-sync, re-read and
+    run mutate again (it re-checks), never overwrite. mutate returns SKIP to leave the file alone.
+    Returns (job, written)."""
+    for i in range(6):
+        sync_main()
+        try:
+            job = read_job(job_id)
+        except (OSError, ValueError):
+            return None, False
+        if mutate(job) is SKIP:
+            return job, False
+        write_job(job)
+        if push_paths([os.path.join("queue", f"{job_id}.json")], message):
+            return job, True
+        time.sleep(2 + 3 * i)
+    raise RuntimeError(f"queue/{job_id}.json: could not push after 6 tries")
+
+
+def run_active(run_id):
+    """Is another publish run (the lock holder) still going? Unknown -> True (never steal a live lock)."""
+    if not run_id or str(run_id).startswith("local-") or not GH_TOKEN:
+        return True
+    try:
+        r = gh("GET", f"/actions/runs/{run_id}", timeout=30)
+        if r.status_code == 200:
+            return r.json().get("status") != "completed"
+    except Exception:
+        pass
+    return True
+
+
+def lock_state(res, at=None):
+    """For a result: None (free to publish) | "ours" | "busy" (another live run) | "stale" (holder died mid-publish)."""
+    if not res or res.get("status") != "publishing":
+        return None
+    if str(res.get("run_id")) == str(RUN_ID):
+        return "ours"
+    started = parse_time(res.get("started_at"))
+    old = started is None or (at or now()) - started > timedelta(minutes=LOCK_STALE_MIN)
+    if old or not run_active(res.get("run_id")):
+        return "stale"
+    return "busy"
 
 
 # --------------------------------------------------------------------------- GitHub
@@ -300,6 +410,9 @@ def publish_youtube(job, page):
         if "missing" in str(e):
             raise NeedsSetup(f"Secretهای اپ گوگل (YT_CLIENT_ID / YT_CLIENT_SECRET) در publish.yml نیست ({e}).")
         raise RuntimeError(f"توکن یوتیوب تمدید نشد: {e}")
+    found = youtube_existing(access, job)
+    if found:
+        return found
     path = local_file(job)
     size = os.path.getsize(path)
     meta = {"snippet": {"title": (job.get("title") or "ویدیو")[:100], "description": job.get("caption") or "",
@@ -321,6 +434,33 @@ def publish_youtube(job, page):
         raise RuntimeError(f"آپلود یوتیوب ناموفق (HTTP {up.status_code}): {up.text[:200]}")
     vid = up.json().get("id")
     return {"status": "published", "url": f"https://www.youtube.com/watch?v={vid}", "remote_id": vid}
+
+
+def youtube_existing(access, job):
+    """v30.2 dedupe: a video with this job's title already in the channel's newest uploads (since the job was made)
+    is adopted instead of uploading a second copy. Lookup errors fall through (the lock still prevents doubles)."""
+    title = (job.get("title") or "ویدیو")[:100].strip()
+    since = parse_time(job.get("created_at"))
+    api = os.environ.get("SP_YT_API") or "https://www.googleapis.com/youtube/v3"
+    h = {"Authorization": f"Bearer {access}"}
+    try:
+        ch = requests.get(f"{api}/channels", params={"part": "contentDetails", "mine": "true"}, headers=h, timeout=30).json()
+        up = ch["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+        items = requests.get(f"{api}/playlistItems", params={"part": "snippet", "playlistId": up, "maxResults": 15},
+                             headers=h, timeout=30).json().get("items") or []
+    except Exception as e:
+        log(f"youtube dedupe lookup skipped: {str(e)[:120]}")
+        return None
+    for it in items:
+        sn = it.get("snippet") or {}
+        pub = parse_time(sn.get("publishedAt"))
+        if (sn.get("title") or "").strip() == title and (since is None or (pub and pub >= since - timedelta(minutes=5))):
+            vid = (sn.get("resourceId") or {}).get("videoId")
+            if vid:
+                log(f"youtube: '{title}' already uploaded ({vid}); adopted, no new upload")
+                return {"status": "published", "url": f"https://www.youtube.com/watch?v={vid}", "remote_id": vid,
+                        "reason": "قبلاً در کانال بود؛ دوباره آپلود نشد."}
+    return None
 
 
 # --------------------------------------------------------------------------- Instagram
@@ -492,33 +632,42 @@ Q_BUFFER_CREATE = """mutation($input: CreatePostInput!){ createPost(input: $inpu
   ... on PostActionSuccess { post { id status dueAt externalLink } }
   ... on MutationError { message } } }"""
 Q_BUFFER_POST = "query($id: PostId!){ post(input: {id: $id}){ id status externalLink } }"
+Q_BUFFER_ORG = "query { account { organizations { id } } }"
+Q_BUFFER_POSTS = """query($o:OrganizationId!, $s:[PostStatus!]){ posts(first:40, input:{organizationId:$o, filter:{status:$s}}){
+ edges{ node{ id text status dueAt channelId externalLink } } } }"""
 
 
-def publish_buffer(job, page, platform, ch, key):
-    expected = _norm_handle(((cpage(page) or {}).get("accounts") or {}).get(platform))
-    got = {_norm_handle(ch.get("name")), _norm_handle(ch.get("displayName"))}
-    if expected and expected not in got:
-        raise NeedsSetup(f"کانال بافر ({ch.get('name')}) با اکانت این پیج ({expected}) یکی نیست؛ برای امنیت منتشر نشد.")
-    if ch.get("isQueuePaused"):
-        raise NeedsSetup("صف این کانال در بافر متوقف (Paused) است؛ در بافر صف را فعال کن.")
-    if not job.get("asset_url"):
-        raise RuntimeError("آدرس عمومی فایل آماده نیست")
-    video = is_video(job)
-    if platform == "tiktok" and not video:
-        return {"status": "skipped", "reason": "انتشار عکس در تیک‌تاک از این مسیر پشتیبانی نمی‌شود."}
-    inp = {"channelId": ch["id"], "text": job.get("caption") or job.get("title") or "", "schedulingType": "automatic", "mode": "shareNow",
-           "assets": [{"video": {"url": job["asset_url"]}} if video else {"image": {"url": job["asset_url"]}}]}
-    if platform == "instagram":
-        inp["metadata"] = {"instagram": {"type": "reel" if video else "post", "shouldShareToFeed": True}}
-    res = buffer_gql(key, Q_BUFFER_CREATE, {"input": inp}).get("createPost") or {}
-    if res.get("message") and not res.get("post"):
-        raise RuntimeError(f"بافر پست را نساخت: {res['message'][:250]}")
-    post = res.get("post") or {}
-    pid = post.get("id")
-    if not pid:
-        raise RuntimeError("بافر شناسه‌ی پست را برنگرداند")
-    st, link = post.get("status"), post.get("externalLink")
-    for _ in range(int(os.environ.get("SP_BUFFER_POLLS", "20"))):  # ~5 min
+def _norm_text(t):
+    return re.sub(r"\s+", " ", str(t or "")).strip()
+
+
+def buffer_existing(key, ch, text, since):
+    """v30.2 dedupe: a Buffer post on this channel with the same text since the job was made (sent, or still on its way)."""
+    try:
+        org = ((buffer_gql(key, Q_BUFFER_ORG).get("account") or {}).get("organizations") or [{}])[0].get("id")
+    except (RuntimeError, NeedsSetup) as e:
+        log(f"buffer dedupe lookup skipped: {str(e)[:120]}")
+        return None
+    if not org:
+        return None
+    want = _norm_text(text)
+    for sts in (["sent"], ["sending"], ["scheduled"]):
+        try:
+            edges = ((buffer_gql(key, Q_BUFFER_POSTS, {"o": org, "s": sts}).get("posts") or {}).get("edges")) or []
+        except (RuntimeError, NeedsSetup) as e:
+            log(f"buffer dedupe lookup ({sts[0]}) skipped: {str(e)[:120]}")
+            continue
+        for e in edges:
+            n = (e or {}).get("node") or {}
+            due = parse_time(n.get("dueAt"))
+            if n.get("channelId") == ch["id"] and _norm_text(n.get("text")) == want and (since is None or due is None or due >= since - timedelta(minutes=5)):
+                return n
+    return None
+
+
+def buffer_follow(key, pid, st=None, link=None):
+    """Poll one Buffer post until it is sent / error (~5 min)."""
+    for _ in range(int(os.environ.get("SP_BUFFER_POLLS", "20"))):
         if st in ("sent", "error"):
             break
         time.sleep(float(os.environ.get("SP_BUFFER_WAIT", "15")))
@@ -533,6 +682,43 @@ def publish_buffer(job, page, platform, ch, key):
     if st != "sent":
         out["reason"] = "به بافر سپرده شد؛ بافر در حال انتشار است."
     return out
+
+
+def publish_buffer(job, page, platform, ch, key):
+    expected = _norm_handle(((cpage(page) or {}).get("accounts") or {}).get(platform))
+    got = {_norm_handle(ch.get("name")), _norm_handle(ch.get("displayName"))}
+    if expected and expected not in got:
+        raise NeedsSetup(f"کانال بافر ({ch.get('name')}) با اکانت این پیج ({expected}) یکی نیست؛ برای امنیت منتشر نشد.")
+    if ch.get("isQueuePaused"):
+        raise NeedsSetup("صف این کانال در بافر متوقف (Paused) است؛ در بافر صف را فعال کن.")
+    if not job.get("asset_url"):
+        raise RuntimeError("آدرس عمومی فایل آماده نیست")
+    video = is_video(job)
+    if platform == "tiktok" and not video:
+        return {"status": "skipped", "reason": "انتشار عکس در تیک‌تاک از این مسیر پشتیبانی نمی‌شود."}
+    prev = job.get("_prev") or {}
+    if prev.get("remote_id") and prev.get("via") == "buffer":
+        # a Buffer post was already created for this target (e.g. polling failed): follow it, never create a second
+        return buffer_follow(key, prev["remote_id"])
+    text = job.get("caption") or job.get("title") or ""
+    dup = buffer_existing(key, ch, text, parse_time(job.get("created_at")))
+    if dup:
+        log(f"buffer: same post already on channel {ch.get('name')} ({dup.get('id')}); adopted, no new post")
+        out = buffer_follow(key, dup["id"], dup.get("status"), dup.get("externalLink"))
+        out["reason"] = "قبلاً در بافر ساخته شده بود؛ پست دوم ساخته نشد."
+        return out
+    inp = {"channelId": ch["id"], "text": text, "schedulingType": "automatic", "mode": "shareNow",
+           "assets": [{"video": {"url": job["asset_url"]}} if video else {"image": {"url": job["asset_url"]}}]}
+    if platform == "instagram":
+        inp["metadata"] = {"instagram": {"type": "reel" if video else "post", "shouldShareToFeed": True}}
+    res = buffer_gql(key, Q_BUFFER_CREATE, {"input": inp}).get("createPost") or {}
+    if res.get("message") and not res.get("post"):
+        raise RuntimeError(f"بافر پست را نساخت: {res['message'][:250]}")
+    post = res.get("post") or {}
+    pid = post.get("id")
+    if not pid:
+        raise RuntimeError("بافر شناسه‌ی پست را برنگرداند")
+    return buffer_follow(key, pid, post.get("status"), post.get("externalLink"))
 
 
 _CFG = None
@@ -668,9 +854,110 @@ def aggregate(job):
     return "failed"
 
 
+def publish_target(job_id, key, t):
+    """One target, race-safe (v30.2):
+      1. on the newest main, re-read the job; skip if the target is published / final / locked by a live run;
+      2. push a "publishing" lock (run id) — only the run whose push lands publishes; a push conflict re-reads and re-checks;
+      3. publish (with remote dedupe), then write the result onto the newest copy again."""
+    page, platform = t["page"], t["platform"]
+    holder = {}
+
+    def claim(job):
+        if job.get("status") != "pending":
+            return SKIP
+        res = (job.get("results") or {}).get(key) or {}
+        tt = next((x for x in job.get("targets", []) if f"{x['page']}/{x['platform']}" == key), None)
+        if tt is None or res.get("status") in FINAL:
+            return SKIP
+        ls = lock_state(res)
+        if ls == "busy":
+            log(f"{job_id}: {key} is being published by run {res.get('run_id')}; skipped")
+            return SKIP
+        if ls == "stale":
+            # the holder died mid-publish: the post may be live already. Never publish blindly again.
+            job["results"][key] = {"status": "manual", "reason": "اجرای قبلیِ انتشار وسط کار قطع شد؛ معلوم نیست منتشر شده یا نه. "
+                                   "اول صفحه‌ی شبکه را چک کن، بعد «دستی منتشر کردم» یا «تلاش دوباره».",
+                                   "stale_run_id": res.get("run_id"), "remote_id": res.get("remote_id"), "at": iso_tehran()}
+            job["status"] = aggregate(job)
+            holder["stale"] = True
+            return None
+        if tt.get("manual") and route_ready(page, platform):
+            tt.pop("manual", None)  # connected since it was queued: publish automatically
+        if tt.get("manual"):
+            # chosen in the panel while the channel had no automatic connection: a reminder, not an attempt
+            job["results"][key] = {"status": "manual", "reason": "این کانال موقع ثبت به انتشار خودکار وصل نبود", "at": iso_tehran()}
+            job["status"] = aggregate(job)
+            holder["manual"] = True
+            return None
+        lock = {"status": "publishing", "run_id": str(RUN_ID), "started_at": iso_tehran(),
+                "attempts": int(res.get("attempts") or 0)}
+        for k in ("retry_requested_at", "remote_id", "via", "prev_reason"):
+            if res.get(k):
+                lock[k] = res[k]
+        holder["prev"] = res
+        job.setdefault("results", {})[key] = lock
+        holder["mine"] = True
+        return None
+
+    job, wrote = update_job(job_id, claim, f"queue: {job_id} {key} publishing (run {RUN_ID})")
+    if job is None or not holder.get("mine") or not wrote:
+        if holder.get("manual"):
+            log(f"{job_id}: {key} -> manual")
+        elif holder.get("stale"):
+            log(f"{job_id}: {key} -> manual (stale lock)")
+        return False
+    prev = holder.get("prev") or {}
+    attempts = int(prev.get("attempts") or 0)
+    fn = PUBLISHERS.get(platform)
+    work = dict(job)
+    work["_prev"] = prev
+    try:
+        if not fn:
+            raise NeedsSetup("این شبکه پشتیبانی نمی‌شود")
+        out = fn(work, page)
+    except NeedsSetup as e:
+        out = {"status": "needs_setup", "reason": str(e)}
+    except Exception as e:
+        attempts += 1
+        reason = str(e)[:300]
+        if attempts < MAX_ATTEMPTS:
+            out = {"status": "retry", "reason": reason, "attempts": attempts}
+        else:
+            out = {"status": "failed", "reason": f"بعد از {MAX_ATTEMPTS} تلاش ناموفق ماند: {reason}", "attempts": attempts}
+    if work.get("asset_url") and not job.get("asset_url"):
+        job["asset_url"] = work["asset_url"]
+    out = {k: v for k, v in out.items() if v is not None}
+    if out.get("status") == "published":
+        out["attempts"] = attempts + 1
+    if prev.get("retry_requested_at"):
+        out["retry_requested_at"] = prev["retry_requested_at"]
+    out["run_id"] = str(RUN_ID)
+    out["at"] = iso_tehran()
+
+    def record(fresh):
+        fresh.setdefault("results", {})[key] = out
+        fresh["status"] = aggregate(fresh) if fresh.get("status") != "cancelled" else "cancelled"
+        if fresh["status"] not in ("pending", "cancelled"):
+            fresh["finished_at"] = iso_tehran()
+        elif fresh["status"] == "pending":
+            fresh.pop("finished_at", None)
+        return None
+
+    try:
+        update_job(job_id, record, f"queue: {job_id} {key} -> {out['status']}")
+    except Exception as e:
+        # the post is out but its result could not be saved: the lock stays (status publishing + run id), so no
+        # later run re-publishes it; the run fails loudly so it gets looked at.
+        log(f"::error::{job_id}: {key} -> {out['status']} {out.get('url') or out.get('remote_id') or ''} but the result was NOT saved: {e}")
+        raise
+    log(f"{job_id}: {key} -> {out['status']} {out.get('url') or ''} {out.get('reason', '')}")
+    return True
+
+
 def main():
     if not GH_TOKEN:
         log("GITHUB_TOKEN missing; cannot move media or read blobs")
+    sync_main()
     os.makedirs(QUEUE, exist_ok=True)
     gallery_moved = set()
     if GH_TOKEN:
@@ -679,6 +966,7 @@ def main():
         except Exception as e:
             log(f"gallery move failed: {e}")
     changed = 0
+    errors = 0
     keep_paths = set()
     for path in sorted(glob.glob(os.path.join(QUEUE, "*.json"))):
         try:
@@ -687,67 +975,64 @@ def main():
         except Exception as e:
             log(f"skip {path}: {e}")
             continue
-        before = json.dumps(job, sort_keys=True, ensure_ascii=False)
+        job_id = job.get("id") or os.path.splitext(os.path.basename(path))[0]
         media = job.get("media") or {}
         status = job.get("status", "pending")
+        if status != "pending":
+            continue
 
-        if status == "pending" and media.get("blob_sha") and not job.get("asset_url"):
+        if media.get("blob_sha") and not job.get("asset_url"):
             try:
                 migrate_to_release(job)
-                log(f"{job['id']}: media moved to release -> {job['asset_url']}")
+                log(f"{job_id}: media moved to release -> {job['asset_url']}")
+                url, aid = job["asset_url"], job["media"].get("asset_id")
+
+                def put_asset(fresh):
+                    if fresh.get("asset_url"):
+                        return SKIP
+                    fresh["asset_url"] = url
+                    fresh.setdefault("media", {})["asset_id"] = aid
+                    fresh.pop("media_error", None)
+                    return None
+                update_job(job_id, put_asset, f"queue: {job_id} media moved to release")
+                changed += 1
             except Exception as e:
-                log(f"{job['id']}: media move failed: {e}")
-                job["media_error"] = str(e)[:200]
-        if status == "pending" and media.get("path") and not job.get("asset_url"):
-            keep_paths.add(media["path"])
+                log(f"{job_id}: media move failed: {e}")
+                err = str(e)[:200]
+                try:
+                    update_job(job_id, lambda fresh: SKIP if fresh.get("media_error") == err else fresh.__setitem__("media_error", err),
+                               f"queue: {job_id} media move failed")
+                except Exception:
+                    pass
+        try:
+            job = read_job(job_id)
+        except (OSError, ValueError):
+            continue
+        if job.get("status") == "pending" and (job.get("media") or {}).get("path") and not job.get("asset_url"):
+            keep_paths.add(job["media"]["path"])
 
         due = parse_time(job.get("publish_at")) or now()
-        if status == "pending" and due <= now():
-            job.setdefault("results", {})
-            for t in job.get("targets", []):
-                key = f"{t['page']}/{t['platform']}"
-                if (job["results"].get(key) or {}).get("status") in FINAL:
-                    continue
-                fn = PUBLISHERS.get(t["platform"])
-                prev = job["results"].get(key) or {}
-                attempts = int(prev.get("attempts") or 0)
-                if t.get("manual") and route_ready(t["page"], t["platform"]):
-                    t.pop("manual", None)  # connected since it was queued: publish automatically
-                if t.get("manual"):
-                    # chosen in the panel while the channel had no automatic connection: a reminder, not an attempt
-                    job["results"][key] = {"status": "manual", "reason": "این کانال موقع ثبت به انتشار خودکار وصل نبود", "at": iso_tehran()}
-                    log(f"{job['id']}: {key} -> manual")
-                    continue
-                try:
-                    if not fn:
-                        raise NeedsSetup("این شبکه پشتیبانی نمی‌شود")
-                    out = fn(job, t["page"])
-                except NeedsSetup as e:
-                    out = {"status": "needs_setup", "reason": str(e)}
-                except Exception as e:
-                    attempts += 1
-                    reason = str(e)[:300]
-                    if attempts < MAX_ATTEMPTS:
-                        out = {"status": "retry", "reason": reason, "attempts": attempts}
-                    else:
-                        out = {"status": "failed", "reason": f"بعد از {MAX_ATTEMPTS} تلاش ناموفق ماند: {reason}", "attempts": attempts}
-                out = {k: v for k, v in out.items() if v is not None}
-                if out.get("status") == "published":
-                    out["attempts"] = attempts + 1
-                if prev.get("retry_requested_at"):
-                    out["retry_requested_at"] = prev["retry_requested_at"]
-                out["at"] = iso_tehran()
-                job["results"][key] = out
-                log(f"{job['id']}: {key} -> {out['status']} {out.get('reason', '')}")
-            job["status"] = aggregate(job)
-            if job["status"] != "pending":
-                job["finished_at"] = iso_tehran()
-
-        if json.dumps(job, sort_keys=True, ensure_ascii=False) != before:
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(job, f, ensure_ascii=False, indent=1)
-                f.write("\n")
-            changed += 1
+        if job.get("status") != "pending" or due > now():
+            continue
+        for t in list(job.get("targets", [])):
+            key = f"{t['page']}/{t['platform']}"
+            try:
+                if publish_target(job_id, key, t):
+                    changed += 1
+            except Exception as e:
+                errors += 1
+                log(f"{job_id}: {key} not finished: {e}")
+        # a job whose targets are all final but whose status is still pending (old files) gets its status now
+        def settle(fresh):
+            if fresh.get("status") != "pending" or aggregate(fresh) == "pending":
+                return SKIP
+            fresh["status"] = aggregate(fresh)
+            fresh["finished_at"] = iso_tehran()
+            return None
+        try:
+            update_job(job_id, settle, f"queue: {job_id} status")
+        except Exception as e:
+            log(f"{job_id}: status not saved: {e}")
 
     for p in _FILES.values():
         try:
@@ -763,7 +1048,9 @@ def main():
         write_caps()
     except Exception as e:
         log(f"publish_caps.json not written: {e}")
-    log(f"done: {changed} job file(s) updated")
+    log(f"done: {changed} change(s)")
+    if errors:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -1527,3 +1527,8 @@ i.undc { font-style: normal; color: #c2410c; }
 [data-theme="dark"] .bdg-new, [data-theme="dark"] .newchip, [data-theme="dark"] .tdsec.soft h2 em { background: rgba(139, 92, 246, .2); color: #c4b5fd; border-color: rgba(139, 92, 246, .35); }
 [data-theme="dark"] .bdg-new.dot { background: #a78bfa; }
 [data-theme="dark"] .tdsec.soft .tdlist a { border-color: rgba(139, 92, 246, .35); }
+
+/* v30.2: a target locked by a running publish */
+.schip.pubing { background: var(--warn-bg); color: var(--warn); }
+.schip.pubing::before { content: ""; display: inline-block; width: .5em; height: .5em; margin-inline-end: .35em; border-radius: 50%; background: currentColor; animation: pubpulse 1s ease-in-out infinite; vertical-align: middle; }
+@keyframes pubpulse { 50% { opacity: .25; } }
