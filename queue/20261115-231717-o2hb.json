@@ -42,9 +42,11 @@
    "at": "2026-11-21T13:03:35.249Z"
   },
   "titan-station/youtube": {
-   "status": "needs_setup",
-   "reason": "برای یوتیوب Secretهای YT_CLIENT_ID، YT_CLIENT_SECRET و YT_REFRESH_TOKEN_TITAN_STATION لازم است.",
-   "at": "2026-11-15T23:17:54+03:30"
+   "status": "queued",
+   "attempts": 0,
+   "retry_requested_at": "2026-11-21T13:03:47.233Z",
+   "prev_reason": "برای یوتیوب Secretهای YT_CLIENT_ID، YT_CLIENT_SECRET و YT_REFRESH_TOKEN_TITAN_STATION لازم است.",
+   "at": "2026-11-21T13:03:47.233Z"
   },
   "titan-station/aparat": {
    "status": "needs_setup",
