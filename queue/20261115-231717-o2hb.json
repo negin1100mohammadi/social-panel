@@ -54,9 +54,11 @@
    "at": "2026-11-15T23:17:54+03:30"
   },
   "titan-station/tiktok": {
-   "status": "needs_setup",
-   "reason": "تیک‌تاک برای انتشار به اپ تأییدشده‌ی Content Posting API و Secret TIKTOK_ACCESS_TOKEN_TITAN_STATION نیاز دارد.",
-   "at": "2026-11-15T23:17:54+03:30"
+   "status": "queued",
+   "attempts": 0,
+   "retry_requested_at": "2026-11-21T13:03:57.602Z",
+   "prev_reason": "تیک‌تاک برای انتشار به اپ تأییدشده‌ی Content Posting API و Secret TIKTOK_ACCESS_TOKEN_TITAN_STATION نیاز دارد.",
+   "at": "2026-11-21T13:03:57.602Z"
   }
  }
 }
