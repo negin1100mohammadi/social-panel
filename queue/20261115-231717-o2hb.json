@@ -32,14 +32,16 @@
   "asset_id": 752147549
  },
  "asset_url": "https://github.com/negin1100mohammadi/social-panel/releases/download/media-queue/20261115-231717-o2hb.mp4",
- "status": "pending",
+ "status": "needs_action",
  "results": {
   "titan-station/instagram": {
-   "status": "queued",
-   "attempts": 0,
+   "status": "published",
+   "remote_id": "6b0196b2d5eabfb8cc306b9a",
+   "via": "buffer",
+   "url": "https://www.instagram.com/reel/DgAS2jtAm7Y/",
+   "attempts": 1,
    "retry_requested_at": "2026-11-21T13:03:35.249Z",
-   "prev_reason": "برای اینستاگرام Secretهای IG_ACCESS_TOKEN_TITAN_STATION و IG_USER_ID_TITAN_STATION لازم است (اکانت Business/Creator).",
-   "at": "2026-11-21T13:03:35.249Z"
+   "at": "2026-11-21T16:35:11+03:30"
   },
   "titan-station/youtube": {
    "status": "queued",
@@ -60,5 +62,6 @@
    "prev_reason": "تیک‌تاک برای انتشار به اپ تأییدشده‌ی Content Posting API و Secret TIKTOK_ACCESS_TOKEN_TITAN_STATION نیاز دارد.",
    "at": "2026-11-21T13:03:57.602Z"
   }
- }
+ },
+ "finished_at": "2026-11-21T16:35:11+03:30"
 }
