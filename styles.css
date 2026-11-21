@@ -1416,3 +1416,7 @@ a.tbox.guidebtn .gq { width: 22px; height: 22px; border-radius: 50%; background:
 .ptool .acpick { min-height: 32px; }
 button.tacc { font: inherit; cursor: pointer; }
 .taccs > button.tacc:only-child { grid-column: 1 / -1; border: 0; }
+/* v29.1: mini stepper — step passed but not really done; AI Studio manual chip */
+.ln-mini a.miss { background: var(--soft); color: var(--muted); border-style: dashed; }
+.jchip.j-manual { background: var(--soft); color: var(--muted); border: 1px solid var(--line); }
+.jman { flex-basis: 100%; font-size: 12px; color: var(--muted); margin-top: 2px; }

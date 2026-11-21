@@ -220,7 +220,13 @@ const SEED = (P) => ({ items: [], hark: [], screen: [], final: [
   { id: "fA", page: P, title: "ویدیوی صبح", text: "هوک: صبح‌ها این کار رو می‌کنی؟\nبیت ۱: گوشی قبل از آب", script: { hook: "صبح‌ها این کار رو می‌کنی؟" }, content_type: "video", created_at: "2026-11-20T08:00:00Z", jobs: {} },
   { id: "fB", page: P, title: "اسلاید نکته‌ها", text: "اسلاید ۱: نکته\nاسلاید ۲: نکته", script: {}, content_type: "slide", created_at: "2026-11-20T07:00:00Z", jobs: {} },
   { id: "fC", page: P, title: "قدیمی فرستاده‌شده", text: "متن", script: {}, content_type: "video", created_at: "2026-11-19T07:00:00Z", jobs: { claude: { id: "jold", state: "queued", requested_at: "2026-11-19T08:00:00Z" } } },
-  { id: "fD", page: P, title: "بدون نوع", text: "متن", script: {}, created_at: "2026-11-18T07:00:00Z", jobs: {} }] });
+  { id: "fD", page: P, title: "بدون نوع", text: "متن", script: {}, created_at: "2026-11-18T07:00:00Z", jobs: {} },
+  // v29.1: sent to make before v28 without a type (Negin's «من سر ساعت می‌رسم» case) → back to ۴
+  { id: "fE", page: P, title: "قدیمی بدون نوع فرستاده‌شده", text: "متن", script: {}, created_at: "2026-11-17T07:00:00Z", jobs: { claude: { id: "jE", state: "queued", requested_at: "2026-11-17T08:00:00Z" } } },
+  // v29.1: typed + music approved, AI Studio job ended in a network error → «دستی»
+  { id: "fF", page: P, title: "موسیقی آماده", text: "متن", script: {}, content_type: "slide", created_at: "2026-11-16T07:00:00Z",
+    vo: { mode: "music", music: { note: "لوفای" }, approvals: { "نگین": { at: "x" }, "امیرحسین": { at: "x" } } },
+    jobs: { aistudio: { id: "jF", state: "error", reason: "AI Studio از مرورگر هارک باز نمی‌شود (خطای شبکه)", requested_at: "2026-11-16T08:00:00Z" } } }] });
 async function approveBoth(page, card, act) {
   for (const who of ["نگین", "امیرحسین"]) {
     await page.selectOption(card + " select[data-me]", who);
@@ -259,21 +265,47 @@ async function approveBoth(page, card, act) {
         tools: V.voiceTools().map((t) => t.id), pst: V.pstages().map((x) => x[0]).slice(0, 8).join(",") };
     });
     ok(u.n === 8 && u.names.join("›") === "مغز متفکر›غربال‌گری›اسکریپت نهایی›نوع محتوا›اسکریپت ویس‌اور›ساخت صدا›ساخت›مشاهده و انتشار", "line has the 8 steps in Negin's order");
-    ok(u.legacy === 4 && u.sent === 6 && u.none === 3, "old finals: typed but unsent -> ۵ اسکریپت ویس‌اور, already sent -> ۷ ساخت, untyped -> ۴ (" + [u.legacy, u.sent, u.none] + ")");
+    ok(u.legacy === 4 && u.sent === 4 && u.none === 3, "old finals (v29.1): typed -> ۵ اسکریپت ویس‌اور even if already sent, untyped -> ۴ (" + [u.legacy, u.sent, u.none] + ")");
     ok(u.music === 6 && u.musicReady && u.half === 5 && u.all === 6, "music skips ساخت صدا; voice waits until both approve the audio");
     ok(u.stale && u.vo.text === "سلام" && u.vo.state === "ready" && u.vo.provider === "gemini" && u.vo.segments === undefined && u.vo.script.segments.length === 1, "voscript result merged (stale request ignored)");
     ok(u.voice.job.state === "done" && u.voice.audio.url.endsWith("v.mp3") && u.voice.audio.source === "tool", "voice_result merged as the item's audio");
     ok(u.segs.length === 2 && u.segs[0].scene === "اسلاید ۱" && u.segs[0].note === "آروم" && u.segs[1].text === "فقط متن", "timing lines parsed");
     ok(u.tools.join() === "elevenlabs,other", "voice tools from config.json voice_tools");
     ok(u.pst === "idea,screen,script,ctype,vo,voice,make,view", "pipeline columns follow the 8-step line");
+    // ---------------- v29.1: stage derivation from what is really done
+    const w = await page.evaluate(() => {
+      const V = window.__spV28, A = { "نگین": { at: "x" }, "امیرحسین": { at: "x" } };
+      const oldSent = { jobs: { claude: { state: "queued" } } }, oldErr = { jobs: { aistudio: { state: "error" } } };
+      const typedSent = { content_type: "video", jobs: { claude: { state: "done" } } };
+      const music = { content_type: "slide", jobs: {}, vo: { mode: "music", music: { note: "x" }, approvals: A } };
+      const voiceNoAudio = { content_type: "slide", jobs: {}, vo: { mode: "voice", text: "t", approvals: A } };
+      const voiceOne = { content_type: "slide", jobs: {}, vo: { mode: "voice", text: "t", approvals: { "نگین": { at: "x" } } } };
+      return { s1: V.finalStep(oldSent), t1: V.finalTicks(oldSent), s2: V.finalStep(oldErr), sm: V.finalStep(music), tm: V.finalTicks(music),
+        sv: V.finalStep(voiceNoAudio), tv: V.finalTicks(voiceNoAudio), s1a: V.finalStep(voiceOne), sd: V.finalStep(typedSent), td: V.finalTicks(typedSent) };
+    });
+    ok(w.s1 === 3 && w.s2 === 3 && w.t1.slice(3, 7).every((x) => !x) && w.t1.slice(0, 3).every(Boolean), "v29.1: old item sent to make without a type -> step ۴; steps ۴–۷ not ticked (" + w.s1 + "," + w.t1 + ")");
+    ok(w.sm === 6 && w.tm[3] && w.tm[4] && w.tm[5] && !w.tm[6], "v29.1: music approved -> ۷ ساخت, ۶ ticked (skipped)");
+    ok(w.sv === 5 && w.tv[4] && !w.tv[5] && w.s1a === 4, "v29.1: voice-over approved but no voice -> ۶; one approval -> ۵");
+    ok(w.sd === 7 && w.td[3] && !w.td[4] && !w.td[5] && w.td[6], "v29.1: something made -> ۸ with honest ticks (no voice-over ✓)");
+    // ---------------- v29.1 UI: old untyped item at ۴ with steps ۴–۶ unticked; stepper badges; AI Studio manual
+    await hashTo(page, "#/brain/" + P1 + "/ctype", "#b-fE");
+    const mE = await page.$$eval("#b-fE .ln-mini a", (a) => a.map((e) => e.className));
+    ok(mE[3] === "cur" && mE.slice(4).every((c) => c === "") && mE.slice(0, 3).every((c) => c === "done"), "v29.1: card mini stepper of the old item: ۴ current, ۵–۸ not ticked (" + mE + ")");
+    ok(/برگشته/.test(await page.textContent("#b-fE")), "v29.1: old item explains why it is back at ۴");
+    const cnt = await page.$$eval("#line-top .ln-st em", (a) => a.map((e) => e.textContent));
+    ok(/۲/.test(cnt[3]) && /۳/.test(cnt[4]) && /۱/.test(cnt[6]), "v29.1: stepper badges count by real state (" + cnt + ")");
+    await hashTo(page, "#/brain/" + P1 + "/make", "#b-fF");
+    const af = await page.$eval('#b-fF .ptool[data-tool="aistudio"]', (e) => ({ t: e.textContent, man: !!e.querySelector(".j-manual"), err: !!e.querySelector(".jerr, .j-error"), b: (e.querySelector('[data-act="send"]') || {}).disabled }));
+    ok(af.man && !af.err && /دستی/.test(af.t) && /دکمه‌ی اکانت/.test(af.t) && af.b === false && !/خطای شبکه/.test(af.t), "v29.1: AI Studio error shown as grey «دستی» with a usable «ارسال» (" + JSON.stringify(af) + ")");
+    await hashTo(page, "#/brain/" + P1 + "/vo", "#blist .voitem");
 
     // ---------------- UI: stepper + step ۵
     await page.reload(); await page.waitForSelector("#blist .voitem");
     ok((await page.$$("#line-top .ln-st")).length === 8, "stepper shows 8 steps");
     ok(/مرحله‌ی ۵ از ۸/.test(await page.textContent("#line-top")), "stepper footer: step 5 of 8");
     const vids = await page.$$eval("#blist .voitem", (a) => a.map((e) => e.getAttribute("data-id")));
-    ok(vids.includes("fA") && vids.includes("fB") && !vids.includes("fC") && !vids.includes("fD"), "old typed finals wait at «اسکریپت ویس‌اور» (" + vids + ")");
-    ok((await page.$$("#blist .voitem .ln-mini a")).length === 16, "card mini-lines have 8 dots");
+    ok(vids.includes("fA") && vids.includes("fB") && vids.includes("fC") && !vids.includes("fD") && !vids.includes("fE"), "old typed finals (sent or not) wait at «اسکریپت ویس‌اور» (" + vids + ")");
+    ok((await page.$$("#blist .voitem .ln-mini a")).length === 8 * vids.length, "card mini-lines have 8 dots");
     await page.click('#b-fA [data-act="vomode"][data-mode="voice"]');
     await page.waitForSelector('#b-fA [data-act="vorun"]');
     await page.click('#b-fA [data-act="vorun"]');
@@ -353,7 +385,7 @@ async function approveBoth(page, card, act) {
     ok(!/لوفای|صبح‌ها اول/.test(R.text("vault/brain-" + P1 + ".enc.json")), "voice-over + music stored encrypted");
     // legacy sent item still in make; gate on unready items
     await hashTo(page, "#/brain/" + P1 + "/make", "#b-fC");
-    ok(!(await page.$('#b-fC [data-act="send"][disabled]')) && (await page.$('#b-fC [data-act="send"]')), "already-sent legacy final can still be resent");
+    ok(!!(await page.$('#b-fC button[disabled]')) && !(await page.$('#b-fC [data-act="send"]')) && /مرحله‌ی ۵/.test(await page.textContent("#b-fC")), "v29.1: already-sent legacy final without approved voice-over waits (send disabled, points to step ۵)");
     // pipeline columns
     await hashTo(page, "#/pipeline", ".pflow");
     ok(/اسکریپت ویس‌اور/.test(await page.textContent(".pflow")) && /ساخت صدا/.test(await page.textContent(".pflow")), "pipeline flow shows the two new columns");
