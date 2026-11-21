@@ -42,7 +42,15 @@
    "attempts": 1,
    "retry_requested_at": "2026-11-21T13:03:35.249Z",
    "at": "2026-11-21T16:35:11+03:30",
-   "duplicate_note": "اینستاگرام دو بار منتشر شد (اجرای 44906948990 و 44906982884) چون اجرای دوم از نسخه‌ی قدیمی صف کار کرد."
+   "duplicate_note": "اینستاگرام دو بار منتشر شد: این ریل و یک ریل تکراری (https://www.instagram.com/reel/DgATDz7kow2/) — اجرای دوم از نسخه‌ی قدیمی صف کار کرد. ریل تکراری را در صورت تمایل از اینستاگرام حذف کنید.",
+   "duplicates": [
+    {
+     "remote_id": "6b01971f8bd84d5966ec778b",
+     "via": "buffer",
+     "url": "https://www.instagram.com/reel/DgATDz7kow2/",
+     "run": 44906982884
+    }
+   ]
   },
   "titan-station/youtube": {
    "status": "published",
@@ -64,8 +72,9 @@
    "attempts": 1,
    "retry_requested_at": "2026-11-21T13:03:57.602Z",
    "at": "2026-11-21T16:38:00+03:30",
-   "reason": "منتشر شد (لینک در حال بازیابی از بافر)",
-   "note": "recovered by Hark: run 44906982884 log says published; status commit lost in a rebase conflict"
+   "note": "recovered by Hark from Buffer: published by run 44906982884, its status commit was lost in a rebase conflict",
+   "remote_id": "6b019759846b0ee9070bf0bf",
+   "url": "https://tiktok.com/@titan_station/video/7710610413548801286"
   }
  },
  "finished_at": "2026-11-21T16:35:11+03:30"
