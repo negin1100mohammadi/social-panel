@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-22T10:24:59.352553+00:00",
+ "updated": "2026-11-22T13:36:38.842000+00:00",
  "pages": {
   "hamrah-seller": {
    "status": "ok",
@@ -39,16 +39,16 @@
    ],
    "posts": [
     {
-     "id": "6b019759846b0ee9070bf0bf",
-     "text": "با این همه، وقتی سرم را روی سینه‌ات می‌گذارم\nبرای چند لحظه این فکر هولناک را فراموش می‌کنم که جهان به هیچ نمی‌ارزد...\n- همایون کاویان",
-     "dueAt": "2026-11-21T13:06:33.737Z",
-     "channelId": "6ae48c482f1f5ed6481f63ca",
-     "externalLink": "https://tiktok.com/@titan_station/video/7710610413548801286",
+     "id": "6b02e5a515920074eab98798",
+     "text": "چرا از تعریف فرار می‌کنی ولی انتقادو سریع باور می‌کنی؟ 🤔\nمغزت تعریف رو باور نمی‌کنه، چون با تصویری که از خودت داری جور نیست.\nبفرست برای اونی که همیشه خودش رو دست‌کم می‌گیره. 💚\n#روانشناسی #خودشناسی #اعتماد_به_نفس #روانشناسی_روزمره #تایتان_استیشن",
+     "dueAt": "2026-11-22T06:33:01.000Z",
+     "channelId": "6afb0a76ece6dfde5fe47684",
+     "externalLink": "https://www.instagram.com/reel/DgCK1iVza0i/",
      "metrics": [
       {
        "type": "reactions",
        "name": "Reactions",
-       "value": 1,
+       "value": 49,
        "unit": "count"
       },
       {
@@ -60,13 +60,77 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 1.43,
+       "value": 3.63,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Views",
+       "value": 2504,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 11,
+       "unit": "count"
+      },
+      {
+       "type": "saves",
+       "name": "Saves",
+       "value": 20,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 508.25,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 13.94,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 2202,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-22T12:52:53.514Z"
+    },
+    {
+     "id": "6b019759846b0ee9070bf0bf",
+     "text": "با این همه، وقتی سرم را روی سینه‌ات می‌گذارم\nبرای چند لحظه این فکر هولناک را فراموش می‌کنم که جهان به هیچ نمی‌ارزد...\n- همایون کاویان",
+     "dueAt": "2026-11-21T13:06:33.737Z",
+     "channelId": "6ae48c482f1f5ed6481f63ca",
+     "externalLink": "https://tiktok.com/@titan_station/video/7710610413548801286",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 2,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 1.31,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 70,
+       "value": 153,
        "unit": "count"
       },
       {
@@ -84,17 +148,17 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 3.83,
+       "value": 15.63,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 1.94,
+       "value": 2.52,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T13:46:38.939Z"
+     "metricsUpdatedAt": "2026-11-22T12:47:44.089Z"
     },
     {
      "id": "6b01971f8bd84d5966ec778b",
@@ -127,13 +191,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 2.29,
+       "value": 2.22,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Views",
-       "value": 190,
+       "value": 198,
        "unit": "count"
       },
       {
@@ -151,7 +215,7 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 13.28,
+       "value": 13.76,
        "unit": "count"
       },
       {
@@ -163,11 +227,11 @@
       {
        "type": "reach",
        "name": "Reach",
-       "value": 175,
+       "value": 180,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.489Z"
     },
     {
      "id": "6b01941915920074ea9e8ddd",
@@ -197,7 +261,7 @@
       {
        "type": "views",
        "name": "Views",
-       "value": 2571,
+       "value": 2572,
        "unit": "count"
       },
       {
@@ -215,7 +279,7 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 415.53,
+       "value": 415.57,
        "unit": "count"
       },
       {
@@ -227,11 +291,11 @@
       {
        "type": "reach",
        "name": "Reach",
-       "value": 2310,
+       "value": 2311,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.512Z"
     },
     {
      "id": "6b01941915920074ea9e8dc9",
@@ -255,13 +319,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 3.37,
+       "value": 3.35,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Views",
-       "value": 2830,
+       "value": 2836,
        "unit": "count"
       },
       {
@@ -279,23 +343,23 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 469.37,
+       "value": 469.86,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 11.56,
+       "value": 11.54,
        "unit": "count"
       },
       {
        "type": "reach",
        "name": "Reach",
-       "value": 2464,
+       "value": 2474,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.494Z"
     },
     {
      "id": "6b018918bb13425e560346ec",
@@ -307,7 +371,7 @@
       {
        "type": "reactions",
        "name": "Reactions",
-       "value": 0,
+       "value": 115,
        "unit": "count"
       },
       {
@@ -319,19 +383,19 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 0,
+       "value": 12.12,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 0,
+       "value": 998,
        "unit": "count"
       },
       {
        "type": "shares",
        "name": "Shares",
-       "value": 0,
+       "value": 6,
        "unit": "count"
       },
       {
@@ -343,17 +407,17 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 0,
+       "value": 365.35,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 0,
+       "value": 12.26,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T12:05:44.844Z"
+     "metricsUpdatedAt": "2026-11-22T12:47:44.089Z"
     },
     {
      "id": "6b016d815f0f4c57e4a2accc",
@@ -365,7 +429,7 @@
       {
        "type": "reactions",
        "name": "Reactions",
-       "value": 18,
+       "value": 20,
        "unit": "count"
       },
       {
@@ -377,13 +441,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 6.52,
+       "value": 6.29,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 276,
+       "value": 318,
        "unit": "count"
       },
       {
@@ -401,17 +465,17 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 65.68,
+       "value": 79.6,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 7.14,
+       "value": 7.04,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T13:46:38.939Z"
+     "metricsUpdatedAt": "2026-11-22T12:47:44.089Z"
     },
     {
      "id": "6b00a22c13ff33cd9476af04",
@@ -435,13 +499,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 9.65,
+       "value": 9.62,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 311,
+       "value": 312,
        "unit": "count"
       },
       {
@@ -459,17 +523,17 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 103.57,
+       "value": 108.28,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 9.69,
+       "value": 9.79,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T13:46:38.939Z"
+     "metricsUpdatedAt": "2026-11-22T12:47:44.090Z"
     },
     {
      "id": "6afef10655edf8314fb848df",
@@ -527,7 +591,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.507Z"
     },
     {
      "id": "6afe0241b38fc9c50b4cc23f",
@@ -551,13 +615,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 3.36,
+       "value": 3.35,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 476,
+       "value": 477,
        "unit": "count"
       },
       {
@@ -569,13 +633,13 @@
       {
        "type": "reach",
        "name": "Reach",
-       "value": 474,
+       "value": 476,
        "unit": "count"
       },
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 88.05,
+       "value": 88.17,
        "unit": "count"
       },
       {
@@ -585,7 +649,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T13:46:38.940Z"
+     "metricsUpdatedAt": "2026-11-22T12:47:44.090Z"
     },
     {
      "id": "6afd9f7bb339838392ca2a17",
@@ -649,7 +713,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.483Z"
     },
     {
      "id": "6afd6cc8bbedb3d3373b9940",
@@ -673,13 +737,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 6.95,
+       "value": 6.93,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 719,
+       "value": 721,
        "unit": "count"
       },
       {
@@ -697,17 +761,17 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 156.02,
+       "value": 157.12,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 9.13,
+       "value": 9.14,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T13:46:38.940Z"
+     "metricsUpdatedAt": "2026-11-22T12:47:44.090Z"
     },
     {
      "id": "6afc4df3116d8535a4646da1",
@@ -771,7 +835,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.497Z"
     },
     {
      "id": "6afc4df3116d8535a4646d9b",
@@ -835,7 +899,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.487Z"
     },
     {
      "id": "6afc0203f17e85e8abfc49b6",
@@ -893,7 +957,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T13:46:38.940Z"
+     "metricsUpdatedAt": "2026-11-22T12:47:44.090Z"
     },
     {
      "id": "6afb739ebac2722791a18537",
@@ -951,7 +1015,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T13:46:38.940Z"
+     "metricsUpdatedAt": "2026-11-22T12:47:44.090Z"
     },
     {
      "id": "6afb408f58b04b19b2e9c58f",
@@ -1009,7 +1073,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T13:46:38.940Z"
+     "metricsUpdatedAt": "2026-11-22T12:47:44.090Z"
     },
     {
      "id": "6afb0a78dbbf158e2c63352e",
@@ -1073,7 +1137,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.516Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633529",
@@ -1137,7 +1201,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.499Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633525",
@@ -1201,7 +1265,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.506Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633522",
@@ -1265,7 +1329,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.485Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633520",
@@ -1323,7 +1387,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T12:52:41.767Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.510Z"
     },
     {
      "id": "6afb0a78dbbf158e2c63351e",
@@ -1387,7 +1451,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.490Z"
     },
     {
      "id": "6afb0a78dbbf158e2c63351c",
@@ -1451,7 +1515,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.496Z"
     },
     {
      "id": "6afb0a78dbbf158e2c63351a",
@@ -1515,7 +1579,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.504Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633518",
@@ -1579,7 +1643,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.501Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633516",
@@ -1643,7 +1707,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.502Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633514",
@@ -1707,7 +1771,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-22T07:52:51.195Z"
+     "metricsUpdatedAt": "2026-11-22T12:52:53.493Z"
     },
     {
      "id": "6af8c0694cec742ed9bab20b",
@@ -1765,65 +1829,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T13:46:38.940Z"
-    },
-    {
-     "id": "6af6eef3e443fe998ae77746",
-     "text": "رفتی گلایه کنی، ولی ده دقیقه بعد این تویی که داری عذرخواهی میکنی. چی شد؟ به این میگن الگوی داروو (DARVO): وقتی یه آدم دستکاریگر با خطاش روبهرو میشه، سه تا کار میکنه — اول اصل ماجرا رو انکار میکنه، بعد بهت حمله میکنه که تو زیادی حساسی و بهونهگیری، و آخرش خودش رو قربانی جا میزنه تا تو احساس گناه کنی. نتیجه؟ موضوع اصلی فراموش میشه و تو میمونی و عذاب وجدان. یادت باشه: توی یه رابطهی سالم وقتی دردت رو میگی قراره شنیده بشی، نه محاکمه. تو هم اینو تجربه کردی؟ 👇",
-     "dueAt": "2026-11-13T11:05:23.918Z",
-     "channelId": "6ae48c482f1f5ed6481f63ca",
-     "externalLink": "https://www.tiktok.com/@titan_station/video/7707610586137300245?utm_campaign=tt4d_open_api&utm_source=7103819247981182978",
-     "metrics": [
-      {
-       "type": "reactions",
-       "name": "Reactions",
-       "value": 27,
-       "unit": "count"
-      },
-      {
-       "type": "comments",
-       "name": "Comments",
-       "value": 0,
-       "unit": "count"
-      },
-      {
-       "type": "engagementRate",
-       "name": "Eng. Rate",
-       "value": 17.06,
-       "unit": "percentage"
-      },
-      {
-       "type": "views",
-       "name": "Video Views",
-       "value": 170,
-       "unit": "count"
-      },
-      {
-       "type": "shares",
-       "name": "Shares",
-       "value": 2,
-       "unit": "count"
-      },
-      {
-       "type": "reach",
-       "name": "Reach",
-       "value": 170,
-       "unit": "count"
-      },
-      {
-       "type": "totalTimeWatched",
-       "name": "Watch Time (min)",
-       "value": 34.8,
-       "unit": "count"
-      },
-      {
-       "type": "averageTimeWatched",
-       "name": "Avg. Watch Time (sec)",
-       "value": 9.81,
-       "unit": "count"
-      }
-     ],
-     "metricsUpdatedAt": "2026-11-21T13:46:38.940Z"
+     "metricsUpdatedAt": "2026-11-22T12:47:44.090Z"
     }
    ]
   },
@@ -1903,7 +1909,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T18:11:41.164Z"
+     "metricsUpdatedAt": "2026-11-22T12:09:32.410Z"
     },
     {
      "id": "6afb46a4173f6694f0b91b27",
@@ -1967,7 +1973,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T18:11:41.166Z"
+     "metricsUpdatedAt": "2026-11-22T12:09:32.410Z"
     }
    ]
   },
@@ -2113,7 +2119,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T18:09:22.984Z"
+     "metricsUpdatedAt": "2026-11-22T12:07:23.139Z"
     },
     {
      "id": "6b0009cb474b92b2057b730b",
@@ -2235,7 +2241,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T18:09:22.981Z"
+     "metricsUpdatedAt": "2026-11-22T12:07:23.139Z"
     },
     {
      "id": "6afec05ffb7c33a63763f6df",
@@ -2549,7 +2555,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-21T18:09:22.986Z"
+     "metricsUpdatedAt": "2026-11-22T12:07:23.139Z"
     }
    ]
   },
