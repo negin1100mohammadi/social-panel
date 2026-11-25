@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-25T08:00:20.540120+00:00",
+ "updated": "2026-11-25T10:36:21.409316+00:00",
  "pages": {
   "hamrah-seller": {
    "status": "ok",
@@ -39,16 +39,16 @@
    ],
    "posts": [
     {
-     "id": "6b04070ebeaafcdbe0ddcbaa",
-     "text": "اگه بالای سر هر آدمی یه عدد بود که میگفت چند بار دیگه میبینیش چی؟ #روانشناسی #زندگی #تایتان_استیشن",
-     "dueAt": "2026-11-23T09:27:42.285Z",
+     "id": "6b06aac06212ba833cae657e",
+     "text": "صد تا تو وجود داره؛ کدومش واقعیه؟\nتو مسئول کاری هستی که کردی، نه قصه‌ای که بقیه ازش ساختن.\n#روانشناسی #خودشناسی #تایتان_استیشن",
+     "dueAt": "2026-11-25T09:30:40.353Z",
      "channelId": "6ae48c482f1f5ed6481f63ca",
-     "externalLink": "https://www.tiktok.com/@titan_station/video/7711296285495774471?utm_campaign=tt4d_open_api&utm_source=7103819247981182978",
+     "externalLink": "https://tiktok.com/@titan_station/video/7712039201344163079",
      "metrics": [
       {
        "type": "reactions",
        "name": "Reactions",
-       "value": 63,
+       "value": 8,
        "unit": "count"
       },
       {
@@ -60,13 +60,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 5.18,
+       "value": 10.98,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 1235,
+       "value": 82,
        "unit": "count"
       },
       {
@@ -84,17 +84,84 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 1023.78,
+       "value": 15.88,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 20.33,
+       "value": 11.92,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T11:36:01.922Z"
+     "metricsUpdatedAt": "2026-11-25T09:50:26.950Z"
+    },
+    {
+     "id": "6b06aab16212ba833cae5d4c",
+     "text": "صد تا تو وجود داره؛ کدومش واقعیه؟\nتو مسئول کاری هستی که کردی، نه قصه‌ای که بقیه ازش ساختن.\n#روانشناسی #خودشناسی #تایتان_استیشن",
+     "dueAt": "2026-11-25T09:30:25.809Z",
+     "channelId": "6afb0a76ece6dfde5fe47684",
+     "externalLink": "https://www.instagram.com/reel/DgKNmJNtC_F/",
+     "metrics": null,
+     "metricsUpdatedAt": "2026-11-25T09:30:25.686Z"
+    },
+    {
+     "id": "6b04070ebeaafcdbe0ddcbaa",
+     "text": "اگه بالای سر هر آدمی یه عدد بود که میگفت چند بار دیگه میبینیش چی؟ #روانشناسی #زندگی #تایتان_استیشن",
+     "dueAt": "2026-11-23T09:27:42.285Z",
+     "channelId": "6ae48c482f1f5ed6481f63ca",
+     "externalLink": "https://www.tiktok.com/@titan_station/video/7711296285495774471?utm_campaign=tt4d_open_api&utm_source=7103819247981182978",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 66,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 1,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 5.3,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Video Views",
+       "value": 1263,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 1208,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 1073.77,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 20.45,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-25T09:50:26.950Z"
     },
     {
      "id": "6b0407004d584ce26838be90",
@@ -310,13 +377,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 15.74,
+       "value": 15.69,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 324,
+       "value": 325,
        "unit": "count"
       },
       {
@@ -328,23 +395,23 @@
       {
        "type": "reach",
        "name": "Reach",
-       "value": 302,
+       "value": 320,
        "unit": "count"
       },
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 123.85,
+       "value": 125.58,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 11.4,
+       "value": 11.42,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T11:36:01.936Z"
+     "metricsUpdatedAt": "2026-11-25T09:50:26.950Z"
     },
     {
      "id": "6b019759846b0ee9070bf0bf",
@@ -402,7 +469,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T11:36:01.942Z"
+     "metricsUpdatedAt": "2026-11-25T09:50:26.950Z"
     },
     {
      "id": "6b01971f8bd84d5966ec778b",
@@ -615,7 +682,7 @@
       {
        "type": "reactions",
        "name": "Reactions",
-       "value": 176,
+       "value": 177,
        "unit": "count"
       },
       {
@@ -627,13 +694,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 11.85,
+       "value": 11.81,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 1553,
+       "value": 1566,
        "unit": "count"
       },
       {
@@ -645,23 +712,23 @@
       {
        "type": "reach",
        "name": "Reach",
-       "value": 1495,
+       "value": 1545,
        "unit": "count"
       },
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 667.13,
+       "value": 679.18,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 12.27,
+       "value": 12.26,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T11:36:01.930Z"
+     "metricsUpdatedAt": "2026-11-25T09:50:26.950Z"
     },
     {
      "id": "6b016d815f0f4c57e4a2accc",
@@ -703,23 +770,23 @@
       {
        "type": "reach",
        "name": "Reach",
-       "value": 320,
+       "value": 324,
        "unit": "count"
       },
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 82.25,
+       "value": 84.22,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 6.98,
+       "value": 7.12,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T11:36:01.933Z"
+     "metricsUpdatedAt": "2026-11-25T09:50:26.951Z"
     },
     {
      "id": "6b00a22c13ff33cd9476af04",
@@ -761,23 +828,23 @@
       {
        "type": "reach",
        "name": "Reach",
-       "value": 314,
+       "value": 316,
        "unit": "count"
       },
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 110.93,
+       "value": 112.77,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 9.79,
+       "value": 9.89,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T11:36:01.946Z"
+     "metricsUpdatedAt": "2026-11-25T09:50:26.951Z"
     },
     {
      "id": "6afef10655edf8314fb848df",
@@ -893,7 +960,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T11:36:01.971Z"
+     "metricsUpdatedAt": "2026-11-25T09:50:26.951Z"
     },
     {
      "id": "6afd9f7bb339838392ca2a17",
@@ -1015,7 +1082,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T11:36:01.977Z"
+     "metricsUpdatedAt": "2026-11-25T09:50:26.951Z"
     },
     {
      "id": "6afc4df3116d8535a4646da1",
@@ -1167,13 +1234,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 3.18,
+       "value": 3.17,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 566,
+       "value": 567,
        "unit": "count"
       },
       {
@@ -1201,7 +1268,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T11:36:01.964Z"
+     "metricsUpdatedAt": "2026-11-25T09:50:26.951Z"
     },
     {
      "id": "6afb739ebac2722791a18537",
@@ -1259,7 +1326,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T11:36:01.939Z"
+     "metricsUpdatedAt": "2026-11-25T09:50:26.951Z"
     },
     {
      "id": "6afb408f58b04b19b2e9c58f",
@@ -1317,7 +1384,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T11:36:01.961Z"
+     "metricsUpdatedAt": "2026-11-25T09:50:26.951Z"
     },
     {
      "id": "6afb0a78dbbf158e2c63352e",
@@ -1696,134 +1763,6 @@
       }
      ],
      "metricsUpdatedAt": "2026-11-25T05:16:14.397Z"
-    },
-    {
-     "id": "6afb0a78dbbf158e2c63351c",
-     "text": "هرچی بیشتر می‌دوی، دورتر می‌شن.\nپروانه‌ها این‌جوری‌ان؛ آدم‌ها هم، فرصت‌ها هم، آرامش هم.\nهرچی بیشتر بچسبی و بدوی، بیشتر ازت فرار می‌کنن.\nولی وقتی وایمیسی، می‌شینی، نفس می‌کشی... خودشون میان سراغت.\nبعضی چیزها رو نمی‌شه با دویدن گرفت؛ باید جا باز کرد تا بیان.\nتو چی رو داری دنبال می‌کنی که هی ازت فرار می‌کنه؟ 👇",
-     "dueAt": "2026-11-07T20:54:46.000Z",
-     "channelId": "6afb0a76ece6dfde5fe47684",
-     "externalLink": "https://www.instagram.com/reel/DfdFiAGjl80/",
-     "metrics": [
-      {
-       "type": "reactions",
-       "name": "Reactions",
-       "value": 2,
-       "unit": "count"
-      },
-      {
-       "type": "comments",
-       "name": "Comments",
-       "value": 0,
-       "unit": "count"
-      },
-      {
-       "type": "engagementRate",
-       "name": "Eng. Rate",
-       "value": 25,
-       "unit": "percentage"
-      },
-      {
-       "type": "views",
-       "name": "Views",
-       "value": 24,
-       "unit": "count"
-      },
-      {
-       "type": "shares",
-       "name": "Shares",
-       "value": 0,
-       "unit": "count"
-      },
-      {
-       "type": "saves",
-       "name": "Saves",
-       "value": 0,
-       "unit": "count"
-      },
-      {
-       "type": "totalTimeWatched",
-       "name": "Watch Time (min)",
-       "value": 2.32,
-       "unit": "count"
-      },
-      {
-       "type": "averageTimeWatched",
-       "name": "Avg. Watch Time (sec)",
-       "value": 6.95,
-       "unit": "count"
-      },
-      {
-       "type": "reach",
-       "name": "Reach",
-       "value": 8,
-       "unit": "count"
-      }
-     ],
-     "metricsUpdatedAt": "2026-11-25T05:16:14.408Z"
-    },
-    {
-     "id": "6afb0a78dbbf158e2c63351a",
-     "text": "تو هم زیر دوش برنده‌ی همه‌ی بحث‌هایی هستی که تو واقعیت حتی نتونستی یه کلمه حرف بزنی؟\nوقتی یکی داره ریز و درشت بارت می‌کنه، تو فقط نگاش می‌کنی — ولی چند ساعت بعد، زیر دوش، مغزت جلسه‌ی فوق‌العاده می‌ذاره و جواب‌های طلایی یکی‌یکی میان سراغت.\nجالب اینجاست که توی اون بحث‌های فرضی، طرف مقابل حتی فرصت دفاع کردن هم پیدا نمی‌کنه؛ تو هم جواب می‌دی، هم دیالوگ اون رو تعیین می‌کنی.\nروانشناسی بهش می‌گه «پردازش پس از رویداد» — مغزت داره سعی می‌کنه از یه اتفاق اجتماعی درس بگیره. ولی وقتی این مرور تبدیل به چرخه می‌شه، هر بار دوباره همون اتفاق داره برات می‌افته: دوباره عصبانی می‌شی، دوباره ناراحت می‌شی.\nقرار نیست تو هر بحثی رو ببری، مخصوصا بحث‌هایی که فقط توی ذهن تو برگزار می‌شن.\nحالا اعتراف کن: تو هم زیر دوش جواب بحث‌هایی رو می‌دی که ۳ سال پیش اتفاق افتادن؟ 👇\nMusic: Kevin MacLeod – Reawakening (CC BY 4.0)",
-     "dueAt": "2026-11-12T09:37:21.000Z",
-     "channelId": "6afb0a76ece6dfde5fe47684",
-     "externalLink": "https://www.instagram.com/reel/DfovzK1TCV8/",
-     "metrics": [
-      {
-       "type": "reactions",
-       "name": "Reactions",
-       "value": 7,
-       "unit": "count"
-      },
-      {
-       "type": "comments",
-       "name": "Comments",
-       "value": 0,
-       "unit": "count"
-      },
-      {
-       "type": "engagementRate",
-       "name": "Eng. Rate",
-       "value": 3.81,
-       "unit": "percentage"
-      },
-      {
-       "type": "views",
-       "name": "Views",
-       "value": 265,
-       "unit": "count"
-      },
-      {
-       "type": "shares",
-       "name": "Shares",
-       "value": 0,
-       "unit": "count"
-      },
-      {
-       "type": "saves",
-       "name": "Saves",
-       "value": 2,
-       "unit": "count"
-      },
-      {
-       "type": "totalTimeWatched",
-       "name": "Watch Time (min)",
-       "value": 161.21,
-       "unit": "count"
-      },
-      {
-       "type": "averageTimeWatched",
-       "name": "Avg. Watch Time (sec)",
-       "value": 40.64,
-       "unit": "count"
-      },
-      {
-       "type": "reach",
-       "name": "Reach",
-       "value": 236,
-       "unit": "count"
-      }
-     ],
-     "metricsUpdatedAt": "2026-11-25T05:16:14.406Z"
     }
    ]
   },
@@ -1975,7 +1914,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T18:14:43.010Z"
+     "metricsUpdatedAt": "2026-11-25T09:10:01.613Z"
     }
    ]
   },
@@ -2121,7 +2060,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T18:12:23.120Z"
+     "metricsUpdatedAt": "2026-11-25T09:07:53.376Z"
     },
     {
      "id": "6b0009cb474b92b2057b730b",
@@ -2243,7 +2182,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T18:12:23.134Z"
+     "metricsUpdatedAt": "2026-11-25T09:07:53.376Z"
     },
     {
      "id": "6afec05ffb7c33a63763f6df",
@@ -2523,7 +2462,7 @@
       {
        "type": "views",
        "name": "Views",
-       "value": 158,
+       "value": 160,
        "unit": "count"
       },
       {
@@ -2541,23 +2480,23 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 106.25,
+       "value": 106.55,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 55.92,
+       "value": 55.59,
        "unit": "count"
       },
       {
        "type": "reach",
        "name": "Reach",
-       "value": 117,
+       "value": 118,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T18:12:23.118Z"
+     "metricsUpdatedAt": "2026-11-25T09:07:53.376Z"
     }
    ]
   },
