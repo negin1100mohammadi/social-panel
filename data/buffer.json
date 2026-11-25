@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-25T16:40:19.446718+00:00",
+ "updated": "2026-11-25T19:32:41.575127+00:00",
  "pages": {
   "hamrah-seller": {
    "status": "ok",
@@ -1850,7 +1850,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T18:14:43.008Z"
+     "metricsUpdatedAt": "2026-11-25T18:14:52.530Z"
     },
     {
      "id": "6afb46a4173f6694f0b91b27",
@@ -1914,7 +1914,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:10:01.613Z"
+     "metricsUpdatedAt": "2026-11-25T18:14:52.543Z"
     }
    ]
   },
@@ -2020,13 +2020,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 1.74,
+       "value": 1.72,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Views",
-       "value": 121,
+       "value": 122,
        "unit": "count"
       },
       {
@@ -2044,23 +2044,23 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 8.32,
+       "value": 8.34,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 4.3,
+       "value": 4.28,
        "unit": "count"
       },
       {
        "type": "reach",
        "name": "Reach",
-       "value": 115,
+       "value": 116,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:07:53.376Z"
+     "metricsUpdatedAt": "2026-11-25T18:12:32.202Z"
     },
     {
      "id": "6b0009cb474b92b2057b730b",
@@ -2182,7 +2182,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:07:53.376Z"
+     "metricsUpdatedAt": "2026-11-25T18:12:32.213Z"
     },
     {
      "id": "6afec05ffb7c33a63763f6df",
@@ -2304,7 +2304,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T18:12:23.122Z"
+     "metricsUpdatedAt": "2026-11-25T18:12:32.204Z"
     },
     {
      "id": "6afb4623b4a7756f8d81f2a9",
@@ -2368,7 +2368,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T18:12:23.116Z"
+     "metricsUpdatedAt": "2026-11-25T18:12:32.200Z"
     },
     {
      "id": "6afb4623b4a7756f8d81f2a7",
@@ -2432,7 +2432,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-24T18:12:23.128Z"
+     "metricsUpdatedAt": "2026-11-25T18:12:32.216Z"
     },
     {
      "id": "6afb4623b4a7756f8d81f2a5",
@@ -2496,7 +2496,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:07:53.376Z"
+     "metricsUpdatedAt": "2026-11-25T18:12:32.210Z"
     }
    ]
   },
