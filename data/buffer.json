@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-26T07:59:20.394567+00:00",
+ "updated": "2026-11-26T10:34:54.970495+00:00",
  "pages": {
   "hamrah-seller": {
    "status": "ok",
@@ -48,25 +48,25 @@
       {
        "type": "reactions",
        "name": "Reactions",
-       "value": 0,
+       "value": 14,
        "unit": "count"
       },
       {
        "type": "comments",
        "name": "Comments",
-       "value": 0,
+       "value": 1,
        "unit": "count"
       },
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 0,
+       "value": 15.15,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 0,
+       "value": 99,
        "unit": "count"
       },
       {
@@ -84,17 +84,17 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 0,
+       "value": 30.5,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 0,
+       "value": 8.93,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-26T07:24:37.383Z"
+     "metricsUpdatedAt": "2026-11-26T08:51:49.965Z"
     },
     {
      "id": "6b07dea963939e1d007fbd47",
@@ -115,7 +115,7 @@
       {
        "type": "reactions",
        "name": "Reactions",
-       "value": 8,
+       "value": 17,
        "unit": "count"
       },
       {
@@ -127,13 +127,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 10.98,
+       "value": 9.38,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 82,
+       "value": 192,
        "unit": "count"
       },
       {
@@ -151,17 +151,17 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 15.88,
+       "value": 111.6,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 11.92,
+       "value": 12.64,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:50:26.950Z"
+     "metricsUpdatedAt": "2026-11-26T08:51:49.965Z"
     },
     {
      "id": "6b06aab16212ba833cae5d4c",
@@ -237,7 +237,7 @@
       {
        "type": "reactions",
        "name": "Reactions",
-       "value": 66,
+       "value": 67,
        "unit": "count"
       },
       {
@@ -249,13 +249,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 5.3,
+       "value": 5.35,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 1263,
+       "value": 1270,
        "unit": "count"
       },
       {
@@ -273,17 +273,17 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 1073.77,
+       "value": 1090.92,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 20.45,
+       "value": 20.49,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:50:26.950Z"
+     "metricsUpdatedAt": "2026-11-26T08:51:49.965Z"
     },
     {
      "id": "6b0407004d584ce26838be90",
@@ -487,7 +487,7 @@
       {
        "type": "reactions",
        "name": "Reactions",
-       "value": 45,
+       "value": 46,
        "unit": "count"
       },
       {
@@ -499,13 +499,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 15.69,
+       "value": 15.9,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 325,
+       "value": 327,
        "unit": "count"
       },
       {
@@ -517,23 +517,23 @@
       {
        "type": "reach",
        "name": "Reach",
-       "value": 320,
+       "value": 325,
        "unit": "count"
       },
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 125.58,
+       "value": 127.47,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 11.42,
+       "value": 11.48,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:50:26.950Z"
+     "metricsUpdatedAt": "2026-11-26T08:51:49.965Z"
     },
     {
      "id": "6b019759846b0ee9070bf0bf",
@@ -591,7 +591,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:50:26.950Z"
+     "metricsUpdatedAt": "2026-11-26T08:51:49.965Z"
     },
     {
      "id": "6b01971f8bd84d5966ec778b",
@@ -816,13 +816,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 11.81,
+       "value": 11.75,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 1566,
+       "value": 1574,
        "unit": "count"
       },
       {
@@ -840,7 +840,7 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 679.18,
+       "value": 684.7,
        "unit": "count"
       },
       {
@@ -850,7 +850,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:50:26.950Z"
+     "metricsUpdatedAt": "2026-11-26T08:51:49.965Z"
     },
     {
      "id": "6b016d815f0f4c57e4a2accc",
@@ -908,7 +908,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:50:26.951Z"
+     "metricsUpdatedAt": "2026-11-26T08:51:49.965Z"
     },
     {
      "id": "6b00a22c13ff33cd9476af04",
@@ -932,13 +932,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 9.49,
+       "value": 9.46,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 316,
+       "value": 317,
        "unit": "count"
       },
       {
@@ -956,17 +956,17 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 112.77,
+       "value": 113.53,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 9.89,
+       "value": 9.94,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:50:26.951Z"
+     "metricsUpdatedAt": "2026-11-26T08:51:49.965Z"
     },
     {
      "id": "6afef10655edf8314fb848df",
@@ -1082,7 +1082,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:50:26.951Z"
+     "metricsUpdatedAt": "2026-11-26T08:51:49.965Z"
     },
     {
      "id": "6afd9f7bb339838392ca2a17",
@@ -1170,13 +1170,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 6.91,
+       "value": 6.9,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Video Views",
-       "value": 724,
+       "value": 725,
        "unit": "count"
       },
       {
@@ -1204,7 +1204,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:50:26.951Z"
+     "metricsUpdatedAt": "2026-11-26T08:51:49.965Z"
     },
     {
      "id": "6afc4df3116d8535a4646da1",
@@ -1374,23 +1374,23 @@
       {
        "type": "reach",
        "name": "Reach",
-       "value": 566,
+       "value": 567,
        "unit": "count"
       },
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 52.67,
+       "value": 33.17,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 3.54,
+       "value": 2.22,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:50:26.951Z"
+     "metricsUpdatedAt": "2026-11-26T08:51:49.965Z"
     },
     {
      "id": "6afb739ebac2722791a18537",
@@ -1438,17 +1438,17 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 21.55,
+       "value": 18.6,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 6.96,
+       "value": 6,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:50:26.951Z"
+     "metricsUpdatedAt": "2026-11-26T08:51:49.965Z"
     },
     {
      "id": "6afb408f58b04b19b2e9c58f",
@@ -1496,17 +1496,17 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 27.28,
+       "value": 20.62,
        "unit": "count"
       },
       {
        "type": "averageTimeWatched",
        "name": "Avg. Watch Time (sec)",
-       "value": 8.15,
+       "value": 6.15,
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T09:50:26.951Z"
+     "metricsUpdatedAt": "2026-11-26T08:51:49.965Z"
     },
     {
      "id": "6afb0a78dbbf158e2c63352e",
@@ -1914,7 +1914,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T18:14:52.543Z"
+     "metricsUpdatedAt": "2026-11-26T08:10:11.691Z"
     }
    ]
   },
@@ -2060,7 +2060,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T18:12:32.202Z"
+     "metricsUpdatedAt": "2026-11-26T08:08:03.500Z"
     },
     {
      "id": "6b0009cb474b92b2057b730b",
@@ -2118,7 +2118,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T11:25:30.473Z"
+     "metricsUpdatedAt": "2026-11-26T10:26:21.068Z"
     },
     {
      "id": "6aff3b0f616aa34a92058407",
@@ -2182,7 +2182,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T18:12:32.213Z"
+     "metricsUpdatedAt": "2026-11-26T08:08:03.500Z"
     },
     {
      "id": "6afec05ffb7c33a63763f6df",
@@ -2240,7 +2240,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T11:25:30.473Z"
+     "metricsUpdatedAt": "2026-11-26T10:26:21.068Z"
     },
     {
      "id": "6afb4623b4a7756f8d81f2ab",
@@ -2496,7 +2496,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T18:12:32.210Z"
+     "metricsUpdatedAt": "2026-11-26T08:08:03.500Z"
     }
    ]
   },
