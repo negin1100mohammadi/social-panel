@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-26T04:41:04.226363+00:00",
+ "updated": "2026-11-26T07:59:20.394567+00:00",
  "pages": {
   "hamrah-seller": {
    "status": "ok",
@@ -38,6 +38,73 @@
     }
    ],
    "posts": [
+    {
+     "id": "6b07deb57cb39d7aa35b2578",
+     "text": "وقتی دلخور می‌شی، چرا فقط ساکت می‌شی؟ 🤔\nپشت این سکوت، یه خستگی قدیمیه.\nبفرست برای اونی که بلده سکوتت رو بشنوه. 💚\n#روانشناسی #روابط #تایتان_استیشن",
+     "dueAt": "2026-11-26T07:24:37.416Z",
+     "channelId": "6ae48c482f1f5ed6481f63ca",
+     "externalLink": "https://tiktok.com/@titan_station/video/7712377727877238023",
+     "metrics": [
+      {
+       "type": "reactions",
+       "name": "Reactions",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "comments",
+       "name": "Comments",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "engagementRate",
+       "name": "Eng. Rate",
+       "value": 0,
+       "unit": "percentage"
+      },
+      {
+       "type": "views",
+       "name": "Video Views",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "shares",
+       "name": "Shares",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "reach",
+       "name": "Reach",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "totalTimeWatched",
+       "name": "Watch Time (min)",
+       "value": 0,
+       "unit": "count"
+      },
+      {
+       "type": "averageTimeWatched",
+       "name": "Avg. Watch Time (sec)",
+       "value": 0,
+       "unit": "count"
+      }
+     ],
+     "metricsUpdatedAt": "2026-11-26T07:24:37.383Z"
+    },
+    {
+     "id": "6b07dea963939e1d007fbd47",
+     "text": "وقتی دلخور می‌شی، چرا فقط ساکت می‌شی؟ 🤔\nپشت این سکوت، یه خستگی قدیمیه.\nبفرست برای اونی که بلده سکوتت رو بشنوه. 💚\n#روانشناسی #روابط #تایتان_استیشن",
+     "dueAt": "2026-11-26T07:24:25.394Z",
+     "channelId": "6afb0a76ece6dfde5fe47684",
+     "externalLink": "https://www.instagram.com/reel/DgMkDS-gS3f/",
+     "metrics": null,
+     "metricsUpdatedAt": "2026-11-26T07:24:25.345Z"
+    },
     {
      "id": "6b06aac06212ba833cae657e",
      "text": "صد تا تو وجود داره؛ کدومش واقعیه؟\nتو مسئول کاری هستی که کردی، نه قصه‌ای که بقیه ازش ساختن.\n#روانشناسی #خودشناسی #تایتان_استیشن",
@@ -106,7 +173,7 @@
       {
        "type": "reactions",
        "name": "Reactions",
-       "value": 73,
+       "value": 74,
        "unit": "count"
       },
       {
@@ -118,13 +185,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 4.72,
+       "value": 4.76,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Views",
-       "value": 2668,
+       "value": 2673,
        "unit": "count"
       },
       {
@@ -142,7 +209,7 @@
       {
        "type": "totalTimeWatched",
        "name": "Watch Time (min)",
-       "value": 477.3,
+       "value": 478.26,
        "unit": "count"
       },
       {
@@ -158,7 +225,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-26T03:53:30.781Z"
+     "metricsUpdatedAt": "2026-11-26T05:16:21.850Z"
     },
     {
      "id": "6b04070ebeaafcdbe0ddcbaa",
@@ -228,7 +295,7 @@
       {
        "type": "reactions",
        "name": "Reactions",
-       "value": 59,
+       "value": 60,
        "unit": "count"
       },
       {
@@ -240,13 +307,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 3.79,
+       "value": 3.83,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Views",
-       "value": 2532,
+       "value": 2535,
        "unit": "count"
       },
       {
@@ -280,7 +347,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-26T03:53:30.781Z"
+     "metricsUpdatedAt": "2026-11-26T05:16:21.844Z"
     },
     {
      "id": "6b030df111ace002372f37b3",
@@ -292,7 +359,7 @@
       {
        "type": "reactions",
        "name": "Reactions",
-       "value": 186,
+       "value": 187,
        "unit": "count"
       },
       {
@@ -304,13 +371,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 10.43,
+       "value": 10.46,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Views",
-       "value": 3432,
+       "value": 3435,
        "unit": "count"
       },
       {
@@ -344,7 +411,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-26T03:53:30.781Z"
+     "metricsUpdatedAt": "2026-11-26T05:16:21.874Z"
     },
     {
      "id": "6b02e5a515920074eab98798",
@@ -356,7 +423,7 @@
       {
        "type": "reactions",
        "name": "Reactions",
-       "value": 49,
+       "value": 50,
        "unit": "count"
       },
       {
@@ -368,13 +435,13 @@
       {
        "type": "engagementRate",
        "name": "Eng. Rate",
-       "value": 3.48,
+       "value": 3.53,
        "unit": "percentage"
       },
       {
        "type": "views",
        "name": "Views",
-       "value": 2590,
+       "value": 2593,
        "unit": "count"
       },
       {
@@ -408,7 +475,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-26T03:53:30.781Z"
+     "metricsUpdatedAt": "2026-11-26T05:16:21.860Z"
     },
     {
      "id": "6b02e0628eba8051c008cac2",
@@ -597,7 +664,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-26T03:53:30.781Z"
+     "metricsUpdatedAt": "2026-11-26T05:16:21.872Z"
     },
     {
      "id": "6b01941915920074ea9e8ddd",
@@ -661,7 +728,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-26T03:53:30.781Z"
+     "metricsUpdatedAt": "2026-11-26T05:16:21.870Z"
     },
     {
      "id": "6b01941915920074ea9e8dc9",
@@ -725,7 +792,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-26T03:53:30.781Z"
+     "metricsUpdatedAt": "2026-11-26T05:16:21.819Z"
     },
     {
      "id": "6b018918bb13425e560346ec",
@@ -957,7 +1024,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-26T03:53:30.781Z"
+     "metricsUpdatedAt": "2026-11-26T05:16:21.834Z"
     },
     {
      "id": "6afe0241b38fc9c50b4cc23f",
@@ -1079,7 +1146,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-26T03:53:30.781Z"
+     "metricsUpdatedAt": "2026-11-26T05:16:21.865Z"
     },
     {
      "id": "6afd6cc8bbedb3d3373b9940",
@@ -1201,7 +1268,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-26T03:53:30.781Z"
+     "metricsUpdatedAt": "2026-11-26T05:16:21.824Z"
     },
     {
      "id": "6afc4df3116d8535a4646d9b",
@@ -1265,7 +1332,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-26T03:53:30.781Z"
+     "metricsUpdatedAt": "2026-11-26T05:16:21.878Z"
     },
     {
      "id": "6afc0203f17e85e8abfc49b6",
@@ -1503,7 +1570,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T05:16:14.393Z"
+     "metricsUpdatedAt": "2026-11-26T05:16:21.858Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633529",
@@ -1567,7 +1634,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-25T05:16:14.358Z"
+     "metricsUpdatedAt": "2026-11-26T05:16:21.854Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633525",
@@ -1631,7 +1698,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-26T03:53:30.781Z"
+     "metricsUpdatedAt": "2026-11-26T05:16:21.836Z"
     },
     {
      "id": "6afb0a78dbbf158e2c633522",
@@ -1695,129 +1762,7 @@
        "unit": "count"
       }
      ],
-     "metricsUpdatedAt": "2026-11-26T03:53:30.781Z"
-    },
-    {
-     "id": "6afb0a78dbbf158e2c633520",
-     "text": "تصاویری ساده با مفاهیم عمیق زندگی\n\nدنبال چیزی باش که خوشحالت می‌کنه...\n\nگذشته رو نمی‌شه تغییر داد؛ آینده رو نمی‌شه پیش‌بینی کرد\n\nقدر داشته‌هات رو بدون و تا وقتی داریشون، ازشون لذت ببر و استفاده کن\n\nآدم‌های بد، زندگیت رو بد می‌کنن\n\nماهی‌گیری یاد بگیر\n\nوفادار باش، حتی اگر شکستی\n\nغرور نابودت می‌کنه\n\nاز اشتباهاتت یاد بگیر\n\nچشم بسته به هیچ‌کس اعتماد نکن\n\nما رو فالو کن",
-     "dueAt": "2026-10-07T21:51:29.000Z",
-     "channelId": "6afb0a76ece6dfde5fe47684",
-     "externalLink": "https://www.instagram.com/p/DeNXcTpjlOU/",
-     "metrics": [
-      {
-       "type": "reactions",
-       "name": "Reactions",
-       "value": 1,
-       "unit": "count"
-      },
-      {
-       "type": "comments",
-       "name": "Comments",
-       "value": 0,
-       "unit": "count"
-      },
-      {
-       "type": "engagementRate",
-       "name": "Eng. Rate",
-       "value": 50,
-       "unit": "percentage"
-      },
-      {
-       "type": "views",
-       "name": "Views",
-       "value": 3,
-       "unit": "count"
-      },
-      {
-       "type": "shares",
-       "name": "Shares",
-       "value": 0,
-       "unit": "count"
-      },
-      {
-       "type": "saves",
-       "name": "Saves",
-       "value": 0,
-       "unit": "count"
-      },
-      {
-       "type": "follows",
-       "name": "Follows",
-       "value": 0,
-       "unit": "count"
-      },
-      {
-       "type": "reach",
-       "name": "Reach",
-       "value": 2,
-       "unit": "count"
-      }
-     ],
-     "metricsUpdatedAt": "2026-11-25T05:16:14.386Z"
-    },
-    {
-     "id": "6afb0a78dbbf158e2c63351e",
-     "text": "گاهی قهرش هنوز سر جاشه، ولی دلش طاقتِ دوری رو نداره... 💚\nبفرست برای اونی که با اینکه قهره، دستت رو ول نمی‌کنه! ✨\nPride says turn away. Love says don’t let go.\nTag or send this to that one person. 💚\n#روانشناسی_رابطه #رابطه #عشق relationships #animation#",
-     "dueAt": "2026-11-14T20:09:35.000Z",
-     "channelId": "6afb0a76ece6dfde5fe47684",
-     "externalLink": "https://www.instagram.com/reel/DfvB6AUzDFK/",
-     "metrics": [
-      {
-       "type": "reactions",
-       "name": "Reactions",
-       "value": 21,
-       "unit": "count"
-      },
-      {
-       "type": "comments",
-       "name": "Comments",
-       "value": 0,
-       "unit": "count"
-      },
-      {
-       "type": "engagementRate",
-       "name": "Eng. Rate",
-       "value": 1.54,
-       "unit": "percentage"
-      },
-      {
-       "type": "views",
-       "name": "Views",
-       "value": 1715,
-       "unit": "count"
-      },
-      {
-       "type": "shares",
-       "name": "Shares",
-       "value": 2,
-       "unit": "count"
-      },
-      {
-       "type": "saves",
-       "name": "Saves",
-       "value": 0,
-       "unit": "count"
-      },
-      {
-       "type": "totalTimeWatched",
-       "name": "Watch Time (min)",
-       "value": 226.06,
-       "unit": "count"
-      },
-      {
-       "type": "averageTimeWatched",
-       "name": "Avg. Watch Time (sec)",
-       "value": 8.88,
-       "unit": "count"
-      },
-      {
-       "type": "reach",
-       "name": "Reach",
-       "value": 1491,
-       "unit": "count"
-      }
-     ],
-     "metricsUpdatedAt": "2026-11-26T03:53:30.781Z"
+     "metricsUpdatedAt": "2026-11-26T05:16:21.843Z"
     }
    ]
   },
